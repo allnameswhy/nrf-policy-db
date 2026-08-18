@@ -1,0 +1,3 @@
+# 직접 의존성만 고정. 전체 설치: pip install -r requirements.txt
+pymupdf==1.28.2
+claude-agent-sdk==0.2.139
