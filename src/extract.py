@@ -4,7 +4,7 @@ PROJECT_NOTES.md §3 단계 ① 참조.
 
 - 입력: pdfs/*.pdf
 - 출력: reports/*.md (frontmatter + 장/절 헤딩 + 본문. 요약 없음)
-- 도구: PyMuPDF(fitz)로만 텍스트 추출. LLM 사용 금지.
+- 도구: PyMuPDF로만 텍스트 추출 (`import pymupdf` — fitz 별칭은 deprecated). LLM 사용 금지.
 - 계층 판별: 본문의 "제N장 / 제N절" 텍스트 패턴 기준. 북마크 미사용.
 - 패턴이 잡히지 않는 문서는 로그로 남기고 수동 확인.
 - 헤딩 ID 규칙: {report_id}_c{장}s{절} (재파싱해도 동일해야 함, §4)
