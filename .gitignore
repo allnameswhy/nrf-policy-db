@@ -6,6 +6,9 @@ __pycache__/
 # 파생물 — .md에서 언제든 재생성 (PROJECT_NOTES §2)
 reports.db
 
+# 추출 로그 — 실행 시마다 재생성
+logs/
+
 # 원본 PDF — 로컬 보관, 버전관리 제외
 pdfs/*
 !pdfs/.gitkeep
