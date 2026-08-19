@@ -10,6 +10,10 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 - 헤딩 ID: 감지 서수 경로 {report_id}_c{i}s{j}… (PROJECT_NOTES §4)
 - 진단: --scan (md 미작성, 감지 결과만 덤프). 로그: logs/extract_log.json
 - 프로파일이 잡히지 않는 문서는 스킵 + 로그 후 수동 확인.
+- 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
+  재추출은 annotate가 삽입한 요약 블록과 frontmatter 검증 스탬프를 소실시킨다
+  (스탬프 소실 = 의도된 미검증 리셋). 합본은 파트 일부만 있어도 스킵 — 부분 실패
+  재시도는 --force뿐이며 성공 파트의 요약도 함께 소실됨에 주의. --scan은 가드 미적용.
 """
 
 from __future__ import annotations
@@ -385,6 +389,20 @@ def derive_report_id(path: str) -> str | None:
     name = unicodedata.normalize("NFC", Path(path).name)
     m = REPORT_ID_RE.search(name)
     return m.group(1) if m else None
+
+
+def find_existing_outputs(out_dir: Path, base_id: str) -> list[Path]:
+    """단독본({id}.md)과 합본 파트({id}_NN.md) 기존 출력 탐지.
+
+    report_id는 고정폭 7자(\\d{4}-\\d{2}), 파트 접미사는 두 자리 고정이라
+    다른 보고서와 접두 충돌이 불가능하다.
+    """
+    out: list[Path] = []
+    single = out_dir / f"{base_id}.md"
+    if single.exists():
+        out.append(single)
+    out.extend(sorted(out_dir.glob(f"{base_id}_[0-9][0-9].md")))
+    return out
 
 
 def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
@@ -1454,7 +1472,7 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 # 파일 단위 처리
 # ---------------------------------------------------------------------------
 
-def process_pdf(path: str, verbose: bool = False):
+def process_pdf(path: str):
     """PDF 1개 → PartResult 목록(합본이면 여러 개)."""
     base_id = derive_report_id(path)
     if base_id is None:
@@ -1600,7 +1618,8 @@ def main() -> None:
     parser.add_argument("-o", "--out-dir", default="reports", help="출력 디렉터리 (기본: reports)")
     parser.add_argument("--log", default="logs/extract_log.json", help="로그 경로 (기본: logs/extract_log.json)")
     parser.add_argument("--scan", action="store_true", help="진단 모드: md 미작성, 감지 결과만 stdout에 덤프")
-    parser.add_argument("-v", "--verbose", action="store_true", help="상세 출력")
+    parser.add_argument("--force", action="store_true",
+                        help="출력 .md가 이미 있어도 재추출·덮어쓰기 (annotate 요약 블록 소실 주의)")
     args = parser.parse_args()
 
     # PowerShell은 글롭을 확장하지 않으므로 자체 확장
@@ -1619,8 +1638,20 @@ def main() -> None:
     all_ok = True
 
     for path in paths:
+        # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
+        base_id = derive_report_id(path)
+        if not args.scan and not args.force and base_id is not None:
+            existing = find_existing_outputs(Path(args.out_dir), base_id)
+            if existing:
+                log_entries.append({"file": Path(path).name, "report_id": base_id,
+                                    "status": "skipped_exists",
+                                    "existing": [p.name for p in existing]})
+                print(f"[skip] {base_id}: 기존 출력 {len(existing)}개 존재 — 재추출은 --force",
+                      file=sys.stderr)
+                continue
+
         try:
-            results = process_pdf(path, verbose=args.verbose)
+            results = process_pdf(path)
         except Exception:
             all_ok = False
             log_entries.append({"file": Path(path).name, "status": "error",

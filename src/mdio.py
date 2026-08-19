@@ -1,7 +1,7 @@
 """reports/*.md 공용 파서 — frontmatter · 헤딩 트리 · 유닛 분할 · 요약 블록 삽입/제거.
 
-annotate.py / build_db.py / build_index.py가 공유한다. 파싱 규칙이 사본으로
-흩어지면 "재파싱해도 동일 ID" 규약이 드리프트로 깨질 수 있어 한곳에 둔다.
+annotate.py / build_db.py / build_index.py / status.py가 공유한다. 파싱 규칙이
+사본으로 흩어지면 "재파싱해도 동일 ID" 규약이 드리프트로 깨질 수 있어 한곳에 둔다.
 
 좌표계 주의: 헤딩·frontmatter의 줄 번호는 파싱에 사용한 줄 리스트 기준이다.
 요약 블록이 있는 원본과 strip_summary_blocks() 결과(base)는 줄 번호가 다르므로,
@@ -57,6 +57,10 @@ class Frontmatter:
     title: str
     abstract_empty: bool
     end_line: int  # 닫는 '---'의 줄 인덱스
+    # 검증 스텝이 기록하는 옵션 스탬프 (YYYY-MM-DD, 없으면 빈 값 = 미검증).
+    # extract가 frontmatter를 재생성하면 자연 소멸 → 자동 미검증 리셋.
+    verified_extract: str = ""
+    verified_annotate: str = ""
 
 
 def _unquote(v: str) -> str:
@@ -74,6 +78,8 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     title = ""
     abstract_empty = True
     end_line = -1
+    verified_extract = ""
+    verified_annotate = ""
     for i in range(1, len(lines)):
         line = lines[i]
         if line == "---":
@@ -87,9 +93,13 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
             val = line.split(":", 1)[1].strip()
             # extract.py: 내용 있으면 'abstract: |' 블록, 공란이면 'abstract: ""'
             abstract_empty = val in ('""', "''", "")
+        elif line.startswith("verified_extract:"):
+            verified_extract = line.split(":", 1)[1].strip()
+        elif line.startswith("verified_annotate:"):
+            verified_annotate = line.split(":", 1)[1].strip()
     if end_line < 0:
         raise ValueError("frontmatter 닫는 '---'가 없습니다")
-    return Frontmatter(report_id, title, abstract_empty, end_line)
+    return Frontmatter(report_id, title, abstract_empty, end_line, verified_extract, verified_annotate)
 
 
 # ---- 헤딩 트리 ----
@@ -306,3 +316,40 @@ def insert_summaries(
     for pos, block in sorted(inserts, key=lambda t: t[0], reverse=True):
         out[pos:pos] = block
     return out
+
+
+# ---- 통합 로더 ----
+
+
+@dataclass
+class ReportState:
+    """load_report() 결과 — annotate.py·status.py가 공유하는 파싱 프렐류드 산출물."""
+
+    path: Path
+    original: list[str]  # 원본 줄 (요약 블록 포함)
+    base: list[str]  # strip_summary_blocks() 결과
+    fm: Frontmatter  # base 좌표계
+    roots: list[Heading]  # base 좌표계
+    by_hid: dict[str, Heading]
+    existing: dict[str, str]  # 원본에서 탐지한 {hid: 요약, REPORT_KEY: 보고서 요약}
+    units: list[Unit]
+    stats: dict  # split_units() 수집 통계
+
+    def roundtrip_ok(self) -> bool:
+        """기존 요약 배치가 우리 규약과 일치하는가 — 일치해야 안전하게 재작성 가능."""
+        return insert_summaries(self.base, self.by_hid, self.fm, self.existing) == self.original
+
+
+def load_report(path: str | Path, *, min_chars: int = 200, max_chars: int = 4000) -> ReportState:
+    """읽기 → 원본 좌표계에서 기존 요약 탐지 → base 재파싱 → 유닛 분할."""
+    original = read_md_lines(path)
+    fm0 = parse_frontmatter(original)
+    roots0 = parse_heading_tree(original)
+    existing = find_existing_summaries(original, roots0, fm0)
+    base = strip_summary_blocks(original)
+    fm = parse_frontmatter(base)
+    roots = parse_heading_tree(base)
+    by_hid = {h.hid: h for h in iter_headings(roots)}
+    stats: dict = {}
+    units = split_units(roots, base, min_chars=min_chars, max_chars=max_chars, stats=stats)
+    return ReportState(Path(path), original, base, fm, roots, by_hid, existing, units, stats)

@@ -241,26 +241,18 @@ async def call_with_retry(prompt: str, args, entry: FileEntry, retries: int = 2)
 async def process_file(
     path: str, args, sema: asyncio.Semaphore, abort: asyncio.Event, entry: FileEntry
 ) -> None:
-    original = mdio.read_md_lines(path)
-    fm0 = mdio.parse_frontmatter(original)
-    roots0 = mdio.parse_heading_tree(original)
-    entry.report_id = fm0.report_id
-    existing = mdio.find_existing_summaries(original, roots0, fm0)
-
-    base = mdio.strip_summary_blocks(original)
-    fm = mdio.parse_frontmatter(base)
-    roots = mdio.parse_heading_tree(base)
-    by_hid = {h.hid: h for h in mdio.iter_headings(roots)}
+    st = mdio.load_report(path, min_chars=args.min_chars, max_chars=args.max_chars)
+    entry.report_id = st.fm.report_id
 
     # 로드 시 왕복 확인: 기존 요약 배치가 우리 규약과 일치해야 안전하게 재작성 가능
-    if mdio.insert_summaries(base, by_hid, fm, existing) != original:
+    if not st.roundtrip_ok():
         entry.status = "error"
         entry.errors.append("기존 요약 배치가 규약과 불일치 — 파일을 건드리지 않고 건너뜀")
         return
 
-    if args.force:
-        existing = {}
-    units = mdio.split_units(roots, base, min_chars=args.min_chars, max_chars=args.max_chars)
+    base, fm, by_hid = st.base, st.fm, st.by_hid
+    existing = {} if args.force else st.existing
+    units = st.units
     entry.units_total = len(units)
     todo = [u for u in units if u.hid not in existing]
     entry.units_skipped_existing = len(units) - len(todo)
@@ -344,17 +336,8 @@ def run_scan(paths: list[str], args) -> tuple[int, list[dict]]:
     tot_units = tot_calls = tot_over = 0
     tot_uncovered = tot_excluded = 0
     for p in paths:
-        original = mdio.read_md_lines(p)
-        fm0 = mdio.parse_frontmatter(original)
-        roots0 = mdio.parse_heading_tree(original)
-        existing = mdio.find_existing_summaries(original, roots0, fm0)
-        base = mdio.strip_summary_blocks(original)
-        fm = mdio.parse_frontmatter(base)
-        roots = mdio.parse_heading_tree(base)
-        stats: dict = {}
-        units = mdio.split_units(
-            roots, base, min_chars=args.min_chars, max_chars=args.max_chars, stats=stats
-        )
+        st = mdio.load_report(p, min_chars=args.min_chars, max_chars=args.max_chars)
+        fm, units, existing, stats = st.fm, st.units, st.existing, st.stats
         new = [u for u in units if u.hid not in existing]
         over = sum(1 for u in units if u.char_count > args.input_cap)
         expected = len(new) + (
