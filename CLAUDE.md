@@ -21,11 +21,12 @@ src/build_db.py     reports/*.md → reports.db (FTS5 trigram)
 src/build_index.py  reports/*.md → master_index.md
 ```
 
-extract.py는 구현 완료(2026-08, 10권 → 11개 .md 검증 통과 — `--scan` 진단 모드 제공). 나머지 세 스크립트는 argparse 골격만 있는 스텁 상태. PROJECT_NOTES §9 순서대로 구현한다.
+extract.py는 구현 완료(2026-08, 10권 → 11개 .md 검증 통과 — `--scan` 진단 모드 제공). annotate.py도 구현·실행 완료(2026-08, 유닛 392개 요약 + 2025-17_02 보고서 요약 fallback 삽입, Haiku 4.5·thinking 비활성, `--scan`/`--smoke`/`--force` 제공. 유닛 분할 = 크기 기반 헤딩 트리 분할, PROJECT_NOTES §3 단계②). frontmatter·헤딩 트리·유닛 분할·요약 블록 처리는 공용 모듈 `src/mdio.py`에 있고 **build_db.py·build_index.py도 이를 재사용**할 것(파이프라인 4단계 체계는 불변). build_db.py·build_index.py는 argparse 골격만 있는 스텁 상태. PROJECT_NOTES §9 순서대로 구현한다.
 
 ## 환경
 
 - Python 3.10 venv: `.venv\Scripts\activate` (의존성: `requirements.txt` — pymupdf, claude-agent-sdk)
 - annotate의 LLM 호출은 **claude-agent-sdk 경유 → Claude Code 구독 로그인 재사용, API 키 불필요.** 대량 배치에서 사용량 한도가 문제되면 anthropic SDK + `ANTHROPIC_API_KEY`(콘솔 발급, 종량제)로 전환 가능.
+- **인증 경로(annotate.py `setup_auth`)**: ① `CLAUDE_CODE_OAUTH_TOKEN` 환경변수 → ② 저장소 루트 `.claude_oauth_token` 파일(git 제외) → ③ CLI 로그인 세션(`~/.claude`). 헤드리스에서는 만료된 로그인 세션이 자동 갱신되지 않으므로("OAuth session expired" 실측), 재로그인 없이 돌리려면 `claude setup-token`(브라우저 승인 1회, **1년 유효**)으로 발급한 토큰을 `.claude_oauth_token`에 저장해 두면 된다. 단 `ANTHROPIC_API_KEY`가 설정돼 있으면 토큰보다 우선 적용됨(종량제 과금 주의).
 - SQLite 3.37.2 내장 — FTS5 `tokenize='trigram'` 지원 확인됨. 실측: 3글자 이상 쿼리는 조사 붙은 어절도 정상 매칭("예산이", "탄소중립" OK). **단, 2글자 이하 쿼리("예산")는 MATCH·LIKE 모두 0건** — trigram의 구조적 제약. 검색 흐름 구현 시 2글자 검색어 대응 필요(쿼리 확장, SQLite 업그레이드, 또는 kiwipiepy 전환 — PROJECT_NOTES §8 연계 판단).
 - 원본 PDF는 `pdfs/`에 두되 git 제외(.gitignore). `reports/*.md`와 `master_index.md`는 git 포함.

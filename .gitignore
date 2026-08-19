@@ -15,3 +15,6 @@ pdfs/*
 
 # 로컬 설정
 .env
+
+# 장기 인증 토큰 (claude setup-token 발급분) — 절대 커밋 금지
+.claude_oauth_token
