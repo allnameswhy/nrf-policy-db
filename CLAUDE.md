@@ -21,9 +21,11 @@ src/build_db.py     reports/*.md → reports.db (FTS5 trigram)
 src/build_index.py  reports/*.md → master_index.md
 ```
 
-extract.py는 구현 완료(2026-08, 10권 → 11개 .md 검증 통과 — `--scan` 진단 모드 제공). **재실행 시 출력 .md가 이미 있으면 기본 스킵, `--force`로만 재추출·덮어쓴다**(재추출 시 annotate 삽입 요약과 검증 스탬프 소실 주의). annotate.py도 구현·실행 완료(2026-08, 유닛 392개 요약 + 2025-17_02 보고서 요약 fallback 삽입, Haiku 4.5·thinking 비활성, `--scan`/`--smoke`/`--force` 제공. 유닛 분할 = 크기 기반 헤딩 트리 분할, PROJECT_NOTES §3 단계②). frontmatter·헤딩 트리·유닛 분할·요약 블록 처리는 공용 모듈 `src/mdio.py`에 있고(통합 로더 `load_report()`) **build_db.py·build_index.py도 이를 재사용**할 것(파이프라인 4단계 체계는 불변). build_db.py·build_index.py는 argparse 골격만 있는 스텁 상태. PROJECT_NOTES §9 순서대로 구현한다.
+extract.py는 구현 완료(2026-08, 10권 → 11개 .md 검증 통과 — `--scan` 진단 모드, **표 마스킹 안전판**: 표 정리에 실리지 못한 글자는 지우지 않고 본문으로 방출 — find_tables 행렬 단계 셀 소실 실측 4권 21건 복구). **재실행 시 출력 .md가 이미 있으면 기본 스킵, `--force`로만 재추출·덮어쓴다**(재추출 시 annotate 삽입 요약과 검증 스탬프 소실 주의). annotate.py도 구현·실행 완료(2026-08, 유닛 392개 요약 + 2025-17_02 보고서 요약 fallback 삽입, Haiku 4.5·thinking 비활성, `--scan`/`--smoke`/`--force` 제공. 유닛 분할 = 크기 기반 헤딩 트리 분할, PROJECT_NOTES §3 단계②). frontmatter·헤딩 트리·유닛 분할·요약 블록 처리는 공용 모듈 `src/mdio.py`에 있고(통합 로더 `load_report()`) **build_db.py·build_index.py도 이를 재사용**할 것(파이프라인 4단계 체계는 불변). build_db.py·build_index.py는 argparse 골격만 있는 스텁 상태. PROJECT_NOTES §9 순서대로 구현한다.
 
-보조 도구 `src/status.py`(읽기 전용, 파이프라인 4단계 아님): 보고서별 추출/요약(M/N)/잔여 LLM 호출/검증 스탬프 현황과 reports.db·master_index.md 신선도를 **아티팩트에서만 파생 계산**해 표시한다(별도 상태 저장 없음; exit 0=완전 동기화, 1=할 일). 검증 스탬프(frontmatter `verified_extract`/`verified_annotate`, PROJECT_NOTES §4)는 차기 설계할 검증 스텝이 기록하며, 재추출 시 자연 소멸 = 미검증 리셋.
+보조 도구 `src/status.py`(읽기 전용, 파이프라인 4단계 아님): 보고서별 추출/요약(M/N)/잔여 LLM 호출/검증 스탬프 현황과 reports.db·master_index.md 신선도를 **아티팩트에서만 파생 계산**해 표시한다(별도 상태 저장 없음; exit 0=완전 동기화, 1=할 일).
+
+검증 스텝 `src/verify.py`(2026-08 구현, 파이프라인 4단계 아님 — PROJECT_NOTES §3 검증 스텝): PDF를 extract와 동일 함수로 재스캔해 **본문 모든 줄의 글자가 .md에 있는지 전수 대조**(공백·불릿 표기 무시)하고, 구조 불변식·표 블록 포함·이미지 마커·목차 대조를 검사한다. 전부 통과하면 frontmatter 검증 스탬프 `verified_extract`/`verified_annotate`(후자는 요약 **커버리지·배치 규약** 확인 — 품질 판정 아님)를 기록한다 — .md에 대한 유일한 쓰기이며 FAIL 파일의 기존 스탬프는 제거(`--no-stamp`는 검사 전용, exit 0=전건 PASS/1=FAIL/2=사용 오류). 스탬프는 재추출 시 자연 소멸 = 미검증 리셋. **신규 PDF 표준 절차: pdfs/에 추가 → extract → verify → annotate → verify 재실행(annotate 승격) → build_db.**
 
 ## 환경
 

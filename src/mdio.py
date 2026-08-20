@@ -318,6 +318,36 @@ def insert_summaries(
     return out
 
 
+# ---- 검증 스탬프 (§4 사다리 — 기록은 검증 스텝 verify.py 소관) ----
+
+
+def set_verified_stamps(lines: list[str], extract_date: str, annotate_date: str = "") -> list[str]:
+    """frontmatter의 verified_* 스탬프를 주어진 값으로 재작성한 새 줄 리스트.
+
+    extract_date가 빈 값이면 스탬프 전부 제거(미검증 리셋 — annotate_date 단독 불가,
+    사다리 위반). 기존 스탬프 줄은 위치와 무관하게 걷어내고 닫는 '---' 직전에 고정
+    순서로 다시 삽입하므로 재실행에 멱등이며, frontmatter 밖은 건드리지 않는다.
+    abstract 블록 연속 줄은 2칸 들여쓰기라 startswith 판정에 걸릴 수 없다.
+    """
+    if annotate_date and not extract_date:
+        raise ValueError("verified_annotate는 verified_extract 없이 기록할 수 없음 (사다리 위반)")
+    end = parse_frontmatter(lines).end_line
+    out = [ln for i, ln in enumerate(lines)
+           if not (i < end and ln.startswith(("verified_extract:", "verified_annotate:")))]
+    end = parse_frontmatter(out).end_line
+    stamps = []
+    if extract_date:
+        stamps.append(f"verified_extract: {extract_date}")
+    if annotate_date:
+        stamps.append(f"verified_annotate: {annotate_date}")
+    return out[:end] + stamps + out[end:]
+
+
+def strip_verified_stamps(lines: list[str]) -> list[str]:
+    """스탬프 줄만 제거한 사본 — '스탬프 외 무변경' 이중 가드 대조용."""
+    return set_verified_stamps(lines, "")
+
+
 # ---- 통합 로더 ----
 
 

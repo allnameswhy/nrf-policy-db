@@ -111,6 +111,19 @@ def fold(s: str) -> str:
     return re.sub(r"\s+", "", s or "")
 
 
+# 불릿 통일(글리프→'- ', 셀 불릿→'•')·파이프 이스케이프가 만드는 표기 차이 무력화용
+_FOLD_G_TABLE = {ord(c): None for c in GLYPH_BULLETS | DASH_BULLETS | {"|", "\\"}}
+
+
+def fold_g(s: str) -> str:
+    """fold + 글리프·불릿·표 구두점 제거 — 표기 정규화를 무시한 순수 글자 대조용.
+
+    양측에 대칭 적용하면 의도된 리라이트는 통과하고 글자 소실만 남는다.
+    마스킹 안전판(build_body)과 verify.py가 공유한다.
+    """
+    return fold(s).translate(_FOLD_G_TABLE)
+
+
 def roman_ascii_to_int(s: str) -> int:
     vals = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100}
     total = 0
@@ -379,6 +392,34 @@ def clean_table(rows: list) -> tuple[str | None, str | None]:
     for row in grid[1:]:
         lines.append("| " + " | ".join(row) + " |")
     return caption, "\n".join(lines)
+
+
+def page_table_fold(tables: list) -> str:
+    """페이지의 정리 성공한 표들(caption+markdown)의 fold_g 결합 — 커버 판정용 국소 haystack."""
+    parts = []
+    for tab in tables:
+        if tab.markdown is None:
+            continue
+        if tab.caption:
+            parts.append(tab.caption)
+        parts.append(tab.markdown)
+    return fold_g("\n".join(parts))
+
+
+def table_covers(text: str, table_fold: str) -> bool:
+    """마스킹될 줄의 글자가 표 정리 결과에 실제로 실렸는가 — 안 실린 줄을 지우면 소실.
+
+    find_tables().extract()가 행렬 생성 단계에서 셀 텍스트를 놓치는 실측(4권 21건)
+    대응. ① fold_g 부분문자열(대부분), ② 공백 토큰 전건 포함(병합셀 중복 붕괴·셀 내
+    조각 재배치 등 clean_table의 무손실 재배열 흡수 — 페이지 국소 haystack 전제라
+    타처 우연 일치로 진짜 소실이 가려지지 않는다).
+    """
+    needle = fold_g(text)
+    if not needle:
+        return True
+    if needle in table_fold:
+        return True
+    return all(t in table_fold for t in (fold_g(tok) for tok in text.split()) if t)
 
 
 # ---------------------------------------------------------------------------
@@ -1276,6 +1317,7 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
         return f"<!-- {rng}: 이미지 전용 페이지, 텍스트 추출 불가 -->"
 
     n_masked = 0
+    n_recovered = 0
     n_tables = 0
     last_pg = None
 
@@ -1312,6 +1354,7 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
         heights = sorted((l.y1 - l.y0) for l in scan.lines if not l.in_table)
         if heights:
             modal_h = heights[len(heights) // 2]
+        page_tf = None  # 마스킹 안전판용 페이지 국소 표 haystack (지연 계산)
 
         prev_ln: Line | None = None
         for y, order, kind, j, obj in items:
@@ -1331,8 +1374,15 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
             if not text:
                 continue
             if ln.in_table:
-                n_masked += 1
-                continue
+                if page_tf is None:
+                    page_tf = page_table_fold(scan.tables)
+                if table_covers(text, page_tf):
+                    n_masked += 1
+                    continue
+                # 마스킹 안전판: find_tables 행렬이 놓친 글자(실측 4권 21건 부류)는
+                # 지우지 않고 본문으로 방출 — 표 markdown은 그대로, 소실만 방지
+                n_recovered += 1
+                result.warnings.append(f"p.{pg + 1} 표 미수록 텍스트 복구: {text[:30]}")
             if idx in consumed:
                 continue
             if ln.is_leader:
@@ -1423,6 +1473,7 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
     flush_para()
     result.stats["tables"] = n_tables
     result.stats["masked_lines"] = n_masked
+    result.stats["recovered_lines"] = n_recovered
     # 끝의 빈 줄 정리
     while out and out[-1] == "":
         out.pop()
@@ -1674,6 +1725,7 @@ def main() -> None:
                 "headings": r.stats.get("headings"),
                 "tables": r.stats.get("tables"),
                 "masked_lines": r.stats.get("masked_lines"),
+                "recovered_lines": r.stats.get("recovered_lines"),
                 "image_only_pages": r.image_only_pages,
                 "unknown_glyphs": r.unknown_glyphs,
                 "warnings": r.warnings,
