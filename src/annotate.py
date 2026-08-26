@@ -8,6 +8,8 @@
 - 본문은 LLM에 보내되 돌려받은 요약만 삽입. 쓰기 전마다 왕복 검증
   (요약 블록 제거 시 base와 바이트 일치)으로 원문 무변경을 보장한다.
 - 유닛 1건 성공마다 즉시 파일 재작성 → 사용량 한도로 중단돼도 재실행하면 이어서 진행.
+- 요약을 1건이라도 새로 쓰는 파일은 verified_annotate 스탬프를 함께 제거한다
+  (요약이 바뀌면 자동 미감사 리셋 — 재검사·기록은 verify.py D 품질 판정 소관).
 """
 
 from __future__ import annotations
@@ -67,16 +69,18 @@ def fatal_msg(e: Exception) -> str:
     return f"[limit] 사용량 한도 도달 — {e}. 재실행하면 이어서 진행합니다."
 
 
-# ---- LLM 호출 ----
+# ---- LLM 호출 (verify.py의 D 품질 판정도 이 레이어를 재사용한다) ----
+
+RETRY_DELAYS = [2.0, 8.0]  # RetryableError 백오프
 
 
-def make_options(model: str) -> ClaudeAgentOptions:
+def make_options(model: str, system_prompt: str = SYSTEM_PROMPT) -> ClaudeAgentOptions:
     return ClaudeAgentOptions(
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt,
         tools=[],  # 내장 도구 전부 비활성 — 순수 텍스트 생성만
         max_turns=1,
         model=model,
-        thinking={"type": "disabled"},  # 1~2문장 요약에 불필요 — 사용량 절약
+        thinking={"type": "disabled"},  # 짧은 요약·판정에 불필요 — 사용량 절약
         setting_sources=[],  # CLAUDE.md 등 파일시스템 설정 유입 차단
         cwd=str(REPO_ROOT),
     )
@@ -93,14 +97,16 @@ def _limit_desc(info) -> str:
     return f"{kind}, 리셋 {when}"
 
 
-async def call_llm(prompt: str, *, model: str, timeout: float) -> tuple[str, dict]:
-    """query() 1회. 반환: (요약 원문, usage 메타). 한도/오류는 예외로 구분."""
+async def call_llm(
+    prompt: str, *, model: str, timeout: float, system_prompt: str = SYSTEM_PROMPT
+) -> tuple[str, dict]:
+    """query() 1회. 반환: (응답 원문, usage 메타). 한도/오류는 예외로 구분."""
     texts: list[str] = []
     result_msg: ResultMessage | None = None
 
     async def consume() -> None:
         nonlocal result_msg
-        async for msg in query(prompt=prompt, options=make_options(model)):
+        async for msg in query(prompt=prompt, options=make_options(model, system_prompt)):
             if isinstance(msg, RateLimitEvent):
                 info = msg.rate_limit_info
                 if getattr(info, "status", None) == "rejected":
@@ -222,7 +228,7 @@ class FileEntry:
 
 
 async def call_with_retry(prompt: str, args, entry: FileEntry, retries: int = 2) -> str:
-    delays = [2.0, 8.0]
+    delays = RETRY_DELAYS
     last: RetryableError | None = None
     for attempt in range(retries + 1):
         try:
@@ -253,6 +259,18 @@ async def process_file(
     base, fm, by_hid = st.base, st.fm, st.by_hid
     existing = {} if args.force else st.existing
     units = st.units
+    will_write = any(u.hid not in existing for u in units) or (
+        fm.abstract_empty and mdio.REPORT_KEY not in existing and bool(units)
+    )
+    if will_write and fm.verified_annotate:
+        # 요약이 바뀌는 파일은 미감사 상태로 리셋 — verified_annotate 제거 후
+        # 줄 좌표가 1줄 당겨지므로 base 기준 파스를 전부 재유도한다.
+        base = mdio.set_verified_stamps(base, fm.verified_extract)
+        fm = mdio.parse_frontmatter(base)
+        roots = mdio.parse_heading_tree(base)
+        by_hid = {h.hid: h for h in mdio.iter_headings(roots)}
+        units = mdio.split_units(roots, base, min_chars=args.min_chars, max_chars=args.max_chars)
+        print(f"[stamp] {fm.report_id}: 요약 갱신 예정 — verified_annotate 리셋", file=sys.stderr)
     entry.units_total = len(units)
     todo = [u for u in units if u.hid not in existing]
     entry.units_skipped_existing = len(units) - len(todo)
@@ -494,7 +512,7 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="기존 요약이 있어도 다시 생성")
     parser.add_argument("--scan", action="store_true", help="dry-run: 유닛 분할 진단만 (LLM 미호출·무수정)")
     parser.add_argument("--smoke", action="store_true", help="인증·모델 스모크 테스트 1회")
-    parser.add_argument("--model", default="claude-haiku-4-5", help="요약 모델 (기본: claude-haiku-4-5)")
+    parser.add_argument("--model", default="claude-sonnet-5", help="요약 모델 (기본: claude-sonnet-5)")
     parser.add_argument("--min-chars", type=int, default=200, help="유닛 최소 글자 수 (기본: 200)")
     parser.add_argument("--max-chars", type=int, default=4000, help="subtree 유닛 최대 글자 수 (기본: 4000)")
     parser.add_argument("--input-cap", type=int, default=8000, help="LLM 입력 절단 상한 (기본: 8000)")

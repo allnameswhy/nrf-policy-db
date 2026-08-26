@@ -7,12 +7,14 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
 - 유닛 계산은 annotate.py와 동일한 mdio.load_report() 재사용 — 잔여 호출 수가
   annotate --scan의 expected_calls와 항상 일치한다.
 - 검증 컬럼은 frontmatter 스탬프 사다리(verified_extract/verified_annotate):
-  없음=미검증, extract만=extract, 둘 다=annotate. 스탬프 기록은 검증 스텝 소관.
-  extract가 frontmatter를 재생성하면 스탬프가 소멸해 자동으로 미검증으로 돌아온다.
+  없음=미검증, extract만=extract, 둘 다=annotate(= verify.py D 품질 판정까지 통과).
+  스탬프 기록은 verify.py 소관. extract가 frontmatter를 재생성하면 스탬프가 소멸해
+  자동 미검증 리셋, annotate가 요약을 새로 쓰면 verified_annotate만 소멸한다.
+- 커버리지 완비(잔여 0)인데 verified_annotate가 없는 파일은 "verify 승격 대기"
+  비고로 할 일에 반영된다(verify 실행 시 D 품질 판정 후 스탬프 기록).
 - PDF↔.md 신선도 비교는 mtime 기반 best-effort — Windows 복사는 LastWriteTime을
   보존하므로 파일 교체를 놓칠 수 있다. FAT/exFAT 2초 정밀도만큼 허용오차를 둔다.
 - 종료 코드: 0 = 완전 동기화, 1 = 할 일·경고 있음, 2 = 사용 오류.
-  검증 컬럼은 표시 전용 — exit 판정에 미반영(검증 스텝 도입 시 재판단).
 """
 
 from __future__ import annotations
@@ -88,6 +90,8 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
             row.notes.append("검증 후 변경 — 재검증 필요")
     elif fm.verified_extract:
         row.verify = "extract"
+        if units and not row.remaining:
+            row.notes.append("verify 승격 대기 — D 품질 판정 후 verified_annotate 기록")
 
     if fm.report_id != path.stem:
         row.notes.append(f"frontmatter report_id({fm.report_id}) ≠ 파일명")
