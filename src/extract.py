@@ -8,8 +8,13 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 - 계층 판별: 북마크 미사용. L1(장) 문법 프로파일 6종 순차 시도 + 하위 패밀리 캐스케이드
   (보고서 전역 첫 등장 순서 → ##~####, 4단계 캡, 부모 범위 내 1부터 단조증가 검증).
 - 헤딩 ID: 감지 서수 경로 {report_id}_c{i}s{j}… (PROJECT_NOTES §4)
+- report_id: 파일명의 정책연구-YYYY-NN 우선, 비NRF 파일명은 스템 슬러그(밑줄 제외 —
+  '_NN'은 합본 파트 접미사 전용)로 유도. verify·status가 같은 함수를 공유한다.
 - 진단: --scan (md 미작성, 감지 결과만 덤프). 로그: logs/extract_log.json
-- 프로파일이 잡히지 않는 문서는 스킵 + 로그 후 수동 확인.
+- 구조(장 문법)가 잡히지 않는 문서는 **플랫 청킹 폴백**(투 레인): 문단 경계 그리디
+  크기 청킹 → 합성 '# 구간 N (p.a-b)' 헤딩 + frontmatter 'structure: flat' 표식으로
+  수용해 다운스트림(mdio/annotate/build_*)이 무수정 처리한다. 본문 텍스트 400자
+  미만(이미지 위주 문서)이면 종전대로 스킵 + 로그 후 수동 확인(OCR 별도 과제).
 - 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
   재추출은 annotate가 삽입한 요약 블록과 frontmatter 검증 스탬프를 소실시킨다
   (스탬프 소실 = 의도된 미검증 리셋). 합본은 파트 일부만 있어도 스킵 — 부분 실패
@@ -19,6 +24,7 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 from __future__ import annotations
 
 import argparse
+import bisect
 import dataclasses
 import datetime
 import glob as globmod
@@ -58,6 +64,8 @@ MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
 MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
 
 REPORT_ID_RE = re.compile(r"정책연구-(\d{4}-\d{2})")
+# 비NRF 파일명의 report_id 슬러그 문자셋 — 밑줄 제외('_NN'은 합본 파트 접미사 전용)
+SLUG_STRIP_RE = re.compile(r"[^0-9A-Za-z가-힣-]+")
 
 # L1(장) 프로파일 — (이름, 패턴, 두줄형 여부). 시도 순서 = 이 순서.
 PROFILES = [
@@ -430,6 +438,20 @@ def derive_report_id(path: str) -> str | None:
     name = unicodedata.normalize("NFC", Path(path).name)
     m = REPORT_ID_RE.search(name)
     return m.group(1) if m else None
+
+
+def derive_report_id_any(path: str) -> str:
+    """NRF 패턴 우선, 실패 시 파일명 스템 슬러그 — 타 기관·이형 문서 수용.
+
+    슬러그 문자셋에서 밑줄을 제외해 합본 파트 접미사('_NN')와의 충돌을 차단한다.
+    verify.py·status.py가 같은 함수로 PDF↔.md를 대응시킨다.
+    """
+    rid = derive_report_id(path)
+    if rid is not None:
+        return rid
+    stem = unicodedata.normalize("NFC", Path(path).stem)
+    slug = SLUG_STRIP_RE.sub("-", stem).strip("-")
+    return slug or "report"
 
 
 def find_existing_outputs(out_dir: Path, base_id: str) -> list[Path]:
@@ -838,6 +860,20 @@ def find_body_start(scans: list[PageScan], part: tuple[int, int]) -> tuple[int |
     return None, []
 
 
+def find_body_start_flat(scans, part) -> int | None:
+    """플랫 폴백용 본문 시작 — 파트 앞의 공백/이미지 전용/앞부속 연속 구간 다음 첫 페이지.
+
+    L1 후보 신호를 요구하지 않는다(장 번호가 없는 문서 대상). extract 폴백과
+    verify.py가 이 함수를 공유해 재현 판정이 어긋날 수 없다(table_covers 전례).
+    """
+    for i in range(part[0], part[1] + 1):
+        s = scans[i]
+        if s.blank or s.image_only or page_is_front(s):
+            continue
+        return i
+    return None
+
+
 @dataclasses.dataclass
 class Heading:
     addr: int                     # body_lines 인덱스
@@ -1189,11 +1225,15 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     ordered = [p for p in PROFILES if p[0] in cand_profiles]
     chosen = None
     chapters = consumed = None
+    attempts = {}
     for profile in ordered:
         chs, cons = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer)
-        if len([c for c in chs if c.kind == "normal"]) >= 2:
+        attempts[profile[0]] = len([c for c in chs if c.kind == "normal"])
+        if attempts[profile[0]] >= 2:
             chosen, chapters, consumed = profile, chs, cons
             break
+    if diag is not None:
+        diag["l1_attempts"] = attempts  # 실패(플랫 폴백) 시에도 후보별 정상 장 수를 남긴다
     if chosen is None:
         return None
     # 확정 워크 (진단 수집 포함)
@@ -1254,13 +1294,15 @@ class PartResult:
     structure: dict | None = None
     markdown: str | None = None
     status: str = "ok"
+    flat: bool = False  # 플랫 청킹 폴백 산출물 (frontmatter 'structure: flat'과 동기)
     warnings: list = dataclasses.field(default_factory=list)
     stats: dict = dataclasses.field(default_factory=dict)
     unknown_glyphs: dict = dataclasses.field(default_factory=dict)
     image_only_pages: list = dataclasses.field(default_factory=list)
 
 
-def build_body(scans, part, body_start, structure, result: PartResult) -> list[str]:
+def build_body(scans, part, body_start, structure, result: PartResult,
+               page_marks: list | None = None) -> list[str]:
     body_lines = structure["body_lines"]
     heading_at = {}
     consumed = set()
@@ -1325,6 +1367,8 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
         pg = scan.index
         if scan.blank or scan.dropped:
             continue
+        if page_marks is not None:
+            page_marks.append((len(out), pg + 1))  # 이 페이지 내용의 out 시작 인덱스 (플랫 청킹 라벨용)
         if scan.image_only:
             flush_para()
             # 이미지 전용 페이지에도 헤딩 줄은 있을 수 있음(2025-13 <부록 1> 실측) — 헤딩만 방출
@@ -1481,6 +1525,134 @@ def build_body(scans, part, body_start, structure, result: PartResult) -> list[s
 
 
 # ---------------------------------------------------------------------------
+# 플랫 청킹 폴백 (구조 미감지 문서 수용 — 투 레인의 두 번째 레인)
+# ---------------------------------------------------------------------------
+
+FLAT_MAX_CHARS = 4000   # mdio.split_units max_chars와 동일 — 청크=유닛 1:1 전제
+FLAT_MIN_CHARS = 200    # split_units min_chars — 미만 꼬리 구간은 직전 구간에 병합
+FLAT_GUARD_CHARS = 400  # 본문 텍스트가 이 미만이면 폴백 포기(전면 이미지 문서 등 — OCR 별도)
+
+
+def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tuple[list[str], int]:
+    """플랫 본문에 합성 구간 헤딩을 삽입 — 문단(빈 줄) 경계 그리디 누적.
+
+    경계는 항상 build_body가 만든 블록(문단·표·캡션·마커) 사이에만 온다.
+    크기 산식은 mdio._span_chars와 동일한 len("\\n".join(...).strip())이라 각 구간이
+    그대로 유닛 1개가 된다(상한 초과 단일 블록과 꼬리 병합 구간만 예외 — leaf 통짜 유닛).
+    헤딩: '# 구간 {k} (p.{a}-{b}) <!-- id: {rid}_c{k} -->' — k는 방출 순번 1..N 연속,
+    페이지는 1-based 인용 라벨(페이지에 걸친 문단은 뒤 페이지로 귀속 — ±1 오차 가능).
+    """
+    blocks: list[tuple[list[str], int]] = []  # (내용 줄들, out 시작 인덱스)
+    i = 0
+    while i < len(out):
+        if out[i] == "":
+            i += 1
+            continue
+        j = i
+        while j < len(out) and out[j] != "":
+            j += 1
+        blocks.append((out[i:j], i))
+        i = j
+
+    marks_idx = [m[0] for m in page_marks]
+    marks_pg = [m[1] for m in page_marks]
+
+    def page_of(out_idx: int) -> int:
+        k = bisect.bisect_right(marks_idx, out_idx) - 1
+        return marks_pg[k] if k >= 0 else 1
+
+    def span(lines_: list[str]) -> int:
+        return len("\n".join(lines_).strip())
+
+    # 그리디 청크 경계 (블록 인덱스 반개구간)
+    chunks: list[tuple[int, int]] = []
+    cur_start = 0
+    cur_lines: list[str] = []
+    for bi, (bl, _) in enumerate(blocks):
+        cand = cur_lines + ([""] if cur_lines else []) + bl
+        if cur_lines and span(cand) > FLAT_MAX_CHARS:
+            chunks.append((cur_start, bi))
+            cur_start, cur_lines = bi, list(bl)
+        else:
+            cur_lines = cand
+    if cur_lines:
+        chunks.append((cur_start, len(blocks)))
+
+    def chunk_lines(c: tuple[int, int]) -> list[str]:
+        s, e = c
+        lines_: list[str] = []
+        for bl, _ in blocks[s:e]:
+            if lines_:
+                lines_.append("")
+            lines_.extend(bl)
+        return lines_
+
+    # 꼬리 구간이 최소 크기 미만이면 직전 구간에 병합 (200자 미만 유닛 스킵 방지)
+    if len(chunks) >= 2 and span(chunk_lines(chunks[-1])) < FLAT_MIN_CHARS:
+        chunks[-2:] = [(chunks[-2][0], chunks[-1][1])]
+
+    result_lines: list[str] = []
+    for k, c in enumerate(chunks, 1):
+        s, e = c
+        sp = span(chunk_lines(c))
+        if sp > FLAT_MAX_CHARS:
+            warnings.append(f"플랫 구간 {k} 크기 {sp}자 > {FLAT_MAX_CHARS} — 단일 블록 초과/꼬리 병합")
+        a = page_of(blocks[s][1])
+        b = page_of(blocks[e - 1][1])
+        label = f"p.{a}" if a == b else f"p.{a}-{b}"
+        result_lines.append(f"# 구간 {k} ({label}) <!-- id: {rid}_c{k} -->")
+        result_lines.append("")
+        for bl, _ in blocks[s:e]:
+            result_lines.extend(bl)
+            result_lines.append("")
+    while result_lines and result_lines[-1] == "":
+        result_lines.pop()
+    return result_lines, len(chunks)
+
+
+def _reset_footnote_flags(scans, part) -> None:
+    """플랫 폴백 직전 초기화 — L1 경로에서 이미 찍힌 각주/드롭 마킹을 걷어내
+    verify.py의 재현(플랫 body 범위 기준 마킹만 수행)과 동일 상태에서 다시 마킹한다."""
+    for s in scans[part[0]:part[1] + 1]:
+        s.dropped = False
+        for ln in s.lines:
+            ln.is_footnote = False
+
+
+def flat_fallback(r: PartResult, scans, part, rid: str, path: str) -> bool:
+    """구조 미감지 파트의 플랫 청킹 폴백. 성공 시 r.markdown까지 채우고 True."""
+    flat_start = find_body_start_flat(scans, part)
+    if flat_start is None:
+        return False
+    tmp_warn: list[str] = []
+    _reset_footnote_flags(scans, part)
+    mark_footnotes(scans, (flat_start, part[1]))
+    mark_colophon_pages(scans, part, tmp_warn)
+    for w in tmp_warn:
+        if w not in r.warnings:
+            r.warnings.append(w)
+    structure = {"body_lines": collect_body_lines(scans, part, flat_start),
+                 "chapters": [], "sub_headings": []}
+    page_marks: list = []
+    body = build_body(scans, part, flat_start, structure, r, page_marks=page_marks)
+    real = "\n".join(l for l in body if not l.startswith("<!--")).strip()
+    if len(real) < FLAT_GUARD_CHARS:
+        r.warnings.append(f"본문 텍스트 {len(real)}자 < {FLAT_GUARD_CHARS} — 플랫 폴백 포기(이미지 위주 문서? OCR 별도)")
+        return False
+    body, n_chunks = chunk_flat(body, page_marks, rid, r.warnings)
+    r.flat = True
+    r.body_start = flat_start
+    diag = r.stats.setdefault("diag", {})
+    diag["body_start_page"] = flat_start + 1
+    diag["profile"] = "flat"
+    r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
+    r.stats["headings"] = n_chunks
+    r.stats["chapters"] = n_chunks
+    r.warnings.append(f"장-절 구조 미감지 — 플랫 청킹 폴백 적용 (구간 {n_chunks}개)")
+    return True
+
+
+# ---------------------------------------------------------------------------
 # 렌더링
 # ---------------------------------------------------------------------------
 
@@ -1492,7 +1664,12 @@ def yaml_str(s: str) -> str:
 def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str:
     meta = result.meta
     rid = result.report_id
-    year = int(rid[:4])
+    # 연도: NRF rid는 앞 4자리, 슬러그 rid는 파일명 내 연도 검색, 실패 시 공란
+    if rid[:4].isdigit():
+        year = rid[:4]
+    else:
+        m = re.search(r"(?:19|20)\d{2}", rid)
+        year = m.group(0) if m else ""
     lines = ["---"]
     lines.append(f"report_id: {rid}")
     lines.append(f"title: {yaml_str(meta.title)}")
@@ -1509,6 +1686,8 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
     else:
         lines.append('abstract: ""')
     lines.append(f"source_pdf: {yaml_str(source_pdf)}")
+    if result.flat:
+        lines.append("structure: flat")  # 플랫 청킹 폴백 표식 — verify·status가 이 키로 분기
     if result.n_parts > 1:
         lines.append(f'pdf_pages: "{result.part_range[0] + 1}-{result.part_range[1] + 1}"')
     lines.append("---")
@@ -1525,12 +1704,12 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 
 def process_pdf(path: str):
     """PDF 1개 → PartResult 목록(합본이면 여러 개)."""
-    base_id = derive_report_id(path)
-    if base_id is None:
-        r = PartResult(report_id=Path(path).name, part_index=0, n_parts=1, part_range=(0, 0))
-        r.status = "skipped_bad_filename"
-        r.warnings.append("파일명에서 정책연구-YYYY-NN 패턴을 찾지 못함")
-        return [r]
+    base_id = derive_report_id_any(path)
+    if derive_report_id(path) is None:
+        # 비NRF 파일명 — 슬러그 rid로 수용 (타 기관·이형 문서)
+        slug_warning = f"비표준 파일명 — report_id 슬러그 유도: {base_id}"
+    else:
+        slug_warning = None
 
     doc = pymupdf.open(path)
     try:
@@ -1545,6 +1724,8 @@ def process_pdf(path: str):
         r = PartResult(report_id=rid, part_index=pi, n_parts=len(parts), part_range=part)
         r.stats["diag"] = {}
         diag = r.stats["diag"]
+        if slug_warning:
+            r.warnings.append(slug_warning)
 
         meta = parse_abstract(scans, part)
         fallback_institution(scans, part, meta)
@@ -1553,30 +1734,34 @@ def process_pdf(path: str):
         r.warnings.extend(meta.warnings)
 
         body_start, cand_profiles = find_body_start(scans, part)
-        if body_start is None:
-            r.status = "skipped_no_body_start"
-            r.warnings.append("본문 시작 페이지를 찾지 못함")
-            results.append(r)
-            continue
-        r.body_start = body_start
-        diag["body_start_page"] = body_start + 1
-        diag["candidate_profiles"] = cand_profiles
+        structure = None
+        if body_start is not None:
+            r.body_start = body_start
+            diag["body_start_page"] = body_start + 1
+            diag["candidate_profiles"] = cand_profiles
 
-        mark_footnotes(scans, (body_start, part[1]))
-        mark_colophon_pages(scans, part, r.warnings)
+            mark_footnotes(scans, (body_start, part[1]))
+            mark_colophon_pages(scans, part, r.warnings)
 
-        structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag)
+            structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag)
+
         if structure is None:
-            r.status = "skipped_no_profile"
-            r.warnings.append(f"L1 프로파일 검증 실패(후보: {cand_profiles})")
-            results.append(r)
-            continue
-        r.structure = structure
-
-        body = build_body(scans, part, body_start, structure, r)
-        r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
-        r.stats["headings"] = len(structure["chapters"]) + len(structure["sub_headings"])
-        r.stats["chapters"] = len(structure["chapters"])
+            # 투 레인: 구조 미감지 → 플랫 청킹 폴백. 폴백조차 불가하면 종전대로 시끄럽게 스킵.
+            if not flat_fallback(r, scans, part, rid, path):
+                if body_start is None:
+                    r.status = "skipped_no_body_start"
+                    r.warnings.append("본문 시작 페이지를 찾지 못함")
+                else:
+                    r.status = "skipped_no_profile"
+                    r.warnings.append(f"L1 프로파일 검증 실패(후보: {cand_profiles})")
+                results.append(r)
+                continue
+        else:
+            r.structure = structure
+            body = build_body(scans, part, body_start, structure, r)
+            r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
+            r.stats["headings"] = len(structure["chapters"]) + len(structure["sub_headings"])
+            r.stats["chapters"] = len(structure["chapters"])
         r.stats["footer_runs"] = summarize_footers(scans, part)
         results.append(r)
     return results
@@ -1642,6 +1827,7 @@ def scan_report(results, path) -> dict:
             "body_start_page": diag.get("body_start_page"),
             "candidate_profiles": diag.get("candidate_profiles"),
             "profile": diag.get("profile"),
+            "l1_attempts": diag.get("l1_attempts"),
             "chapters": diag.get("chapters"),
             "family_order": diag.get("family_order"),
             "family_depths": diag.get("family_depths"),
@@ -1690,8 +1876,8 @@ def main() -> None:
 
     for path in paths:
         # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
-        base_id = derive_report_id(path)
-        if not args.scan and not args.force and base_id is not None:
+        base_id = derive_report_id_any(path)
+        if not args.scan and not args.force:
             existing = find_existing_outputs(Path(args.out_dir), base_id)
             if existing:
                 log_entries.append({"file": Path(path).name, "report_id": base_id,
@@ -1717,6 +1903,7 @@ def main() -> None:
                 "file": Path(path).name,
                 "report_id": r.report_id,
                 "status": r.status,
+                "flat": r.flat,
                 "part_range": [r.part_range[0] + 1, r.part_range[1] + 1],
                 "profile": r.stats.get("diag", {}).get("profile"),
                 "family_depths": r.stats.get("diag", {}).get("family_depths"),

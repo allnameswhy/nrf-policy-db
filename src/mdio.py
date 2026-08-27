@@ -61,6 +61,11 @@ class Frontmatter:
     # extract가 frontmatter를 재생성하면 자연 소멸 → 자동 미검증 리셋.
     verified_extract: str = ""
     verified_annotate: str = ""
+    # build_index.py·build_db.py가 소비하는 메타데이터 (§5 카탈로그·§6 스키마).
+    year: str = ""
+    lead_researcher: str = ""
+    institution: str = ""
+    abstract: str = ""  # 'abstract: |' 블록 원문 (줄바꿈 유지, 공란이면 "")
 
 
 def _unquote(v: str) -> str:
@@ -80,6 +85,10 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     end_line = -1
     verified_extract = ""
     verified_annotate = ""
+    year = ""
+    lead_researcher = ""
+    institution = ""
+    abstract = ""
     for i in range(1, len(lines)):
         line = lines[i]
         if line == "---":
@@ -89,17 +98,32 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
             report_id = line.split(":", 1)[1].strip()
         elif line.startswith("title:"):
             title = _unquote(line.split(":", 1)[1])
+        elif line.startswith("year:"):
+            year = _unquote(line.split(":", 1)[1])
+        elif line.startswith("lead_researcher:"):
+            lead_researcher = _unquote(line.split(":", 1)[1])
+        elif line.startswith("institution:"):
+            institution = _unquote(line.split(":", 1)[1])
         elif line.startswith("abstract:"):
             val = line.split(":", 1)[1].strip()
-            # extract.py: 내용 있으면 'abstract: |' 블록, 공란이면 'abstract: ""'
-            abstract_empty = val in ('""', "''", "")
+            # extract.py: 내용 있으면 'abstract: |' 블록(연속 줄 2칸 들여쓰기), 공란이면 'abstract: ""'
+            if val == "|":
+                block = []
+                for k in range(i + 1, len(lines)):
+                    if lines[k].startswith("  "):
+                        block.append(lines[k][2:])
+                    else:
+                        break
+                abstract = "\n".join(block).strip()
+            abstract_empty = abstract == ""
         elif line.startswith("verified_extract:"):
             verified_extract = line.split(":", 1)[1].strip()
         elif line.startswith("verified_annotate:"):
             verified_annotate = line.split(":", 1)[1].strip()
     if end_line < 0:
         raise ValueError("frontmatter 닫는 '---'가 없습니다")
-    return Frontmatter(report_id, title, abstract_empty, end_line, verified_extract, verified_annotate)
+    return Frontmatter(report_id, title, abstract_empty, end_line, verified_extract, verified_annotate,
+                       year=year, lead_researcher=lead_researcher, institution=institution, abstract=abstract)
 
 
 # ---- 헤딩 트리 ----

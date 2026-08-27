@@ -27,10 +27,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import mdio
-from extract import derive_report_id
+from extract import derive_report_id_any
 
-# .md 파일명 = {report_id}.md — 단독본(2025-02) 또는 합본 파트(2025-17_01)
-MD_STEM_RE = re.compile(r"^(\d{4}-\d{2})(?:_\d{2})?$")
+# .md 파일명 = {report_id}.md — 단독본(2025-02) 또는 합본 파트(2025-17_01).
+# 슬러그 rid는 밑줄을 포함하지 않으므로 '_NN' 꼬리는 언제나 합본 파트 접미사다.
+PART_SUFFIX_RE = re.compile(r"^(.+)_(\d{2})$")
 MTIME_TOLERANCE = 2.0  # FAT/exFAT mtime 정밀도
 
 
@@ -45,16 +46,9 @@ class Row:
     notes: list[str] = field(default_factory=list)
 
 
-def scan_pdfs(pdf_dir: Path, warnings: list[str]) -> dict[str, Path]:
-    """{base_id: pdf 경로}. report_id를 유도할 수 없는 파일명은 경고로."""
-    out: dict[str, Path] = {}
-    for p in sorted(pdf_dir.glob("*.pdf")):
-        base = derive_report_id(str(p))
-        if base is None:
-            warnings.append(f"report_id 유도 불가 PDF: {p.name}")
-        else:
-            out[base] = p
-    return out
+def scan_pdfs(pdf_dir: Path) -> dict[str, Path]:
+    """{base_id: pdf 경로}. NRF 패턴 실패 시 슬러그 유도 — extract와 동일 함수 공유."""
+    return {derive_report_id_any(str(p)): p for p in sorted(pdf_dir.glob("*.pdf"))}
 
 
 def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
@@ -65,6 +59,9 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
         row.extracted = "파싱 실패"
         row.notes.append(str(e))
         return row
+
+    if any(st.base[i] == "structure: flat" for i in range(1, st.fm.end_line)):
+        row.notes.append("플랫 구조(구간 청킹)")
 
     fm, units, existing = st.fm, st.units, st.existing
     done = sum(1 for u in units if u.hid in existing)
@@ -185,17 +182,14 @@ def main() -> None:
         sys.exit(2)
 
     warnings: list[str] = []
-    pdfs = scan_pdfs(pdf_dir, warnings)
+    pdfs = scan_pdfs(pdf_dir)
 
     rows: list[Row] = []
     covered_bases: set[str] = set()
     md_mtimes: list[float] = []
     for p in sorted(reports_dir.glob("*.md")):
-        m = MD_STEM_RE.match(p.stem)
-        if not m:
-            warnings.append(f"report_id 형식이 아닌 .md: {p.name}")
-            continue
-        base = m.group(1)
+        m = PART_SUFFIX_RE.match(p.stem)
+        base = m.group(1) if m else p.stem
         covered_bases.add(base)
         md_mtimes.append(p.stat().st_mtime)
         rows.append(build_md_row(p, base, pdfs.get(base), args))

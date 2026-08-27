@@ -32,6 +32,13 @@ PROJECT_NOTES §3의 "검증 스텝": frontmatter verified_extract/verified_anno
                    동일 절단(--input-cap). FAIL은 자동 수정하지 않고 리포트만 —
                    수정 경로: 요약 줄 삭제 → annotate 재실행 → verify 재실행.
 
+플랫 문서(frontmatter 'structure: flat' — extract 플랫 폴백 산출물): 풀 검사에서
+find_body_start/detect_structure 재현 대신 extract와 공유하는 find_body_start_flat로
+body 범위를 재현해 B를 동일하게 실행한다. A는 합성 '구간 N (p.a-b)' 헤딩 전용
+검사로 바뀌고(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수 2→1) C는 생략하되, 앞부속에
+목차 페이지가 있으면 경고한다(구조 문서가 폴백으로 떨어진 의심 — 레인 정합 안전망).
+비NRF 슬러그 스템은 검사 대상에 포함되며 year 대조는 NRF 스템에서만 수행한다.
+
 스탬프 기록(검사 아님 — 최종 단계): 통과 상태에 맞는 스탬프를 이중 가드(스탬프 외
 무변경 바이트 대조 + 재파싱 값 일치)로 기록. verified_annotate = 커버리지·배치
 완비 + D 전건 통과. 결정론 FAIL은 스탬프 전체 회수, D FAIL은 verified_annotate만
@@ -64,9 +71,10 @@ from extract import (
     CAPTION_RE,
     PROFILES,
     TEMPLATE_FOLD,
-    derive_report_id,
+    derive_report_id_any,
     detect_structure,
     find_body_start,
+    find_body_start_flat,
     fold,
     fold_g,
     mark_colophon_pages,
@@ -80,7 +88,8 @@ from extract import (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-MD_STEM_RE = re.compile(r"^(\d{4}-\d{2})(?:_\d{2})?$")
+NRF_STEM_RE = re.compile(r"^(\d{4}-\d{2})(?:_\d{2})?$")  # NRF 표준 스템 — year 대조는 이 형식에서만
+FLAT_HEADING_RE = re.compile(r"^구간 \d+ \(p\.\d+(?:-\d+)?\)$")  # extract 플랫 폴백의 합성 헤딩 제목
 FM_KEY_RE = re.compile(r"^([a-z_]+):(.*)$")
 RAW_BULLET_RE = re.compile(r"^\s*[□○ㅇ❍◉▸▪‣∙•Ÿ](\s|$)")
 UNESCAPED_PIPE = re.compile(r"(?<!\\)\|")
@@ -136,8 +145,16 @@ def check_frontmatter(rep: Report, raw: dict, st, stem: str, part, n_parts: int)
         rep.fails.append(f"frontmatter 필수 키 누락: {', '.join(missing)}")
     if st.fm.report_id != stem:
         rep.fails.append(f"report_id({st.fm.report_id}) ≠ 파일명({stem})")
-    if raw.get("year") != stem[:4]:
-        rep.fails.append(f"year({raw.get('year')}) ≠ 파일명 연도({stem[:4]})")
+    if NRF_STEM_RE.match(stem):
+        if raw.get("year") != stem[:4]:
+            rep.fails.append(f"year({raw.get('year')}) ≠ 파일명 연도({stem[:4]})")
+    else:
+        y = raw.get("year", "")
+        if y and not re.fullmatch(r"\d{4}", y):
+            rep.fails.append(f"year({y}) — 슬러그 rid는 4자리 연도 또는 공란이어야 함")
+    sv = raw.get("structure")
+    if sv is not None and sv != "flat":
+        rep.fails.append(f"structure 키 값 위반: {sv} (허용: flat)")
     if not mdio._unquote(raw.get("title", "")):
         rep.warns.append("title 공란(결측 허용 규약 — 확인 권장)")
     if part is None:
@@ -152,8 +169,11 @@ def check_frontmatter(rep: Report, raw: dict, st, stem: str, part, n_parts: int)
     return False
 
 
-def check_headings(rep: Report, st, stem: str) -> list:
-    """헤딩 ID 형식·유일·서수 경로 검사. 정상(비 참고문헌/부록) 장 목록 반환."""
+def check_headings(rep: Report, st, stem: str, flat: bool = False) -> list:
+    """헤딩 ID 형식·유일·서수 경로 검사. 정상(비 참고문헌/부록) 장 목록 반환.
+
+    flat 문서는 합성 '구간 N' 헤딩만 허용(하위 헤딩 불가) — 레인 위장 방지.
+    최소 장 수도 2→1로 완화(400자 가드 통과 문서는 구간 1개일 수 있음)."""
     hid_re = re.compile(rf"^{re.escape(stem)}_c\d+(?:s\d+)*$")
     seen = set()
 
@@ -173,9 +193,16 @@ def check_headings(rep: Report, st, stem: str) -> list:
         if r.depth != 1:
             rep.fails.append(f"최상위 헤딩 depth≠1: {r.hid}")
         walk(r, None, i)
+    if flat:
+        for r in st.roots:
+            if not FLAT_HEADING_RE.match(r.text):
+                rep.fails.append(f"플랫 문서에 비구간 헤딩: {r.text[:30]}")
+            if r.children:
+                rep.fails.append(f"플랫 문서에 하위 헤딩 존재: {r.hid}")
     normal = [r for r in st.roots if r.depth == 1 and not mdio.is_excluded_chapter(r.text)]
-    if len(normal) < 2:
-        rep.fails.append(f"정상 장 수 {len(normal)} < 2 — extract 산출물이 아닐 가능성")
+    floor = 1 if flat else 2
+    if len(normal) < floor:
+        rep.fails.append(f"정상 장 수 {len(normal)} < {floor} — extract 산출물이 아닐 가능성")
     return normal
 
 
@@ -599,26 +626,43 @@ def check_full(rep: Report, md_path: Path, scans, part, n_parts: int, stem: str,
         rep.fails.append(f"로더 파싱 실패: {e}")
         return None
     raw = fm_raw(st.base, st.fm.end_line)
+    flat = raw.get("structure") == "flat"
     fatal = check_frontmatter(rep, raw, st, stem, part, n_parts)
-    check_headings(rep, st, stem)
+    check_headings(rep, st, stem, flat=flat)
     check_body_text(rep, st.base)
 
     if not fatal:
-        body_start, cands = find_body_start(scans, part)
-        if body_start is None:
-            rep.fails.append("본문 시작 페이지 재현 실패 — 드리프트 의심")
+        if flat:
+            # 플랫 레인: 구조 재현 대신 extract 폴백과 동일한 body 범위 함수를 공유,
+            # 핵심 안전망인 B 손실 전수 대조는 동일하게 실행한다(C 목차 대조는 생략).
+            body_start = find_body_start_flat(scans, part)
+            if body_start is None:
+                rep.fails.append("플랫 본문 시작 재현 실패 — 드리프트 의심")
+            else:
+                mark_footnotes(scans, (body_start, part[1]))
+                mark_colophon_pages(scans, part, [])
+                md_fold = fold_g("\n".join(st.base))
+                check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
+                check_tables_in_md(rep, scans, part, body_start, md_fold)
+                check_image_markers(rep, scans, part, body_start, set(st.base))
+                if any(scans[i].leader_lines >= 3 for i in range(part[0], body_start)):
+                    rep.warns.append("플랫 문서인데 앞부속에 목차 페이지 존재 — 구조 문서가 폴백으로 떨어졌을 가능성(--scan 확인)")
         else:
-            mark_footnotes(scans, (body_start, part[1]))
-            mark_colophon_pages(scans, part, [])
-            structure = detect_structure(scans, part, body_start, cands, stem)
-            if structure is None:
-                rep.fails.append("L1 구조 재현 실패 — 드리프트 의심")
-            md_fold = fold_g("\n".join(st.base))
-            check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
-            check_tables_in_md(rep, scans, part, body_start, md_fold)
-            check_image_markers(rep, scans, part, body_start, set(st.base))
-            check_toc(rep, scans, part, body_start,
-                      structure["profile"] if structure else None, st.roots)
+            body_start, cands = find_body_start(scans, part)
+            if body_start is None:
+                rep.fails.append("본문 시작 페이지 재현 실패 — 드리프트 의심")
+            else:
+                mark_footnotes(scans, (body_start, part[1]))
+                mark_colophon_pages(scans, part, [])
+                structure = detect_structure(scans, part, body_start, cands, stem)
+                if structure is None:
+                    rep.fails.append("L1 구조 재현 실패 — 드리프트 의심")
+                md_fold = fold_g("\n".join(st.base))
+                check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
+                check_tables_in_md(rep, scans, part, body_start, md_fold)
+                check_image_markers(rep, scans, part, body_start, set(st.base))
+                check_toc(rep, scans, part, body_start,
+                          structure["profile"] if structure else None, st.roots)
     return st
 
 
@@ -631,7 +675,7 @@ def check_md_only(rep: Report, md_path: Path, stem: str, args):
         return None
     raw = fm_raw(st.base, st.fm.end_line)
     check_frontmatter(rep, raw, st, stem, None, 1)
-    check_headings(rep, st, stem)
+    check_headings(rep, st, stem, flat=raw.get("structure") == "flat")
     check_body_text(rep, st.base)
     return st
 
@@ -675,7 +719,7 @@ def main() -> None:
         print(f"디렉터리가 없습니다: {reports_dir}", file=sys.stderr)
         sys.exit(2)
 
-    all_md = {p.stem: p for p in sorted(reports_dir.glob("*.md")) if MD_STEM_RE.match(p.stem)}
+    all_md = {p.stem: p for p in sorted(reports_dir.glob("*.md"))}  # 슬러그 스템 포함 전수
     if args.ids:
         sel = {}
         for rid in args.ids:
@@ -732,7 +776,7 @@ def main() -> None:
 
     for pdf_path, members in sorted(groups.items()):
         print(f"[스캔] {Path(pdf_path).name}", file=sys.stderr)
-        base = derive_report_id(pdf_path)
+        base = derive_report_id_any(pdf_path)
         doc = pymupdf.open(pdf_path)
         try:
             scans = scan_document(doc)
@@ -742,7 +786,7 @@ def main() -> None:
         expected = {base: parts[0]} if len(parts) == 1 else \
                    {f"{base}_{i + 1:02d}": pt for i, pt in enumerate(parts)}
         for stem, mp, rep in sorted(members):
-            if base is None or stem not in expected:
+            if stem not in expected:
                 rep.fails.append(
                     f"합본 분할 불일치 — PDF는 {len(parts)}파트({sorted(expected)}), "
                     f".md는 {stem} (재추출 필요)")
