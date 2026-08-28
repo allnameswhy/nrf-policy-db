@@ -12,6 +12,8 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
   자동 미검증 리셋, annotate가 요약을 새로 쓰면 verified_annotate만 소멸한다.
 - 커버리지 완비(잔여 0)인데 verified_annotate가 없는 파일은 "verify 승격 대기"
   비고로 할 일에 반영된다(verify 실행 시 D 품질 판정 후 스탬프 기록).
+- DB 컬럼은 reports.db 내 files 원장(build_db 증분 동기화 기록)과 .md sha256을
+  대조해 파일별 동기화/미반영을 표시한다 — mtime 추정이 아니라 내용 기준.
 - PDF↔.md 신선도 비교는 mtime 기반 best-effort — Windows 복사는 LastWriteTime을
   보존하므로 파일 교체를 놓칠 수 있다. FAT/exFAT 2초 정밀도만큼 허용오차를 둔다.
 - 종료 코드: 0 = 완전 동기화, 1 = 할 일·경고 있음, 2 = 사용 오류.
@@ -20,7 +22,9 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
+import sqlite3
 import sys
 import unicodedata
 from dataclasses import dataclass, field
@@ -43,6 +47,7 @@ class Row:
     remaining: int = 0
     report_summary: str = "-"  # abstract | 완료 | 대기 | -
     verify: str = "미검증"  # 미검증 | extract | annotate
+    db: str = "-"  # 동기화 | 미반영 | -
     notes: list[str] = field(default_factory=list)
 
 
@@ -101,6 +106,35 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
     return row
 
 
+def read_db_ledger(db_path: Path) -> dict[str, str] | None:
+    """reports.db의 files 원장(build_db 증분 동기화 기록). DB 없음·읽기 실패 시 None."""
+    if not db_path.exists():
+        return None
+    try:
+        con = sqlite3.connect(db_path)
+        try:
+            return dict(con.execute("SELECT filepath, content_hash FROM files"))
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return None
+
+
+def db_sync_line(db_path: Path, ledger: dict[str, str] | None,
+                 digests: dict[str, str]) -> tuple[str, bool]:
+    """reports.db 신선도 한 줄 — mtime이 아니라 파일 해시 대조. (표시문, 할 일 여부)."""
+    label = "reports.db     "
+    if not db_path.exists():
+        return f"{label}: 없음 — src/build_db.py 실행 필요", True
+    if ledger is None:
+        return f"{label}: files 원장 읽기 실패 — src/build_db.py --rebuild 검토", True
+    stale = sum(1 for fp, d in digests.items() if ledger.get(fp) != d)
+    orphan = len(set(ledger) - set(digests))
+    if stale or orphan:
+        return f"{label}: 미반영 {stale + orphan}건 — src/build_db.py 실행 필요", True
+    return f"{label}: 최신 (해시 동기화)", False
+
+
 def artifact_line(label: str, path: Path, builder: str, newest_md: float | None) -> tuple[str, bool]:
     """파생물 신선도 한 줄. (표시문, 할 일 여부). 빌더가 .md를 읽은 뒤 쓰므로 >=면 최신."""
     if not path.exists():
@@ -120,10 +154,10 @@ def pad(s: str, width: int) -> str:
 
 def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
            extract_needed: int, remaining_total: int) -> None:
-    headers = ["report_id", "추출", "요약", "잔여 호출", "보고서요약", "검증", "비고"]
+    headers = ["report_id", "추출", "요약", "잔여 호출", "보고서요약", "검증", "DB", "비고"]
     cells = [
         [r.report_id, r.extracted, r.summary, str(r.remaining), r.report_summary,
-         r.verify, "; ".join(r.notes)]
+         r.verify, r.db, "; ".join(r.notes)]
         for r in rows
     ]
     widths = [max(disp_width(h), *(disp_width(c[i]) for c in cells)) if cells else disp_width(h)
@@ -184,15 +218,24 @@ def main() -> None:
     warnings: list[str] = []
     pdfs = scan_pdfs(pdf_dir)
 
+    db_path = Path(args.db)
+    ledger = read_db_ledger(db_path)
+
     rows: list[Row] = []
     covered_bases: set[str] = set()
     md_mtimes: list[float] = []
+    md_digests: dict[str, str] = {}
     for p in sorted(reports_dir.glob("*.md")):
         m = PART_SUFFIX_RE.match(p.stem)
         base = m.group(1) if m else p.stem
         covered_bases.add(base)
         md_mtimes.append(p.stat().st_mtime)
-        rows.append(build_md_row(p, base, pdfs.get(base), args))
+        fp = p.as_posix()
+        md_digests[fp] = hashlib.sha256(p.read_bytes()).hexdigest()
+        row = build_md_row(p, base, pdfs.get(base), args)
+        if ledger is not None:
+            row.db = "동기화" if ledger.get(fp) == md_digests[fp] else "미반영"
+        rows.append(row)
 
     extract_needed = 0
     for base in sorted(set(pdfs) - covered_bases):
@@ -201,7 +244,7 @@ def main() -> None:
     rows.sort(key=lambda r: r.report_id)
 
     newest_md = max(md_mtimes) if md_mtimes else None
-    db_line, db_todo = artifact_line("reports.db     ", Path(args.db), "src/build_db.py", newest_md)
+    db_line, db_todo = db_sync_line(db_path, ledger, md_digests)
     idx_line, idx_todo = artifact_line("master_index.md", Path(args.index), "src/build_index.py", newest_md)
 
     remaining_total = sum(r.remaining for r in rows)
