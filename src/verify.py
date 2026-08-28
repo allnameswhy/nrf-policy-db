@@ -35,8 +35,9 @@ PROJECT_NOTES §3의 "검증 스텝": frontmatter verified_extract/verified_anno
 플랫 문서(frontmatter 'structure: flat' — extract 플랫 폴백 산출물): 풀 검사에서
 find_body_start/detect_structure 재현 대신 extract와 공유하는 find_body_start_flat로
 body 범위를 재현해 B를 동일하게 실행한다. A는 합성 '구간 N (p.a-b)' 헤딩 전용
-검사로 바뀌고(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수 2→1) C는 생략하되, 앞부속에
-목차 페이지가 있으면 경고한다(구조 문서가 폴백으로 떨어진 의심 — 레인 정합 안전망).
+검사로 바뀌고(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수 2→1) C는 생략하되, L1 구조
+신호(find_body_start 성공)가 있으면 경고한다(구조 문서가 폴백 또는 --lane flat 강제로
+플랫 처리된 의심 — 레인 정합 안전망).
 비NRF 슬러그 스템은 검사 대상에 포함되며 year 대조는 NRF 스템에서만 수행한다.
 
 스탬프 기록(검사 아님 — 최종 단계): 통과 상태에 맞는 스탬프를 이중 가드(스탬프 외
@@ -645,8 +646,11 @@ def check_full(rep: Report, md_path: Path, scans, part, n_parts: int, stem: str,
                 check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
                 check_tables_in_md(rep, scans, part, body_start, md_fold)
                 check_image_markers(rep, scans, part, body_start, set(st.base))
-                if any(scans[i].leader_lines >= 3 for i in range(part[0], body_start)):
-                    rep.warns.append("플랫 문서인데 앞부속에 목차 페이지 존재 — 구조 문서가 폴백으로 떨어졌을 가능성(--scan 확인)")
+                # 레인 정합 안전망: 플랫 body 시작은 표지에서 잡히는 게 보통이라
+                # "body_start 앞 목차 페이지" 검사는 사문(실측 2025-02) — L1 신호 유무로 판별한다.
+                sb_probe, _ = find_body_start(scans, part)
+                if sb_probe is not None:
+                    rep.warns.append("플랫 문서인데 L1 구조 신호 존재 — 구조 문서가 폴백/강제(--lane flat)로 플랫 처리됐을 가능성(--scan 확인)")
         else:
             body_start, cands = find_body_start(scans, part)
             if body_start is None:

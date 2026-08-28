@@ -15,6 +15,10 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
   크기 청킹 → 합성 '# 구간 N (p.a-b)' 헤딩 + frontmatter 'structure: flat' 표식으로
   수용해 다운스트림(mdio/annotate/build_*)이 무수정 처리한다. 본문 텍스트 400자
   미만(이미지 위주 문서)이면 종전대로 스킵 + 로그 후 수동 확인(OCR 별도 과제).
+- 레인 수동 지정: --lane {auto,structured,flat} (기본 auto=자동 분기).
+  structured = 감지 실패 시 플랫 폴백 억제·시끄러운 스킵(승격 검토 대상),
+  flat = 구조 감지 생략·곧장 구간 청킹. 감지 실패 시 l1_attempts + 헤딩 의심 줄
+  샘플(l1_suspects)을 로그·--scan에 남겨 프로파일 승격 판단 재료로 쓴다.
 - 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
   재추출은 annotate가 삽입한 요약 블록과 frontmatter 검증 스탬프를 소실시킨다
   (스탬프 소실 = 의도된 미검증 리셋). 합본은 파트 일부만 있어도 스킵 — 부분 실패
@@ -76,6 +80,18 @@ PROFILES = [
     ("arabic", re.compile(r"^(\d{1,2})\.(?!\s*\d)\s+\S"), False),
     ("bare_digit_split", re.compile(r"^(\d{1,2})$"), True),
 ]
+
+# 감지 실패 시 승격 판단용 헤딩 의심 줄 캐치올(번호 토큰류 줄머리) — 진단 전용, 추출에 무관여
+L1_SUSPECT_RE = re.compile(
+    r"^(?:제\s*\d{1,3}\s*[가-힣]"            # 제N장/편/부/절 …
+    r"|\d{1,3}\s*[장편부절]"                  # N장 (제 생략형)
+    r"|\d{1,3}\s*[.)]"                       # N. / N)
+    r"|\d{1,3}$"                             # 단독 숫자 (두줄형)
+    r"|[Ⅰ-Ⅻⅰ-ⅻ]"                          # 로마 유니코드
+    r"|[IVXLC]{1,5}\s*[.)]"                  # 로마 ASCII
+    r"|[\[(]\s*\d{1,3}\s*[\])]"              # (N) / [N]
+    r"|(?:Chapter|CHAPTER|Part|PART)\s+\S)"  # 영문 표기
+)
 
 # 하위 헤딩 패밀리 — 한 줄이 여러 패턴에 걸리면 이 순서의 첫 매치만 인정
 SUB_FAMILY_DEFS = [
@@ -1251,6 +1267,28 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
             "sub_headings": subs, "family_depths": depth_of, "sub_stats": stats}
 
 
+def collect_l1_suspects(scans, part, start, limit=30):
+    """감지 실패 문서의 헤딩 의심 줄 샘플 — 프로파일 승격 판단 재료(진단 전용).
+
+    본문 범위에서 번호 토큰류 줄머리의 짧은 줄을 페이지와 함께 수집한다.
+    표 내부·리더런·각주 줄 제외, 동일 텍스트는 첫 출현만, 최대 limit개.
+    """
+    out, seen = [], set()
+    for pg, _j, ln in collect_body_lines(scans, part, start):
+        t = ln.text.strip()
+        if not t or len(t) > MAX_TITLE_LINE:
+            continue
+        if ln.in_table or ln.is_leader or ln.is_footnote:
+            continue
+        if not L1_SUSPECT_RE.match(t) or t in seen:
+            continue
+        seen.add(t)
+        out.append(f"p.{pg + 1}: {t}")
+        if len(out) >= limit:
+            break
+    return out
+
+
 # ---------------------------------------------------------------------------
 # 본문 조립
 # ---------------------------------------------------------------------------
@@ -1619,8 +1657,11 @@ def _reset_footnote_flags(scans, part) -> None:
             ln.is_footnote = False
 
 
-def flat_fallback(r: PartResult, scans, part, rid: str, path: str) -> bool:
-    """구조 미감지 파트의 플랫 청킹 폴백. 성공 시 r.markdown까지 채우고 True."""
+def flat_fallback(r: PartResult, scans, part, rid: str, path: str, forced: bool = False) -> bool:
+    """구조 미감지 파트의 플랫 청킹 폴백. 성공 시 r.markdown까지 채우고 True.
+
+    forced=True는 --lane flat(감지 생략 강제) — 경고 문구만 다르고 로직 동일.
+    """
     flat_start = find_body_start_flat(scans, part)
     if flat_start is None:
         return False
@@ -1648,7 +1689,10 @@ def flat_fallback(r: PartResult, scans, part, rid: str, path: str) -> bool:
     r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
     r.stats["headings"] = n_chunks
     r.stats["chapters"] = n_chunks
-    r.warnings.append(f"장-절 구조 미감지 — 플랫 청킹 폴백 적용 (구간 {n_chunks}개)")
+    if forced:
+        r.warnings.append(f"구조 감지 생략(--lane flat) — 플랫 청킹 적용 (구간 {n_chunks}개)")
+    else:
+        r.warnings.append(f"장-절 구조 미감지 — 플랫 청킹 폴백 적용 (구간 {n_chunks}개)")
     return True
 
 
@@ -1702,8 +1746,8 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 # 파일 단위 처리
 # ---------------------------------------------------------------------------
 
-def process_pdf(path: str):
-    """PDF 1개 → PartResult 목록(합본이면 여러 개)."""
+def process_pdf(path: str, lane: str = "auto"):
+    """PDF 1개 → PartResult 목록(합본이면 여러 개). lane: auto|structured|flat (--lane)."""
     base_id = derive_report_id_any(path)
     if derive_report_id(path) is None:
         # 비NRF 파일명 — 슬러그 rid로 수용 (타 기관·이형 문서)
@@ -1733,22 +1777,40 @@ def process_pdf(path: str):
         r.meta = meta
         r.warnings.extend(meta.warnings)
 
-        body_start, cand_profiles = find_body_start(scans, part)
-        structure = None
-        if body_start is not None:
-            r.body_start = body_start
-            diag["body_start_page"] = body_start + 1
-            diag["candidate_profiles"] = cand_profiles
+        body_start, cand_profiles, structure = None, [], None
+        if lane != "flat":
+            body_start, cand_profiles = find_body_start(scans, part)
+            if body_start is not None:
+                r.body_start = body_start
+                diag["body_start_page"] = body_start + 1
+                diag["candidate_profiles"] = cand_profiles
 
-            mark_footnotes(scans, (body_start, part[1]))
-            mark_colophon_pages(scans, part, r.warnings)
+                mark_footnotes(scans, (body_start, part[1]))
+                mark_colophon_pages(scans, part, r.warnings)
 
-            structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag)
+                structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag)
 
         if structure is None:
-            # 투 레인: 구조 미감지 → 플랫 청킹 폴백. 폴백조차 불가하면 종전대로 시끄럽게 스킵.
-            if not flat_fallback(r, scans, part, rid, path):
-                if body_start is None:
+            if lane != "flat":
+                # 감지 실패 — 승격 판단 재료(헤딩 의심 줄 샘플)를 폴백 여부와 무관하게 남긴다
+                sus_start = body_start if body_start is not None else find_body_start_flat(scans, part)
+                if sus_start is not None:
+                    diag["l1_suspects"] = collect_l1_suspects(scans, part, sus_start)
+            # 투 레인: 구조 미감지 → 플랫 청킹 폴백(--lane structured는 억제).
+            # 폴백조차 불가하면 종전대로 시끄럽게 스킵.
+            if lane == "structured":
+                r.warnings.append("플랫 폴백 억제(--lane structured) — 승격 검토 대상")
+                fell_back = False
+            else:
+                fell_back = flat_fallback(r, scans, part, rid, path, forced=(lane == "flat"))
+            if not fell_back:
+                if lane == "flat":
+                    if find_body_start_flat(scans, part) is None:
+                        r.status = "skipped_no_body_start"
+                        r.warnings.append("본문 시작 페이지를 찾지 못함")
+                    else:
+                        r.status = "skipped_flat_guard"  # 400자 가드 — 경고는 flat_fallback이 기록
+                elif body_start is None:
                     r.status = "skipped_no_body_start"
                     r.warnings.append("본문 시작 페이지를 찾지 못함")
                 else:
@@ -1828,6 +1890,7 @@ def scan_report(results, path) -> dict:
             "candidate_profiles": diag.get("candidate_profiles"),
             "profile": diag.get("profile"),
             "l1_attempts": diag.get("l1_attempts"),
+            "l1_suspects": diag.get("l1_suspects"),
             "chapters": diag.get("chapters"),
             "family_order": diag.get("family_order"),
             "family_depths": diag.get("family_depths"),
@@ -1857,6 +1920,9 @@ def main() -> None:
     parser.add_argument("--scan", action="store_true", help="진단 모드: md 미작성, 감지 결과만 stdout에 덤프")
     parser.add_argument("--force", action="store_true",
                         help="출력 .md가 이미 있어도 재추출·덮어쓰기 (annotate 요약 블록 소실 주의)")
+    parser.add_argument("--lane", choices=["auto", "structured", "flat"], default="auto",
+                        help="레인 수동 지정: structured=플랫 폴백 억제(감지 실패 시 시끄럽게 스킵), "
+                             "flat=구조 감지 생략·곧장 플랫 청킹 (기본 auto=자동 분기)")
     args = parser.parse_args()
 
     # PowerShell은 글롭을 확장하지 않으므로 자체 확장
@@ -1888,7 +1954,7 @@ def main() -> None:
                 continue
 
         try:
-            results = process_pdf(path)
+            results = process_pdf(path, lane=args.lane)
         except Exception:
             all_ok = False
             log_entries.append({"file": Path(path).name, "status": "error",
@@ -1915,6 +1981,8 @@ def main() -> None:
                 "recovered_lines": r.stats.get("recovered_lines"),
                 "image_only_pages": r.image_only_pages,
                 "unknown_glyphs": r.unknown_glyphs,
+                "l1_attempts": r.stats.get("diag", {}).get("l1_attempts"),
+                "l1_suspects": r.stats.get("diag", {}).get("l1_suspects"),
                 "warnings": r.warnings,
             }
             log_entries.append(entry)
@@ -1937,6 +2005,7 @@ def main() -> None:
     log_path.write_text(json.dumps({
         "run_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "mode": "scan" if args.scan else "extract",
+        "lane": args.lane,
         "files": log_entries,
     }, ensure_ascii=False, indent=1), encoding="utf-8")
 
