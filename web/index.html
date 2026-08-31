@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nrf-policy-db 검색 테스트</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1a1f27; --muted: #6b7280;
+    --border: #dfe3e8; --accent: #2456c9; --accent-weak: #e8eefb;
+    --sid-bg: #e4ecfa; --sid-text: #1d4ed8;
+    --fab-bg: #fde8e8; --fab-text: #b91c1c;
+    --warn-bg: #fef7e0; --warn-border: #f0c96b; --warn-text: #7c5e10;
+    --err-bg: #fdecec; --err-border: #e8a0a0; --err-text: #a02020;
+    --retry-bg: #fff3e6; --retry-border: #f0bb84; --retry-text: #92500f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --panel: #1d2129; --text: #e6e9ee; --muted: #9aa2af;
+      --border: #333a45; --accent: #6f9bf0; --accent-weak: #24314d;
+      --sid-bg: #263a5e; --sid-text: #9dbdf7;
+      --fab-bg: #4a2222; --fab-text: #f3a0a0;
+      --warn-bg: #3c3417; --warn-border: #8a742f; --warn-text: #e8d48a;
+      --err-bg: #421f1f; --err-border: #8a4444; --err-text: #f0a8a8;
+      --retry-bg: #40301c; --retry-border: #8a6335; --retry-text: #ecc089;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  textarea {
+    width: 100%; min-height: 72px; resize: vertical;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font: inherit;
+  }
+  textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 22px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { color: var(--muted); font-size: 13px; }
+  .status.busy { color: var(--accent); }
+  h2 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  #progress {
+    font-family: Consolas, "D2Coding", monospace; font-size: 12.5px;
+    max-height: 260px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+  }
+  #progress .turn { font-weight: 700; }
+  #progress .tool { color: var(--muted); padding-left: 1.5em; }
+  #answer { white-space: pre-wrap; word-break: break-word; }
+  .sid {
+    background: var(--sid-bg); color: var(--sid-text);
+    border-radius: 4px; padding: 0 4px;
+    font-family: Consolas, "D2Coding", monospace; font-size: .9em;
+  }
+  .sid.fab { background: var(--fab-bg); color: var(--fab-text); text-decoration: line-through; }
+  .box { border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; border: 1px solid; }
+  .box.warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  .box.fatal { background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+  .box.retryable { background: var(--retry-bg); border-color: var(--retry-border); color: var(--retry-text); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td.sid-cell { font-family: Consolas, "D2Coding", monospace; font-size: 12px; white-space: nowrap; }
+  .excerpt { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .usage { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>nrf-policy-db 검색 테스트</h1>
+  <div class="sub">정책보고서 코퍼스 BM25 + LLM 라우팅 검색 — 질의 1건이 수십 초~수 분 걸릴 수 있습니다.</div>
+
+  <div class="panel">
+    <textarea id="question" placeholder="질문을 입력하세요 (Ctrl+Enter로 실행)"></textarea>
+    <div class="row">
+      <button id="run">검색</button>
+      <span id="status" class="status">대기 중</span>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="progress-panel">
+    <h2>진행 로그</h2>
+    <div id="progress"></div>
+  </div>
+
+  <div id="error-box" class="box hidden"></div>
+  <div id="fab-box" class="box warn hidden"></div>
+
+  <div class="panel hidden" id="answer-panel">
+    <h2>답변</h2>
+    <div id="answer"></div>
+    <div id="usage" class="usage"></div>
+  </div>
+
+  <div class="panel hidden" id="sources-panel">
+    <h2>출처 (세션이 실제 전달한 본문 ∩ 답변 인용)</h2>
+    <table>
+      <thead><tr><th>section_id</th><th>보고서</th><th>위치</th></tr></thead>
+      <tbody id="sources"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+"use strict";
+// search.py SECTION_ID_RE와 동치 — JS \w는 한글 미포함이라 범위 명시
+const SID_RE = /[\w가-힣-]+_c\d+(?:s\d+)*/g;
+
+const $ = (id) => document.getElementById(id);
+const qEl = $("question"), runBtn = $("run"), statusEl = $("status");
+
+let timer = null;
+
+function setBusy(busy) {
+  qEl.disabled = busy;
+  runBtn.disabled = busy;
+  clearInterval(timer);
+  if (busy) {
+    const t0 = Date.now();
+    statusEl.className = "status busy";
+    statusEl.textContent = "질의 중… 0초";
+    timer = setInterval(() => {
+      statusEl.textContent = `질의 중… ${Math.round((Date.now() - t0) / 1000)}초`;
+    }, 1000);
+  } else {
+    statusEl.className = "status";
+  }
+}
+
+function resetPanels() {
+  for (const id of ["progress-panel", "answer-panel", "sources-panel"]) $(id).classList.add("hidden");
+  for (const id of ["error-box", "fab-box"]) $(id).classList.add("hidden");
+  $("progress").textContent = "";
+  $("answer").textContent = "";
+  $("usage").textContent = "";
+  $("sources").textContent = "";
+}
+
+function addProgress(cls, text) {
+  $("progress-panel").classList.remove("hidden");
+  const line = document.createElement("div");
+  line.className = cls;
+  line.textContent = text;
+  const p = $("progress");
+  p.appendChild(line);
+  p.scrollTop = p.scrollHeight;
+}
+
+function showError(kind, message) {
+  const box = $("error-box");
+  box.className = "box " + (kind === "fatal" ? "fatal" : "retryable");
+  box.textContent = message;
+  box.classList.remove("hidden");
+}
+
+// 답변 평문 삽입 + section_id 토큰만 하이라이트 (innerHTML에 원문 주입 금지 — XSS 방지)
+function renderAnswer(text, fabricated) {
+  const fabSet = new Set(fabricated);
+  const el = $("answer");
+  el.textContent = "";
+  let last = 0;
+  SID_RE.lastIndex = 0;
+  for (let m; (m = SID_RE.exec(text)) !== null;) {
+    if (m.index > last) el.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const span = document.createElement("span");
+    span.className = fabSet.has(m[0]) ? "sid fab" : "sid";
+    span.title = fabSet.has(m[0]) ? "전달되지 않은 출처 — 날조 의심" : "";
+    span.textContent = m[0];
+    el.appendChild(span);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
+  $("answer-panel").classList.remove("hidden");
+}
+
+function renderSources(sources) {
+  if (!sources.length) return;
+  const tbody = $("sources");
+  for (const s of sources) {
+    const tr = document.createElement("tr");
+    const tdId = document.createElement("td");
+    tdId.className = "sid-cell";
+    tdId.textContent = s.section_id;
+    const tdRep = document.createElement("td");
+    tdRep.textContent = `${s.report_title} (${s.year})`;
+    const tdLoc = document.createElement("td");
+    tdLoc.textContent = s.heading;
+    if (s.excerpt) {
+      const ex = document.createElement("div");
+      ex.className = "excerpt";
+      ex.textContent = s.excerpt;
+      tdLoc.appendChild(ex);
+    }
+    tr.append(tdId, tdRep, tdLoc);
+    tbody.appendChild(tr);
+  }
+  $("sources-panel").classList.remove("hidden");
+}
+
+function handleEvent(ev) {
+  switch (ev.type) {
+    case "ping":
+      break; // keep-alive — 경과 타이머가 살아있음의 표시
+    case "turn":
+      addProgress("turn", `[${ev.turn}] ${ev.tool} ${ev.args}`);
+      break;
+    case "tool":
+      addProgress("tool", ev.text);
+      break;
+    case "result": {
+      renderAnswer(ev.answer, ev.fabricated);
+      if (ev.fabricated.length) {
+        const fb = $("fab-box");
+        fb.textContent = "⚠ 전달되지 않은 출처 인용(날조 의심): " + ev.fabricated.join(", ");
+        fb.classList.remove("hidden");
+      }
+      renderSources(ev.sources);
+      $("usage").textContent =
+        `${ev.turns}턴` + (ev.cost_usd != null ? `, cost=$${ev.cost_usd.toFixed(4)}` : "");
+      statusEl.textContent = "완료";
+      break;
+    }
+    case "error":
+      showError(ev.kind, ev.message);
+      statusEl.textContent = "오류";
+      break;
+  }
+}
+
+async function runSearch() {
+  const question = qEl.value.trim();
+  if (!question || runBtn.disabled) return;
+  resetPanels();
+  setBusy(true);
+  try {
+    const res = await fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try { msg = (await res.json()).error || msg; } catch (_) {}
+      showError(res.status === 409 ? "retryable" : "fatal", msg);
+      statusEl.textContent = "오류";
+      return;
+    }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (line) handleEvent(JSON.parse(line));
+      }
+    }
+  } catch (e) {
+    showError("retryable", `연결 오류: ${e.message} — 서버(python src/serve.py) 상태를 확인하세요.`);
+    statusEl.textContent = "오류";
+  } finally {
+    setBusy(false);
+    if (statusEl.textContent.startsWith("질의")) statusEl.textContent = "중단됨";
+  }
+}
+
+runBtn.addEventListener("click", runSearch);
+qEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runSearch(); }
+});
+</script>
+</body>
+</html>

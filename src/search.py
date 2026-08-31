@@ -28,6 +28,7 @@ import sqlite3
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from annotate import (
     AuthError,
@@ -298,12 +299,15 @@ class SearchState:
     report_map: dict[str, str]
     top_n: int
     trace: bool
+    emit: Callable[[dict], None] | None = None  # 진행 이벤트 콜백(웹) — None이면 stderr(CLI)
     bm25_ranking: list[str] = field(default_factory=list)  # ② hold — ④의 첫 순위표
     bm25_hits: dict[str, sqlite3.Row] = field(default_factory=dict)
     delivered: set[str] = field(default_factory=set)  # 본문 전달 집합 — 사후 출처 검사 기준
 
     def log(self, msg: str) -> None:
-        if self.trace:
+        if self.emit is not None:
+            self.emit({"type": "tool", "text": msg})
+        elif self.trace:
             print(f"[tool] {msg}", file=sys.stderr)
 
 
@@ -587,97 +591,156 @@ def audit_citations(answer: str, delivered: set[str]) -> list[str]:
     return sorted(set(SECTION_ID_RE.findall(answer)) - delivered)
 
 
-async def run_search(question: str, args) -> int:
+@dataclass
+class SearchResult:
+    """perform_search 반환값 — CLI·웹 공용."""
+
+    answer: str  # 빈 문자열 = 답변 미생성
+    sources: list[dict]  # 인용 ∩ 전달 교집합의 구조화 출처
+    fabricated: list[str]  # audit_citations 결과 (날조 의심)
+    turns: int
+    cost_usd: float | None
+    subtype: str | None  # 빈 답변 진단용
+    had_result_msg: bool  # CLI [usage] 출력 조건 보존
+
+
+async def perform_search(
+    question: str, args, emit: Callable[[dict], None] | None = None
+) -> SearchResult:
+    """검색 세션 코어 — print/exit 없이 답변·구조화 출처·usage를 반환한다.
+
+    emit이 있으면 진행 이벤트({"type":"turn"|"tool", ...})를 콜백으로 흘리고(웹),
+    없으면 --trace 시 종전 stderr 출력을 유지한다(CLI). 오류는
+    UsageLimitReached·AuthError·RetryableError 전파 — 분류는 호출자 몫.
+    """
     con = open_db(Path(args.db))
-    state = SearchState(
-        con=con,
-        report_map=build_report_map(con),
-        top_n=args.top_n,
-        trace=args.trace,
-    )
-    server = create_sdk_mcp_server("searchdb", tools=build_tools(state))
-    options = make_search_options(server, args)
-
-    answer_parts: list[str] = []
-    result_msg: ResultMessage | None = None
-    turn = 0
-
-    async def consume(client: ClaudeSDKClient) -> None:
-        nonlocal result_msg, turn
-        async for msg in client.receive_response():
-            if isinstance(msg, RateLimitEvent):
-                info = msg.rate_limit_info
-                if getattr(info, "status", None) == "rejected":
-                    raise UsageLimitReached(_limit_desc(info))
-            elif isinstance(msg, AssistantMessage):
-                turn += 1
-                tool_uses = [b for b in msg.content if isinstance(b, ToolUseBlock)]
-                if tool_uses:
-                    # 툴 호출 전 텍스트는 중간 코멘트 — 최종 답변은 마지막 툴 이후 텍스트만
-                    answer_parts.clear()
-                    if state.trace:
-                        for b in tool_uses:
-                            arg_s = json.dumps(b.input, ensure_ascii=False)[:200]
-                            print(f"[turn {turn}] {b.name} {arg_s}", file=sys.stderr)
-                for block in msg.content:
-                    if isinstance(block, TextBlock):
-                        answer_parts.append(block.text)
-            elif isinstance(msg, ResultMessage):
-                result_msg = msg
-
-    stream_error: Exception | None = None
-    client = ClaudeSDKClient(options=options)
-    await client.connect()
     try:
-        await client.query(build_initial_prompt(question, args.index_path))
+        state = SearchState(
+            con=con,
+            report_map=build_report_map(con),
+            top_n=args.top_n,
+            trace=args.trace,
+            emit=emit,
+        )
+        server = create_sdk_mcp_server("searchdb", tools=build_tools(state))
+        options = make_search_options(server, args)
+
+        answer_parts: list[str] = []
+        result_msg: ResultMessage | None = None
+        turn = 0
+
+        async def consume(client: ClaudeSDKClient) -> None:
+            nonlocal result_msg, turn
+            async for msg in client.receive_response():
+                if isinstance(msg, RateLimitEvent):
+                    info = msg.rate_limit_info
+                    if getattr(info, "status", None) == "rejected":
+                        raise UsageLimitReached(_limit_desc(info))
+                elif isinstance(msg, AssistantMessage):
+                    turn += 1
+                    tool_uses = [b for b in msg.content if isinstance(b, ToolUseBlock)]
+                    if tool_uses:
+                        # 툴 호출 전 텍스트는 중간 코멘트 — 최종 답변은 마지막 툴 이후 텍스트만
+                        answer_parts.clear()
+                        if emit is not None or state.trace:
+                            for b in tool_uses:
+                                arg_s = json.dumps(b.input, ensure_ascii=False)[:200]
+                                if emit is not None:
+                                    emit({"type": "turn", "turn": turn, "tool": b.name, "args": arg_s})
+                                else:
+                                    print(f"[turn {turn}] {b.name} {arg_s}", file=sys.stderr)
+                    for block in msg.content:
+                        if isinstance(block, TextBlock):
+                            answer_parts.append(block.text)
+                elif isinstance(msg, ResultMessage):
+                    result_msg = msg
+
+        stream_error: Exception | None = None
+        client = ClaudeSDKClient(options=options)
+        await client.connect()
         try:
-            await asyncio.wait_for(consume(client), args.timeout)
-        except asyncio.TimeoutError as e:
-            raise RetryableError(f"타임아웃 {args.timeout:.0f}s") from e
-        except (UsageLimitReached, AuthError):
-            raise
-        except Exception as e:  # SDK는 CLI 오류를 일반 Exception으로도 올린다
-            stream_error = e
+            await client.query(build_initial_prompt(question, args.index_path))
+            try:
+                await asyncio.wait_for(consume(client), args.timeout)
+            except asyncio.TimeoutError as e:
+                raise RetryableError(f"타임아웃 {args.timeout:.0f}s") from e
+            except (UsageLimitReached, AuthError):
+                raise
+            except Exception as e:  # SDK는 CLI 오류를 일반 Exception으로도 올린다
+                stream_error = e
+        finally:
+            await client.disconnect()
+
+        # annotate.call_llm과 동일한 오류 분류 — result_msg가 더 구체적이면 우선
+        if result_msg is not None and result_msg.is_error:
+            detail = str(result_msg.result or result_msg.subtype)
+            if result_msg.api_error_status == 429:
+                raise UsageLimitReached("api_error_status=429")
+            low = detail.lower()
+            if "authenticate" in low or "not logged in" in low or "oauth" in low:
+                raise AuthError(detail[:200])
+            raise RetryableError(f"result error: {detail[:200]}")
+        if stream_error is not None:
+            raise RetryableError(str(stream_error)[:200]) from stream_error
+
+        answer = ""
+        if result_msg is not None and isinstance(result_msg.result, str):
+            answer = result_msg.result
+        if not answer.strip():
+            answer = "".join(answer_parts)
+
+        fabricated = audit_citations(answer, state.delivered)
+        sources: list[dict] = []
+        for sid in sorted(set(SECTION_ID_RE.findall(answer)) & state.delivered):
+            row = get_row(con, sid)
+            if row is None:
+                continue
+            src = {
+                "section_id": sid,
+                "report_id": Path(row["filepath"]).stem,
+                "report_title": row["report_title"],
+                "year": row["year"],
+                "heading": heading_of(row),
+                "filepath": row["filepath"],
+            }
+            hit = state.bm25_hits.get(sid)
+            if hit is not None:
+                src["excerpt"] = " ".join(str(hit["excerpt"]).split())
+            sources.append(src)
+
+        return SearchResult(
+            answer=answer,
+            sources=sources,
+            fabricated=fabricated,
+            turns=turn,
+            cost_usd=getattr(result_msg, "total_cost_usd", None) if result_msg else None,
+            subtype=getattr(result_msg, "subtype", None) if result_msg else None,
+            had_result_msg=result_msg is not None,
+        )
     finally:
-        await client.disconnect()
+        con.close()
 
-    # annotate.call_llm과 동일한 오류 분류 — result_msg가 더 구체적이면 우선
-    if result_msg is not None and result_msg.is_error:
-        detail = str(result_msg.result or result_msg.subtype)
-        if result_msg.api_error_status == 429:
-            raise UsageLimitReached("api_error_status=429")
-        low = detail.lower()
-        if "authenticate" in low or "not logged in" in low or "oauth" in low:
-            raise AuthError(detail[:200])
-        raise RetryableError(f"result error: {detail[:200]}")
-    if stream_error is not None:
-        raise RetryableError(str(stream_error)[:200]) from stream_error
 
-    answer = ""
-    if result_msg is not None and isinstance(result_msg.result, str):
-        answer = result_msg.result
-    if not answer.strip():
-        answer = "".join(answer_parts)
-    if not answer.strip():
-        subtype = getattr(result_msg, "subtype", None) if result_msg else None
+async def run_search(question: str, args) -> int:
+    """CLI 래퍼 — perform_search 결과를 종전과 동일한 stdout/stderr·exit code로 출력."""
+    result = await perform_search(question, args, emit=None)
+    if not result.answer.strip():
         print(
-            f"[error] 답변이 생성되지 않았습니다(subtype={subtype}, {turn}턴) — "
+            f"[error] 답변이 생성되지 않았습니다(subtype={result.subtype}, {result.turns}턴) — "
             "--max-turns 상향 또는 재실행을 검토하세요.",
             file=sys.stderr,
         )
         return 1
 
-    print(answer)
+    print(result.answer)
 
-    fabricated = audit_citations(answer, state.delivered)
-    if fabricated:
+    if result.fabricated:
         print(
-            "[검증] 전달되지 않은 출처 인용(날조 의심): " + ", ".join(fabricated),
+            "[검증] 전달되지 않은 출처 인용(날조 의심): " + ", ".join(result.fabricated),
             file=sys.stderr,
         )
-    if args.trace and result_msg is not None:
-        cost = getattr(result_msg, "total_cost_usd", None)
-        print(f"[usage] {turn}턴, cost={cost}", file=sys.stderr)
+    if args.trace and result.had_result_msg:
+        print(f"[usage] {result.turns}턴, cost={result.cost_usd}", file=sys.stderr)
     return 0
 
 
