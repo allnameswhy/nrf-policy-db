@@ -11,6 +11,7 @@
     --ok-bg: #e7f6ec; --ok-border: #93d3a8; --ok-text: #176d33;
     --warn-bg: #fef7e0; --warn-border: #f0c96b; --warn-text: #7c5e10;
     --err-bg: #fdecec; --err-border: #e8a0a0; --err-text: #a02020;
+    --info-bg: #eef1f5; --info-border: #c9d0da; --info-text: #4a5261;
     --log-err: #c22f2f; --log-warn: #9a6d10;
   }
   @media (prefers-color-scheme: dark) {
@@ -20,6 +21,7 @@
       --ok-bg: #1c3a26; --ok-border: #3f7c53; --ok-text: #9fdcb2;
       --warn-bg: #3c3417; --warn-border: #8a742f; --warn-text: #e8d48a;
       --err-bg: #421f1f; --err-border: #8a4444; --err-text: #f0a8a8;
+      --info-bg: #232833; --info-border: #3b4350; --info-text: #aab3c2;
       --log-err: #f08c8c; --log-warn: #e2c06d;
     }
   }
@@ -31,6 +33,7 @@
   }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .head .navs { display: flex; gap: 8px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
   .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
   a.nav {
@@ -55,66 +58,40 @@
   .box.ok { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
   .box.warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
   .box.err { background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+  .box.info { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
   .box .hint { font-size: 13px; margin-top: 6px; opacity: .9; }
   .box .actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
-  td.mono { font-family: Consolas, "D2Coding", monospace; font-size: 12px; white-space: nowrap; }
-  td.num { text-align: right; white-space: nowrap; }
-  .cell-warn { color: var(--warn-text); }
-  .cell-err { color: var(--err-text); }
-  .cell-ok { color: var(--ok-text); }
-  .artifacts { font-size: 13px; margin-top: 10px; color: var(--muted); }
-  .artifacts .todo { color: var(--warn-text); }
-  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
-  .lanes { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; margin: 6px 0 2px; }
-  .lanes label { cursor: pointer; }
-  .note { color: var(--muted); font-size: 12.5px; }
-  .step { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
-  .step:last-child { border-bottom: 0; }
-  .step .label { flex: 1; }
-  .step .desc { color: var(--muted); font-size: 12px; }
-  .chip {
-    min-width: 62px; text-align: center; font-size: 11.5px; font-weight: 700;
-    border-radius: 999px; padding: 2px 10px; border: 1px solid var(--border);
-    color: var(--muted); background: var(--bg); white-space: nowrap;
+  .box .files {
+    font-family: Consolas, "D2Coding", monospace; font-size: 12px; margin-top: 4px; opacity: .85;
+    word-break: break-all;
   }
-  .chip.running { color: var(--accent); border-color: var(--accent); }
-  .chip.ok { color: var(--ok-text); border-color: var(--ok-border); background: var(--ok-bg); }
-  .chip.fail { color: var(--err-text); border-color: var(--err-border); background: var(--err-bg); }
-  .need {
-    font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 9px;
-    background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text);
-    white-space: nowrap;
-  }
-  .box .steps-list div { padding-left: 1em; }
-  #pipe-log {
-    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
-    max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 10px; margin-top: 10px;
-  }
-  #pipe-log .err { color: var(--log-err); }
-  #pipe-log .warn { color: var(--log-warn); }
-  #master-src {
-    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
-    max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 10px; margin-top: 10px;
-  }
-  select {
-    background: var(--bg); color: var(--text); border: 1px solid var(--border);
-    border-radius: 8px; padding: 7px 10px; font: inherit; max-width: 100%;
-  }
-  td.sum { font-size: 12.5px; color: var(--muted); }
+  .box .ctl { margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; }
+  .box .ctl label { cursor: pointer; white-space: nowrap; }
   .box .mono-block {
     font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
     white-space: pre-wrap; word-break: break-all; color: var(--text);
     background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
     padding: 6px 8px; margin-top: 6px; max-height: 220px; overflow-y: auto;
   }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .note { color: var(--muted); font-size: 12.5px; }
+  #job-stages { font-size: 13px; margin-bottom: 6px; }
+  #job-stages .st { padding: 2px 0; }
+  #job-stages .st .mark { display: inline-block; min-width: 70px; font-weight: 700; }
+  #job-stages .st.ok .mark { color: var(--ok-text); }
+  #job-stages .st.fail .mark { color: var(--err-text); }
+  #job-stages .st.run .mark { color: var(--accent); }
+  #job-stages .st.idle { color: var(--muted); }
+  #job-stages .st .drop { color: var(--warn-text); font-size: 12px; margin-left: 6px; }
+  #pipe-log {
+    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
+    max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; margin-top: 6px;
+  }
+  #pipe-log .err { color: var(--log-err); }
+  #pipe-log .warn { color: var(--log-warn); }
+  #pipe-log .sep { font-weight: 700; }
   .hidden { display: none; }
 </style>
 </head>
@@ -123,65 +100,43 @@
   <div class="head">
     <div>
       <h1>DB 관리</h1>
-      <div class="sub">신규 PDF 반영 파이프라인 실행 · 현황판 · 목차/요약 브라우저</div>
+      <div class="sub">파일별 문제 카드 확인 → 결정 선택 → 일괄 해결</div>
     </div>
-    <a class="nav" href="/">← 검색으로</a>
+    <div class="navs">
+      <a class="nav" href="/browse">자료 현황</a>
+      <a class="nav" href="/">← 검색으로</a>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="job-panel">
+    <h2>작업 로그</h2>
+    <div id="job-stages"></div>
+    <div id="pipe-log"></div>
+    <div class="row">
+      <button id="cancel" class="danger hidden">작업 중지</button>
+      <span id="pipe-status" class="note">대기 중</span>
+    </div>
+    <div id="pipe-outcome" style="margin-top:10px"></div>
   </div>
 
   <div id="banners"></div>
 
   <div class="panel">
-    <h2>현황판 <button id="refresh" class="mini ghost" style="margin-left:8px">새로고침</button></h2>
-    <div id="status-body" class="note">불러오는 중…</div>
-    <div class="scroll">
-      <table id="status-table" class="hidden">
-        <thead><tr>
-          <th>report_id</th><th>추출</th><th>요약</th><th>잔여 호출</th>
-          <th>보고서요약</th><th>검증</th><th>DB</th><th>비고</th>
-        </tr></thead>
-        <tbody id="status-rows"></tbody>
-      </table>
-    </div>
-    <div id="artifacts" class="artifacts"></div>
-  </div>
-
-  <div class="panel">
-    <h2>파이프라인 실행</h2>
-    <div class="note">"최신화 시작"은 현황에서 <b>필요한 단계만 자동 감지</b>해 순서대로 진행합니다
-      (신규 PDF 표준 절차 ①~⑥과 동일한 순서). 각 단계는 특이사항(종료 코드 ≠ 0)이 있으면 멈춰
-      해결을 안내하고, 없으면 현황을 다시 계산해 다음 필요 단계 진행 여부를 묻습니다.
-      개별 [실행] 버튼으로 특정 단계만 강제 실행할 수도 있습니다.</div>
-    <div class="lanes" id="lanes">
-      <label><input type="radio" name="lane" value="structured" checked>
-        <b>structured</b> — 기존 정책보고서류 (장·절 문법 감지, 감지 실패 시 시끄럽게 스킵)</label>
-      <label><input type="radio" name="lane" value="flat">
-        <b>flat</b> — 타 기관·발표자료·백서류 (구조 감지 생략, 플랫 청킹)</label>
-    </div>
-    <div class="note">레인은 ① extract의 <b>신규 PDF에만</b> 적용됩니다 — 이미 추출된 .md는 건드리지 않습니다.</div>
-    <div id="steps" style="margin-top:10px"></div>
+    <h2>필요한 조치 <button id="refresh" class="mini ghost" style="margin-left:8px">새로고침</button></h2>
+    <div id="cards" class="note">불러오는 중…</div>
     <div class="row">
-      <button id="start">최신화 시작 (필요 단계 자동 감지)</button>
-      <button id="cancel" class="danger hidden">작업 중지</button>
-      <span id="pipe-status" class="note">대기 중</span>
+      <button id="resolve">일괄 해결</button>
+      <span id="plan-preview" class="note"></span>
     </div>
-    <div id="pipe-outcome"></div>
-    <div id="pipe-log" class="hidden"></div>
+    <div class="note" style="margin-top:8px">일괄 해결은 카드의 결정대로 필요한 파일만
+      파이프라인(추출 → 추출 검증 → 요약 생성 → 요약 품질 검증 → DB 동기화 → 카탈로그 재생성)에
+      태워 순서대로 처리합니다. 중간에 문제가 생긴 파일은 빼고 나머지는 끝까지 진행한 뒤,
+      남은 문제를 다시 카드로 띄웁니다.</div>
   </div>
 
   <div class="panel">
-    <h2>목차·요약 브라우저 (reports.db 기준)</h2>
-    <div class="row" style="margin-top:0">
-      <select id="toc-report"><option value="">보고서 선택…</option></select>
-      <button id="master-btn" class="mini ghost">마스터 카탈로그 보기</button>
-    </div>
-    <div id="toc-note" class="note" style="margin-top:8px"></div>
-    <div class="scroll">
-      <table id="toc-table" class="hidden" style="margin-top:8px">
-        <thead><tr><th>section_id</th><th>위치</th><th>요약</th><th class="num">본문</th></tr></thead>
-        <tbody id="toc-rows"></tbody>
-      </table>
-    </div>
-    <div id="master-src" class="hidden"></div>
+    <span id="summary" class="note"></span>
+    <a class="nav" href="/browse" style="margin-left:10px">자료 현황 보기 →</a>
   </div>
 </div>
 
@@ -189,211 +144,291 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 
-// ---- 파이프라인 단계 정의 (서버 PIPELINE_STEPS와 동일 id) ----
-const STEPS = [
-  { id: "extract", label: "extract — PDF → .md 추출", desc: "신규 PDF만 처리 · 레인 적용",
-    hint: "로그의 [skip]/[error]를 확인하세요. structured 감지 실패면 아래 감지 실패 카드에서 문서별로 승격 여부(예/아니오)를 결정하세요." },
-  { id: "verify", label: "verify — 추출 검증 (A~C)", desc: "PDF 전수 대조 · verified_extract 스탬프",
-    hint: "FAIL은 추출 결함 신호 — 원인 해결(재추출 검토) 후 이 단계를 다시 실행하세요." },
-  { id: "annotate", label: "annotate — 요약 생성 (LLM)", desc: "요약 없는 유닛만 증분 생성",
-    hint: "오류·사용량 한도를 확인하세요 — 다시 실행하면 남은 유닛만 이어서 생성합니다." },
-  { id: "verify2", label: "verify 재실행 — 품질 판정 (D)", desc: "판정 통과 시 verified_annotate 기록",
-    hint: "D 품질 FAIL = 해당 요약 부실 — .md에서 그 요약 줄을 삭제하고 ③ annotate → ④ verify를 다시 실행하세요." },
-  { id: "build_db", label: "build_db — FTS 증분 동기화", desc: "변경 .md만 재색인",
-    hint: "게이트 스킵 = verified_annotate 없는 변경 파일 — ④ verify를 먼저 통과시킨 뒤 다시 실행하세요." },
-  { id: "build_index", label: "build_index — 마스터 카탈로그", desc: "master_index.md 재생성",
-    hint: "로그의 오류를 해결한 뒤 다시 실행하세요." },
-];
-const NUM = ["①", "②", "③", "④", "⑤", "⑥"];
-const stepIdx = (id) => STEPS.findIndex((s) => s.id === id);
-const stepName = (i) => `${NUM[i]} ${STEPS[i].id}`;
-
 const ERR_RE = /FAIL|\[error\]|Traceback|오류|실패/;
 const WARN_RE = /경고|\[skip|WARN|스킵|미반영|주의|게이트/;
 
+let lastStatus = null;
 let jobId = null, cursor = 0, pollTimer = null, busy = false;
-let lastStatus = null; // 마지막 /api/admin/status 응답 — todo_steps 기반 다음 단계 제안에 사용
-let lastJobPdf = null; // 마지막 job의 대상 PDF(파일 단위 extract·promote) — 실패 후속 버튼에 사용
+let previewSeq = 0;
 
-// ---- 현황판 ----
-function box(cls, html) {
+// ---- 공용 DOM 헬퍼 ----
+function box(cls, kids) {
   const d = document.createElement("div");
   d.className = "box " + cls;
-  d.append(...html);
+  d.append(...kids);
   return d;
+}
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
 }
 function txt(s) { return document.createTextNode(s); }
 function bold(s) { const b = document.createElement("b"); b.textContent = s; return b; }
 
+// ---- 현황 + 카드 ----
 async function refreshStatus() {
-  $("status-body").textContent = "불러오는 중…";
+  $("cards").textContent = "불러오는 중…";
   let s;
   try {
     s = await (await fetch("/api/admin/status")).json();
   } catch (e) {
-    $("status-body").textContent = "현황 조회 실패: " + e.message;
+    $("cards").textContent = "현황 조회 실패: " + e.message;
     return;
   }
   lastStatus = s;
-  // 배너 — 필요한 조치(자동 단계) / 수동 확인 / 최신 3종
   const bn = $("banners");
   bn.textContent = "";
-  if (s.todo_steps.length) {
-    const kids = [bold("필요한 조치 — 감지된 단계:")];
-    const list = document.createElement("div");
-    list.className = "steps-list";
-    for (const t of s.todo_steps) {
-      const d = document.createElement("div");
-      d.textContent = `${stepName(stepIdx(t.step))} — ${t.reason}`;
-      list.appendChild(d);
-    }
-    kids.push(list);
-    if (!s.freshness.ok) kids.push(txt("⚠ 검색은 DB 동기화 전까지 차단됩니다."));
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    const go = document.createElement("button");
-    go.className = "mini";
-    go.textContent = "최신화 시작";
-    go.addEventListener("click", startSync);
-    actions.appendChild(go);
-    const b = box("warn", kids);
-    b.appendChild(actions);
-    bn.appendChild(b);
+  if (!s.freshness.ok) {
+    bn.appendChild(box("warn", [
+      bold("⚠ 검색 차단 중"),
+      txt(` — ${s.freshness.message} 아래 조치를 해결하면 차단이 풀립니다.`),
+    ]));
   }
-  if (s.manual.length) {
-    const kids = [bold("수동 확인 필요 (자동 조치 없음):")];
-    const list = document.createElement("div");
-    list.className = "steps-list";
-    for (const m of s.manual) {
-      const d = document.createElement("div");
-      d.textContent = m;
-      list.appendChild(d);
-    }
-    kids.push(list);
-    bn.appendChild(box("warn", kids));
-  }
-  if (!s.todo) {
-    bn.appendChild(box("ok", [txt("✓ 모든 아티팩트 동기화 상태 — 할 일이 없습니다.")]));
-  }
-  // 스테퍼 행 "필요" 배지
-  const needMap = new Map(s.todo_steps.map((t) => [t.step, t.reason]));
-  for (const st of STEPS) {
-    const badge = $("need-" + st.id);
-    if (!badge) continue;
-    if (needMap.has(st.id)) {
-      badge.classList.remove("hidden");
-      badge.title = needMap.get(st.id);
-    } else {
-      badge.classList.add("hidden");
-      badge.title = "";
-    }
-  }
-  // 표
-  const tb = $("status-rows");
-  tb.textContent = "";
+  renderCards(s.cards);
+  renderSummary(s);
+  updatePreview();
+}
+
+function renderSummary(s) {
+  let done = 0, total = 0;
   for (const r of s.rows) {
-    const tr = document.createElement("tr");
-    const cells = [
-      ["mono", r.report_id, ""],
-      ["", r.extracted, r.extracted === "추출 필요" ? "cell-warn" : (r.extracted === "완료" ? "" : "cell-err")],
-      ["num", r.summary, ""],
-      ["num", String(r.remaining), r.remaining ? "cell-warn" : ""],
-      ["", r.report_summary, ""],
-      ["", r.verify, r.verify === "annotate" ? "cell-ok" : (r.verify === "미검증" ? "cell-warn" : "")],
-      ["", r.db, r.db === "미반영" ? "cell-err" : (r.db === "동기화" ? "cell-ok" : "")],
-      ["sum", r.notes.join("; "), r.notes.length ? "cell-warn" : ""],
-    ];
-    for (const [base, text, tone] of cells) {
-      const td = document.createElement("td");
-      td.className = (base + " " + tone).trim();
-      td.textContent = text;
-      tr.appendChild(td);
+    const m = /^(\d+)\/(\d+)$/.exec(r.summary);
+    if (m) { done += +m[1]; total += +m[2]; }
+  }
+  $("summary").textContent =
+    `보고서 ${s.rows.length}권 · 유닛 요약 ${done}/${total} · 잔여 호출 ${s.remaining_total}건`;
+}
+
+function ctlWrap(type, pdf) {
+  const d = el("div", "ctl");
+  d.dataset.type = type;
+  d.dataset.pdf = pdf;
+  return d;
+}
+function radio(group, value, label, checked) {
+  const l = el("label");
+  const r = document.createElement("input");
+  r.type = "radio";
+  r.name = group;
+  r.value = value;
+  r.checked = checked;
+  r.className = "card-ctl";
+  r.addEventListener("change", updatePreview);
+  l.append(r, txt(" " + label));
+  return l;
+}
+function checkbox(label, checked) {
+  const l = el("label");
+  const c = document.createElement("input");
+  c.type = "checkbox";
+  c.checked = checked;
+  c.className = "card-ctl";
+  c.dataset.role = "include";
+  c.addEventListener("change", updatePreview);
+  l.append(c, txt(" " + label));
+  return l;
+}
+
+let ctlSeq = 0;
+function renderCards(cards) {
+  const host = $("cards");
+  host.textContent = "";
+  if (!cards.length) {
+    host.appendChild(box("ok", [txt("✓ 조치가 필요한 항목이 없습니다 — 모든 아티팩트 동기화 상태입니다.")]));
+    return;
+  }
+  for (const c of cards) {
+    const kids = [bold(c.title), el("div", "hint", c.detail)];
+    if (c.files && c.files.length) {
+      const shown = c.files.length > 6 ? c.files.slice(0, 6).join(", ") + ` 외 ${c.files.length - 6}건`
+                                       : c.files.join(", ");
+      kids.push(el("div", "files", shown));
     }
-    tb.appendChild(tr);
-  }
-  $("status-table").classList.remove("hidden");
-  $("status-body").textContent = "";
-  // 파생물
-  const art = $("artifacts");
-  art.textContent = "";
-  for (const a of s.artifacts) {
-    const d = document.createElement("div");
-    d.textContent = a.text;
-    if (a.todo) d.className = "todo";
-    art.appendChild(d);
-  }
-}
-
-// ---- 파이프라인 UI ----
-function renderSteps() {
-  const host = $("steps");
-  for (let i = 0; i < STEPS.length; i++) {
-    const s = STEPS[i];
-    const row = document.createElement("div");
-    row.className = "step";
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    chip.id = "chip-" + s.id;
-    chip.textContent = "대기";
-    const label = document.createElement("span");
-    label.className = "label";
-    label.append(bold(`${NUM[i]} ${s.label}`), txt("  "));
-    const desc = document.createElement("span");
-    desc.className = "desc";
-    desc.textContent = s.desc;
-    label.appendChild(desc);
-    const need = document.createElement("span");
-    need.className = "need hidden";
-    need.id = "need-" + s.id;
-    need.textContent = "필요";
-    const btn = document.createElement("button");
-    btn.className = "mini ghost run-btn";
-    btn.textContent = "실행";
-    btn.addEventListener("click", () => startStep(s.id));
-    row.append(chip, label, need, btn);
-    host.appendChild(row);
+    const b = box(c.severity, kids);
+    const ex = c.extra || {};
+    if (c.kind === "detect_fail") {
+      const att = ex.l1_attempts && Object.keys(ex.l1_attempts).length
+        ? Object.entries(ex.l1_attempts).map(([k, v]) => `${k} ${v}`).join(" · ")
+        : "없음(장 번호 후보 신호 자체가 없음)";
+      b.appendChild(el("div", "hint", "후보 프로파일별 정상 장 수: " + att));
+      const sus = ex.l1_suspects || [];
+      if (sus.length) {
+        b.appendChild(el("div", "hint", `헤딩으로 의심되는 줄 ${sus.length}개 — 이 문서의 장 문법 후보:`));
+        b.appendChild(el("div", "mono-block", sus.join("\n")));
+      } else {
+        b.appendChild(el("div", "hint", "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장)."));
+      }
+    }
+    if (ex.error) b.appendChild(el("div", "mono-block", ex.error));
+    if (ex.errors && ex.errors.length) b.appendChild(el("div", "mono-block", ex.errors.join("\n")));
+    if (ex.items && ex.items.length) {
+      const list = el("div", "hint");
+      for (const it of ex.items) list.appendChild(el("div", "", "· " + it));
+      b.appendChild(list);
+    }
+    if (c.control) {
+      const con = c.control;
+      const group = "ctl-" + (ctlSeq++);
+      const w = ctlWrap(con.type, con.pdf);
+      if (con.type === "lane" || con.type === "lane_opt") {
+        if (con.type === "lane_opt") w.appendChild(checkbox("이번 해결에 포함", true));
+        w.append(radio(group, "structured", "structured (정책보고서류)", con.default === "structured"),
+                 radio(group, "flat", "flat (플랫 청킹)", con.default === "flat"));
+      } else if (con.type === "detect") {
+        w.append(radio(group, "promote", "승격 실행 (에이전트)", false),
+                 radio(group, "flat", "플랫으로 수용", false),
+                 radio(group, "skip", "보류", true));
+      } else if (con.type === "force") {
+        w.appendChild(checkbox("--force 재추출 포함 (요약·검증 스탬프 소실)", false));
+        w.dataset.lane = con.lane;
+      }
+      b.appendChild(w);
+    }
+    host.appendChild(b);
   }
 }
 
-function setChip(id, state, text) {
-  const c = $("chip-" + id);
-  if (!c) return;
-  c.className = "chip" + (state ? " " + state : "");
-  c.textContent = text;
+function collectDecisions() {
+  const pdfs = {}, force = [];
+  for (const w of document.querySelectorAll("#cards .ctl")) {
+    const type = w.dataset.type, pdf = w.dataset.pdf;
+    const include = w.querySelector('input[data-role="include"]');
+    const picked = w.querySelector('input[type="radio"]:checked');
+    if (type === "force") {
+      if (include && include.checked) force.push(pdf);
+    } else if (include && !include.checked) {
+      pdfs[pdf] = "skip";
+    } else if (picked) {
+      pdfs[pdf] = picked.value;
+    }
+  }
+  return { pdfs, force };
 }
+
+async function updatePreview() {
+  const seq = ++previewSeq;
+  const pv = $("plan-preview");
+  let res, j;
+  try {
+    res = await fetch("/api/admin/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decisions: collectDecisions(), dry_run: true }),
+    });
+    j = await res.json();
+  } catch (e) {
+    if (seq === previewSeq) pv.textContent = "계획 미리보기 실패: " + e.message;
+    return;
+  }
+  if (seq !== previewSeq) return; // 더 최신 미리보기가 이미 나감
+  if (!res.ok) {
+    pv.textContent = j.error || `HTTP ${res.status}`;
+    $("resolve").disabled = true;
+    return;
+  }
+  if (!j.stages.length) {
+    pv.textContent = "실행할 단계가 없습니다 — 이미 최신 상태입니다.";
+    $("resolve").disabled = true;
+    return;
+  }
+  pv.textContent = "실행 계획: " + j.stages.map((s) =>
+    ["verify", "annotate", "verify2"].includes(s.step) ? `${s.label} ${s.files.length}건` : s.label
+  ).join(" → ");
+  $("resolve").disabled = busy;
+}
+
+// ---- 일괄 해결 실행 ----
+async function resolveAll() {
+  if (busy) return;
+  const decisions = collectDecisions();
+  if (decisions.force.length &&
+      !confirm(`--force 재추출 ${decisions.force.length}건이 포함되어 있습니다.\n` +
+               "기존 요약·검증 스탬프를 버리고 재추출부터 검증·요약 재생성(LLM 사용량 소모)·" +
+               "DB 반영까지 다시 돌립니다. 계속할까요?")) return;
+  let res, j;
+  try {
+    res = await fetch("/api/admin/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decisions, dry_run: false }),
+    });
+    j = await res.json();
+  } catch (e) {
+    $("pipe-outcome").textContent = "";
+    $("pipe-outcome").appendChild(box("err", [txt("서버 연결 실패: " + e.message)]));
+    showJobPanel();
+    return;
+  }
+  if (!res.ok) {
+    $("pipe-outcome").textContent = "";
+    $("pipe-outcome").appendChild(box("err", [txt(j.error || `HTTP ${res.status}`)]));
+    showJobPanel();
+    return;
+  }
+  jobId = j.id;
+  cursor = 0;
+  clearRun();
+  showJobPanel();
+  setBusy(true);
+  clearTimeout(pollTimer);
+  pollJob();
+}
+
+function showJobPanel() { $("job-panel").classList.remove("hidden"); }
 
 function setBusy(b) {
   busy = b;
-  $("start").disabled = b;
-  for (const el of document.querySelectorAll(".run-btn")) el.disabled = b;
-  for (const el of document.querySelectorAll('#lanes input')) el.disabled = b;
+  $("resolve").disabled = b;
+  $("refresh").disabled = b;
+  for (const i of document.querySelectorAll("#cards input")) i.disabled = b;
   $("cancel").classList.toggle("hidden", !b);
   $("pipe-status").textContent = b ? "실행 중…" : "대기 중";
 }
 
+function clearRun() {
+  $("pipe-log").textContent = "";
+  $("job-stages").textContent = "";
+  $("pipe-outcome").textContent = "";
+}
+
 function addLogLines(lines) {
   const log = $("pipe-log");
-  log.classList.remove("hidden");
   for (const line of lines) {
     const d = document.createElement("div");
-    if (ERR_RE.test(line)) d.className = "err";
+    if (line.startsWith("[serve] ── ")) d.className = "sep";
+    else if (ERR_RE.test(line)) d.className = "err";
     else if (WARN_RE.test(line)) d.className = "warn";
-    d.textContent = line || " ";
+    d.textContent = line || " ";
     log.appendChild(d);
   }
   log.scrollTop = log.scrollHeight;
 }
 
-function clearRun() {
-  $("pipe-log").textContent = "";
-  $("pipe-log").classList.add("hidden");
-  $("pipe-outcome").textContent = "";
+function renderStages(j) {
+  const host = $("job-stages");
+  host.textContent = "";
+  j.stages.forEach((s, i) => {
+    let cls = "idle", mark = "· 대기";
+    if (s.code === 0) { cls = "ok"; mark = "✓ 통과"; }
+    else if (s.code !== null) { cls = "fail"; mark = `✗ exit ${s.code}`; }
+    else if (s.skipped) { cls = "idle"; mark = "— 생략"; }
+    else if (j.running && i === j.current) { cls = "run"; mark = "▶ 실행 중"; }
+    const d = el("div", "st " + cls);
+    d.appendChild(el("span", "mark", mark));
+    d.appendChild(txt(` ${i + 1}. ${s.label}`));
+    if (s.dropped && s.dropped.length) {
+      d.appendChild(el("span", "drop", `탈락: ${s.dropped.join(", ")}`));
+    }
+    host.appendChild(d);
+  });
 }
 
-// 완료된 작업 기록을 서버에서 닫고(ack) 화면도 정리 — 이후 새로고침에 재생되지 않음
 async function ackJob() {
   try { await fetch("/api/admin/job/ack", { method: "POST" }); } catch (e) {}
   clearRun();
+  $("job-panel").classList.add("hidden");
 }
 
 function ackButton(label) {
@@ -404,181 +439,41 @@ function ackButton(label) {
   return b;
 }
 
-// 재계산된 현황(lastStatus)에서 다음 필요 단계를 제안 — 순차가 아니라 필요 기준
-function appendNextStep(kids, actions) {
-  const next = lastStatus && lastStatus.todo_steps.length ? lastStatus.todo_steps[0] : null;
-  if (next) {
-    const j = stepIdx(next.step);
-    kids.push(txt(` 다음 필요 단계: ${stepName(j)} — ${next.reason}. 진행할까요?`));
-    const go = document.createElement("button");
-    go.className = "mini";
-    go.textContent = `${stepName(j)} 진행`;
-    go.addEventListener("click", () => startStep(next.step));
-    actions.append(go, ackButton("여기까지"));
-  } else {
-    kids.push(txt(" 필요한 단계가 없습니다 — 모든 아티팩트 최신 🎉"));
-    actions.append(ackButton("확인(닫기)"));
-  }
-}
-
-function showOutcome(step, code) {
+function showOutcome(j) {
   const out = $("pipe-outcome");
   out.textContent = "";
-  if (step === "promote") { showPromoteOutcome(out, code); return; }
-  const i = stepIdx(step);
-  if (code === 0) {
-    const kids = [txt(`✓ ${stepName(i)} 완료 — 특이사항 없음 (exit 0).`)];
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    appendNextStep(kids, actions);
-    const b = box("ok", kids);
-    if (actions.childNodes.length) b.appendChild(actions);
-    out.appendChild(b);
+  const failed = j.stages.filter((s) => s.code !== null && s.code !== 0);
+  const dropped = j.stages.flatMap((s) => s.dropped || []);
+  const hadPromote = j.stages.some((s) => s.step === "promote");
+  let b;
+  if (j.code === 0) {
+    b = box("ok", [txt("✓ 일괄 해결 완료 — 전 단계 통과, 탈락 없음.")]);
+  } else if (j.code === 2) {
+    b = box("err", [
+      bold("✗ 공통 장애로 중단"),
+      txt(" — 사용 오류·인증·사용량 한도 문제입니다. 위 로그의 강조 줄을 확인해 해결한 뒤 다시 일괄 해결을 실행하세요(남은 작업부터 이어집니다)."),
+    ]);
   } else {
-    const kids = [txt(`✗ ${stepName(i)} 종료 코드 ${code} — 특이사항이 있습니다. 위 로그의 강조된 줄을 확인해 해결하세요.`)];
-    const hint = document.createElement("div");
-    hint.className = "hint";
-    hint.textContent = "해결 방법: " + STEPS[i].hint;
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    const retry = document.createElement("button");
-    retry.className = "mini";
-    retry.textContent = `${stepName(i)} 다시 실행`;
-    retry.addEventListener("click", () => startStep(step));
-    actions.append(retry, ackButton("확인(닫기)"));
-    const b = box("err", kids);
-    b.append(hint, actions);
-    out.appendChild(b);
-    if (step === "extract") renderExtractFailures(out); // 비동기 — 감지 실패·승격 결정 패널
+    const kids = [bold("일괄 해결 종료 — 남은 문제가 있습니다.")];
+    const list = el("div", "hint");
+    for (const s of failed) list.appendChild(el("div", "", `· ${s.label}: 종료 코드 ${s.code}`));
+    const uniqDropped = [...new Set(dropped)];
+    if (uniqDropped.length) list.appendChild(el("div", "", `· 중도 탈락 ${uniqDropped.length}건: ${uniqDropped.join(", ")}`));
+    kids.push(list);
+    kids.push(el("div", "hint",
+      "가능한 파일은 끝까지 처리했습니다. 위 로그의 강조 줄과 아래 카드를 확인하고, 결정을 조정해 다시 일괄 해결을 실행하면 남은 작업부터 이어집니다."));
+    b = box("warn", kids);
   }
-}
-
-// ---- 프로파일 승격 (감지 실패 패널 → promote 에이전트) ----
-const PROMOTABLE = new Set(["skipped_no_profile", "skipped_no_body_start"]);
-
-function showPromoteOutcome(out, code) {
-  if (code === 0) {
-    const kids = [txt("✓ 프로파일 승격 완료 — extract.py에 새 문법 규칙이 추가되고 검증(목차 대조·전체 회귀)을 통과했습니다.")];
-    const hint = document.createElement("div");
-    hint.className = "hint";
-    hint.textContent = "extract.py 변경분은 미커밋 상태입니다 — 검토 후 커밋은 직접 해주세요.";
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    appendNextStep(kids, actions);
-    const b = box("ok", kids);
-    b.appendChild(hint);
-    if (actions.childNodes.length) b.appendChild(actions);
-    out.appendChild(b);
-  } else {
-    const kids = [txt(`✗ 프로파일 승격 실패·부적합 (exit ${code}) — 위 로그의 [promote] 보고를 확인하세요.`)];
-    const hint = document.createElement("div");
-    hint.className = "hint";
-    hint.textContent = "부적합 판정이면 이 문서는 플랫 청킹 수용을 권장합니다. extract.py는 에이전트가 원상 복구했는지 로그로 확인하세요.";
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    if (lastJobPdf) {
-      const flat = document.createElement("button");
-      flat.className = "mini";
-      flat.textContent = "플랫 청킹으로 수용";
-      flat.addEventListener("click", () => runJob({ step: "extract", lane: "flat", pdf: lastJobPdf }));
-      const again = document.createElement("button");
-      again.className = "mini ghost";
-      again.textContent = "승격 다시 시도";
-      again.addEventListener("click", () => runJob({ step: "promote", pdf: lastJobPdf }));
-      actions.append(flat, again);
-    }
-    actions.append(ackButton("확인(닫기)"));
-    const b = box("err", kids);
-    b.append(hint);
-    if (actions.childNodes.length) b.appendChild(actions);
-    out.appendChild(b);
+  if (hadPromote) {
+    b.appendChild(el("div", "hint",
+      j.stages.some((s) => s.step === "promote" && s.code === 0)
+        ? "프로파일 승격 성공분: extract.py 변경분은 미커밋 상태입니다 — 검토 후 커밋은 직접 해주세요."
+        : "승격 실패·부적합이면 이 문서는 플랫 수용을 권장합니다. extract.py 원상 복구 여부는 로그의 [promote] 보고로 확인하세요."));
   }
-}
-
-async function renderExtractFailures(out) {
-  let d;
-  try {
-    d = await (await fetch("/api/admin/extract-log")).json();
-  } catch (e) { return; }
-  if (!d.exists || !d.entries.length) return;
-  for (const e of d.entries) out.appendChild(failureCard(e));
-  if (d.entries.filter((e) => PROMOTABLE.has(e.status)).length >= 2) {
-    const kids = [txt("여러 문서가 감지에 실패했습니다 — 개별 결정 대신 한 번에 수용할 수도 있습니다 (structured로 추출된 문서는 스킵 가드가 보호).")];
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    const all = document.createElement("button");
-    all.className = "mini";
-    all.textContent = "남은 신규 PDF 전부 플랫으로 수용";
-    all.addEventListener("click", () => {
-      document.querySelector('#lanes input[value="flat"]').checked = true;
-      startStep("extract");
-    });
-    actions.appendChild(all);
-    const b = box("warn", kids);
-    b.appendChild(actions);
-    out.appendChild(b);
-  }
-}
-
-function failureCard(e) {
-  const kids = [bold(e.file || "?"), txt(" — ")];
-  if (e.status === "skipped_flat_guard") {
-    kids.push(txt("본문 텍스트가 400자 미만(이미지 위주 문서)이라 플랫 청킹도 불가합니다. OCR은 별도 과제 — 이 PDF는 보류하거나 pdfs/에서 빼 두세요."));
-    return box("warn", kids);
-  }
-  if (e.status === "error") {
-    kids.push(txt("추출 중 오류가 발생했습니다(문법 문제가 아니라 코드/파일 문제)."));
-    const b = box("err", kids);
-    if (e.error) {
-      const m = document.createElement("div");
-      m.className = "mono-block";
-      m.textContent = e.error;
-      b.appendChild(m);
-    }
-    return b;
-  }
-  // 감지 실패 — 프로파일 승격 결정 카드
-  kids.push(txt("기존 문법에 맞지 않습니다(장-절 구조 감지 실패)."));
-  const b = box("warn", kids);
-  const att = document.createElement("div");
-  att.className = "hint";
-  att.textContent = "후보 프로파일별 정상 장 수: " +
-    (e.l1_attempts && Object.keys(e.l1_attempts).length
-      ? Object.entries(e.l1_attempts).map(([k, v]) => `${k} ${v}`).join(" · ")
-      : "없음(장 번호 후보 신호 자체가 없음)");
-  b.appendChild(att);
-  const sus = e.l1_suspects || [];
-  const cap = document.createElement("div");
-  cap.className = "hint";
-  if (sus.length) {
-    cap.textContent = `헤딩으로 의심되는 줄 ${sus.length}개 — 이 문서의 장 문법 후보:`;
-    const m = document.createElement("div");
-    m.className = "mono-block";
-    m.textContent = sus.join("\n");
-    b.append(cap, m);
-  } else {
-    cap.textContent = "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장).";
-    b.appendChild(cap);
-  }
-  const q = document.createElement("div");
-  q.style.marginTop = "8px";
-  q.append(
-    bold("프로파일 승격을 진행할까요?"),
-    txt(" 예 = 에이전트가 extract.py에 이 문법 규칙을 추가하고 추출·검증·전체 회귀 대조까지 수행합니다(수 분 소요 · LLM 사용량 소모, 서버 기동 기기에서만). 아니오 = 이 문서만 플랫 청킹으로 수용합니다."),
-  );
-  const actions = document.createElement("div");
-  actions.className = "actions";
-  const yes = document.createElement("button");
-  yes.className = "mini";
-  yes.textContent = "예 — 승격 실행";
-  yes.addEventListener("click", () => runJob({ step: "promote", pdf: e.file }));
-  const no = document.createElement("button");
-  no.className = "mini ghost";
-  no.textContent = "아니오 — 플랫 청킹으로 수용";
-  no.addEventListener("click", () => runJob({ step: "extract", lane: "flat", pdf: e.file }));
-  actions.append(yes, no);
-  b.append(q, actions);
-  return b;
+  const actions = el("div", "actions");
+  actions.appendChild(ackButton("확인(닫기)"));
+  b.appendChild(actions);
+  out.appendChild(b);
 }
 
 async function pollJob() {
@@ -591,67 +486,18 @@ async function pollJob() {
   }
   if (!j.exists) { setBusy(false); return; }
   if (j.id !== jobId) { jobId = j.id; cursor = 0; clearRun(); }
-  lastJobPdf = j.pdf || null;
   if (j.lines.length) addLogLines(j.lines);
   cursor = j.total;
+  renderStages(j);
   if (j.running) {
-    setChip(j.step, "running", "실행 중");
+    showJobPanel();
+    if (!busy) setBusy(true);
     pollTimer = setTimeout(pollJob, 1000);
   } else {
-    setChip(j.step, j.code === 0 ? "ok" : "fail", j.code === 0 ? "통과" : `exit ${j.code}`);
     setBusy(false);
-    await refreshStatus(); // 다음 필요 단계 재도출 후 프롬프트 구성
-    showOutcome(j.step, j.code);
+    await refreshStatus(); // 잔여 문제를 카드로 재도출한 뒤 결과 안내
+    showOutcome(j);
   }
-}
-
-async function startSync() {
-  if (busy) return;
-  await refreshStatus(); // 최신 현황 기준으로 첫 필요 단계 결정
-  const next = lastStatus && lastStatus.todo_steps.length ? lastStatus.todo_steps[0] : null;
-  const out = $("pipe-outcome");
-  if (!next) {
-    out.textContent = "";
-    out.appendChild(box("ok", [txt("✓ 필요한 단계가 없습니다 — 이미 최신 상태입니다.")]));
-    return;
-  }
-  startStep(next.step);
-}
-
-async function startStep(step) {
-  const body = { step };
-  if (step === "extract") body.lane = document.querySelector('#lanes input:checked').value;
-  await runJob(body);
-}
-
-async function runJob(body) {
-  if (busy) return;
-  let res;
-  try {
-    res = await fetch("/api/admin/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  } catch (e) {
-    $("pipe-outcome").textContent = "";
-    $("pipe-outcome").appendChild(box("err", [txt("서버 연결 실패: " + e.message)]));
-    return;
-  }
-  const j = await res.json();
-  if (!res.ok) {
-    $("pipe-outcome").textContent = "";
-    $("pipe-outcome").appendChild(box("err", [txt(j.error || `HTTP ${res.status}`)]));
-    return;
-  }
-  jobId = j.id;
-  cursor = 0;
-  lastJobPdf = body.pdf || null;
-  clearRun();
-  setChip(body.step, "running", "실행 중"); // promote는 칩 없음 — setChip이 무시
-  setBusy(true);
-  clearTimeout(pollTimer);
-  pollJob();
 }
 
 async function attachJob() {
@@ -663,106 +509,28 @@ async function attachJob() {
   if (!j.running && j.acked) return; // [확인]으로 닫은 완료 기록 — 재생하지 않음
   jobId = j.id;
   cursor = j.total;
-  lastJobPdf = j.pdf || null;
   clearRun();
+  showJobPanel();
   addLogLines(j.lines);
+  renderStages(j);
   if (j.running) {
-    setChip(j.step, "running", "실행 중");
     setBusy(true);
     pollTimer = setTimeout(pollJob, 1000);
   } else {
-    setChip(j.step, j.code === 0 ? "ok" : "fail", j.code === 0 ? "통과" : `exit ${j.code}`);
-    showOutcome(j.step, j.code);
+    showOutcome(j);
   }
-}
-
-// ---- 목차·요약 브라우저 ----
-async function loadReports() {
-  let r, j;
-  try {
-    r = await fetch("/api/admin/reports");
-    j = await r.json();
-  } catch (e) { $("toc-note").textContent = "보고서 목록 조회 실패: " + e.message; return; }
-  if (!r.ok) { $("toc-note").textContent = j.error || `HTTP ${r.status}`; return; }
-  const sel = $("toc-report");
-  while (sel.options.length > 1) sel.remove(1);
-  for (const rep of j.reports) {
-    const o = document.createElement("option");
-    o.value = rep.filepath;
-    o.textContent = `${rep.report_id} — ${rep.title} (${rep.year}) · 요약 ${rep.summarized}/${rep.sections}`;
-    sel.appendChild(o);
-  }
-  $("toc-note").textContent = `DB 수록 보고서 ${j.reports.length}권 — 선택하면 목차·요약 현황을 표시합니다.`;
-}
-
-async function loadToc(fp) {
-  const table = $("toc-table"), tb = $("toc-rows");
-  tb.textContent = "";
-  if (!fp) { table.classList.add("hidden"); return; }
-  let r, j;
-  try {
-    r = await fetch("/api/admin/toc?filepath=" + encodeURIComponent(fp));
-    j = await r.json();
-  } catch (e) { $("toc-note").textContent = "목차 조회 실패: " + e.message; return; }
-  if (!r.ok) { $("toc-note").textContent = j.error || `HTTP ${r.status}`; return; }
-  let missing = 0;
-  for (const s of j.sections) {
-    if (!s.summary) missing++;
-    const tr = document.createElement("tr");
-    const tdId = document.createElement("td");
-    tdId.className = "mono";
-    tdId.textContent = s.section_id;
-    const tdLoc = document.createElement("td");
-    tdLoc.textContent = s.chapter + (s.section ? " > " + s.section : "");
-    const tdSum = document.createElement("td");
-    tdSum.className = "sum";
-    tdSum.textContent = s.summary || "— (요약 없음: 참고문헌·부록 장)";
-    const tdN = document.createElement("td");
-    tdN.className = "num";
-    tdN.textContent = s.body_chars.toLocaleString() + "자";
-    tr.append(tdId, tdLoc, tdSum, tdN);
-    tb.appendChild(tr);
-  }
-  table.classList.remove("hidden");
-  $("toc-note").textContent =
-    `${j.sections.length}행 (요약 ${j.sections.length - missing}건 · 공란 ${missing}건 — 공란은 참고문헌·부록 장이 정상)`;
-}
-
-let masterLoaded = false;
-async function toggleMaster() {
-  const pre = $("master-src"), btn = $("master-btn");
-  if (!pre.classList.contains("hidden")) {
-    pre.classList.add("hidden");
-    btn.textContent = "마스터 카탈로그 보기";
-    return;
-  }
-  if (!masterLoaded) {
-    let r, j;
-    try {
-      r = await fetch("/api/admin/master-index");
-      j = await r.json();
-    } catch (e) { pre.textContent = "조회 실패: " + e.message; pre.classList.remove("hidden"); return; }
-    pre.textContent = r.ok ? j.text : (j.error || `HTTP ${r.status}`);
-    masterLoaded = r.ok;
-  }
-  pre.classList.remove("hidden");
-  btn.textContent = "마스터 카탈로그 닫기";
 }
 
 // ---- 초기화 ----
-renderSteps();
 $("refresh").addEventListener("click", refreshStatus);
-$("start").addEventListener("click", startSync);
+$("resolve").addEventListener("click", resolveAll);
 $("cancel").addEventListener("click", async () => {
   await fetch("/api/admin/cancel", { method: "POST" });
 });
-$("toc-report").addEventListener("change", (e) => loadToc(e.target.value));
-$("master-btn").addEventListener("click", toggleMaster);
 (async () => {
-  await refreshStatus(); // attachJob의 완료 재생 프롬프트가 todo_steps를 참조하므로 선행
+  await refreshStatus(); // attachJob의 결과 안내가 최신 카드를 전제하므로 선행
   attachJob();
 })();
-loadReports();
 </script>
 </body>
 </html>

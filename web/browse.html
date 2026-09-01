@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nrf-policy-db 자료 현황</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1a1f27; --muted: #6b7280;
+    --border: #dfe3e8; --accent: #2456c9; --accent-weak: #e8eefb;
+    --ok-text: #176d33; --warn-text: #7c5e10; --err-text: #a02020;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --panel: #1d2129; --text: #e6e9ee; --muted: #9aa2af;
+      --border: #333a45; --accent: #6f9bf0; --accent-weak: #24314d;
+      --ok-text: #9fdcb2; --warn-text: #e8d48a; --err-text: #f0a8a8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .head .navs { display: flex; gap: 8px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  a.nav {
+    color: var(--accent); text-decoration: none; font-size: 13.5px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px;
+    background: var(--panel); white-space: nowrap;
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  h2 { font-size: 14px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 22px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.mini { padding: 3px 12px; font-size: 12.5px; font-weight: 600; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td.mono { font-family: Consolas, "D2Coding", monospace; font-size: 12px; white-space: nowrap; }
+  td.num { text-align: right; white-space: nowrap; }
+  td.sum { font-size: 12.5px; color: var(--muted); }
+  .cell-warn { color: var(--warn-text); }
+  .cell-err { color: var(--err-text); }
+  .cell-ok { color: var(--ok-text); }
+  #status-rows tr { cursor: pointer; }
+  #status-rows tr:hover { background: var(--accent-weak); }
+  #status-rows tr.selected { background: var(--accent-weak); outline: 1px solid var(--accent); }
+  .artifacts { font-size: 13px; margin-top: 10px; color: var(--muted); }
+  .artifacts .todo { color: var(--warn-text); }
+  .note { color: var(--muted); font-size: 12.5px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  #master-src {
+    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
+    max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; margin-top: 10px;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>자료 현황</h1>
+      <div class="sub">보고서별 파이프라인 현황 — 행을 클릭하면 그 보고서의 목차·요약을 아래에 표시합니다.</div>
+    </div>
+    <div class="navs">
+      <a class="nav" href="/admin">DB 관리</a>
+      <a class="nav" href="/">← 검색으로</a>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>현황판 <button id="refresh" class="mini ghost" style="margin-left:8px">새로고침</button></h2>
+    <div id="status-body" class="note">불러오는 중…</div>
+    <div class="scroll">
+      <table id="status-table" class="hidden">
+        <thead><tr>
+          <th>report_id</th><th>추출</th><th>요약</th><th>잔여 호출</th>
+          <th>보고서요약</th><th>검증</th><th>DB</th><th>비고</th>
+        </tr></thead>
+        <tbody id="status-rows"></tbody>
+      </table>
+    </div>
+    <div id="artifacts" class="artifacts"></div>
+    <div id="summary" class="note" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel">
+    <h2>목차·요약 브라우저 (reports.db 기준)</h2>
+    <div class="row" style="margin-top:0">
+      <span id="toc-note" class="note">위 현황판에서 보고서 행을 클릭하세요.</span>
+      <button id="master-btn" class="mini ghost">마스터 카탈로그 보기</button>
+    </div>
+    <div class="scroll">
+      <table id="toc-table" class="hidden" style="margin-top:8px">
+        <thead><tr><th>section_id</th><th>위치</th><th>요약</th><th class="num">본문</th></tr></thead>
+        <tbody id="toc-rows"></tbody>
+      </table>
+    </div>
+    <div id="master-src" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+async function refreshStatus() {
+  $("status-body").textContent = "불러오는 중…";
+  let s;
+  try {
+    s = await (await fetch("/api/admin/status")).json();
+  } catch (e) {
+    $("status-body").textContent = "현황 조회 실패: " + e.message;
+    return;
+  }
+  const tb = $("status-rows");
+  tb.textContent = "";
+  for (const r of s.rows) {
+    const tr = document.createElement("tr");
+    tr.dataset.reportId = r.report_id;
+    const cells = [
+      ["mono", r.report_id, ""],
+      ["", r.extracted, r.extracted === "추출 필요" ? "cell-warn" : (r.extracted === "완료" ? "" : "cell-err")],
+      ["num", r.summary, ""],
+      ["num", String(r.remaining), r.remaining ? "cell-warn" : ""],
+      ["", r.report_summary, ""],
+      ["", r.verify, r.verify === "annotate" ? "cell-ok" : (r.verify === "미검증" ? "cell-warn" : "")],
+      ["", r.db, r.db === "미반영" ? "cell-err" : (r.db === "동기화" ? "cell-ok" : "")],
+      ["sum", r.notes.join("; "), r.notes.length ? "cell-warn" : ""],
+    ];
+    for (const [base, text, tone] of cells) {
+      const td = document.createElement("td");
+      td.className = (base + " " + tone).trim();
+      td.textContent = text;
+      tr.appendChild(td);
+    }
+    tr.addEventListener("click", () => selectReport(tr));
+    tb.appendChild(tr);
+  }
+  $("status-table").classList.remove("hidden");
+  $("status-body").textContent = "";
+  const art = $("artifacts");
+  art.textContent = "";
+  for (const a of s.artifacts) {
+    const d = document.createElement("div");
+    d.textContent = a.text;
+    if (a.todo) d.className = "todo";
+    art.appendChild(d);
+  }
+  let done = 0, total = 0;
+  for (const r of s.rows) {
+    const m = /^(\d+)\/(\d+)$/.exec(r.summary);
+    if (m) { done += +m[1]; total += +m[2]; }
+  }
+  $("summary").textContent =
+    `보고서 ${s.rows.length}권 · 유닛 요약 ${done}/${total} · 잔여 호출 ${s.remaining_total}건 · 비고 ${s.note_count}건`;
+}
+
+async function selectReport(tr) {
+  for (const row of document.querySelectorAll("#status-rows tr")) row.classList.remove("selected");
+  tr.classList.add("selected");
+  const rid = tr.dataset.reportId;
+  const table = $("toc-table"), tb = $("toc-rows");
+  tb.textContent = "";
+  table.classList.add("hidden");
+  $("toc-note").textContent = `${rid} 목차를 불러오는 중…`;
+  let r, j;
+  try {
+    r = await fetch("/api/admin/toc?filepath=" + encodeURIComponent(`reports/${rid}.md`));
+    j = await r.json();
+  } catch (e) { $("toc-note").textContent = "목차 조회 실패: " + e.message; return; }
+  if (!r.ok) {
+    $("toc-note").textContent = r.status === 404
+      ? `${rid} — reports.db에 아직 수록되지 않은 보고서입니다 (신규·미반영이면 DB 관리에서 일괄 해결).`
+      : (j.error || `HTTP ${r.status}`);
+    return;
+  }
+  let missing = 0;
+  for (const s of j.sections) {
+    if (!s.summary) missing++;
+    const row = document.createElement("tr");
+    const tdId = document.createElement("td");
+    tdId.className = "mono";
+    tdId.textContent = s.section_id;
+    const tdLoc = document.createElement("td");
+    tdLoc.textContent = s.chapter + (s.section ? " > " + s.section : "");
+    const tdSum = document.createElement("td");
+    tdSum.className = "sum";
+    tdSum.textContent = s.summary || "— (요약 없음: 참고문헌·부록 장)";
+    const tdN = document.createElement("td");
+    tdN.className = "num";
+    tdN.textContent = s.body_chars.toLocaleString() + "자";
+    row.append(tdId, tdLoc, tdSum, tdN);
+    tb.appendChild(row);
+  }
+  table.classList.remove("hidden");
+  $("toc-note").textContent =
+    `${rid} — ${j.sections.length}행 (요약 ${j.sections.length - missing}건 · 공란 ${missing}건 — 공란은 참고문헌·부록 장이 정상)`;
+}
+
+let masterLoaded = false;
+async function toggleMaster() {
+  const pre = $("master-src"), btn = $("master-btn");
+  if (!pre.classList.contains("hidden")) {
+    pre.classList.add("hidden");
+    btn.textContent = "마스터 카탈로그 보기";
+    return;
+  }
+  if (!masterLoaded) {
+    let r, j;
+    try {
+      r = await fetch("/api/admin/master-index");
+      j = await r.json();
+    } catch (e) { pre.textContent = "조회 실패: " + e.message; pre.classList.remove("hidden"); return; }
+    pre.textContent = r.ok ? j.text : (j.error || `HTTP ${r.status}`);
+    masterLoaded = r.ok;
+  }
+  pre.classList.remove("hidden");
+  btn.textContent = "마스터 카탈로그 닫기";
+}
+
+$("refresh").addEventListener("click", refreshStatus);
+$("master-btn").addEventListener("click", toggleMaster);
+refreshStatus();
+</script>
+</body>
+</html>
