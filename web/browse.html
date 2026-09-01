@@ -23,20 +23,23 @@
     font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
     font-size: 15px; line-height: 1.6;
   }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  .wrap { max-width: 1600px; margin: 0 auto; padding: 24px 16px 32px; }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   .head .navs { display: flex; gap: 8px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
   a.nav {
     color: var(--accent); text-decoration: none; font-size: 13.5px; font-weight: 600;
     border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px;
     background: var(--panel); white-space: nowrap;
   }
+  .cols { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 13fr); gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } .viewer { position: static; } }
   .panel {
     background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+    border-radius: 10px; padding: 14px 16px;
   }
+  .viewer { position: sticky; top: 12px; }
   h2 { font-size: 14px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
   button {
     background: var(--accent); color: #fff; border: 0; border-radius: 8px;
@@ -44,10 +47,15 @@
   }
   button.mini { padding: 3px 12px; font-size: 12.5px; font-weight: 600; }
   button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
-  .scroll { overflow-x: auto; }
+  .scrolly { overflow: auto; }
+  #status-wrap { max-height: calc(100vh - 300px); }
+  #viewer-body { max-height: calc(100vh - 170px); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  th {
+    color: var(--muted); font-weight: 600; white-space: nowrap;
+    position: sticky; top: 0; background: var(--panel);
+  }
   td.mono { font-family: Consolas, "D2Coding", monospace; font-size: 12px; white-space: nowrap; }
   td.num { text-align: right; white-space: nowrap; }
   td.sum { font-size: 12.5px; color: var(--muted); }
@@ -60,12 +68,12 @@
   .artifacts { font-size: 13px; margin-top: 10px; color: var(--muted); }
   .artifacts .todo { color: var(--warn-text); }
   .note { color: var(--muted); font-size: 12.5px; }
-  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
-  #master-src {
-    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
-    max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  .meta-title { font-size: 15.5px; font-weight: 700; line-height: 1.45; }
+  .meta-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .meta-abstract {
+    font-size: 13px; margin: 8px 0 12px; padding: 8px 12px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 10px; margin-top: 10px;
+    white-space: pre-wrap; word-break: break-word;
   }
   .hidden { display: none; }
 </style>
@@ -75,7 +83,7 @@
   <div class="head">
     <div>
       <h1>자료 현황</h1>
-      <div class="sub">보고서별 파이프라인 현황 — 행을 클릭하면 그 보고서의 목차·요약을 아래에 표시합니다.</div>
+      <div class="sub">왼쪽 현황판에서 보고서 행을 클릭하면 오른쪽에 카탈로그 요약과 목차가 표시됩니다.</div>
     </div>
     <div class="navs">
       <a class="nav" href="/admin">DB 관리</a>
@@ -83,35 +91,38 @@
     </div>
   </div>
 
-  <div class="panel">
-    <h2>현황판 <button id="refresh" class="mini ghost" style="margin-left:8px">새로고침</button></h2>
-    <div id="status-body" class="note">불러오는 중…</div>
-    <div class="scroll">
-      <table id="status-table" class="hidden">
-        <thead><tr>
-          <th>report_id</th><th>추출</th><th>요약</th><th>잔여 호출</th>
-          <th>보고서요약</th><th>검증</th><th>DB</th><th>비고</th>
-        </tr></thead>
-        <tbody id="status-rows"></tbody>
-      </table>
+  <div class="cols">
+    <div class="panel">
+      <h2>현황판 <button id="refresh" class="mini ghost" style="margin-left:8px">새로고침</button></h2>
+      <div id="status-body" class="note">불러오는 중…</div>
+      <div id="status-wrap" class="scrolly">
+        <table id="status-table" class="hidden">
+          <thead><tr>
+            <th>report_id</th><th>추출</th><th>요약</th><th>잔여 호출</th>
+            <th>보고서요약</th><th>검증</th><th>DB</th><th>비고</th>
+          </tr></thead>
+          <tbody id="status-rows"></tbody>
+        </table>
+      </div>
+      <div id="artifacts" class="artifacts"></div>
+      <div id="summary" class="note" style="margin-top:8px"></div>
     </div>
-    <div id="artifacts" class="artifacts"></div>
-    <div id="summary" class="note" style="margin-top:8px"></div>
-  </div>
 
-  <div class="panel">
-    <h2>목차·요약 브라우저 (reports.db 기준)</h2>
-    <div class="row" style="margin-top:0">
-      <span id="toc-note" class="note">위 현황판에서 보고서 행을 클릭하세요.</span>
-      <button id="master-btn" class="mini ghost">마스터 카탈로그 보기</button>
+    <div class="panel viewer">
+      <h2 id="viewer-title">보고서 카탈로그·목차</h2>
+      <div id="viewer-body" class="scrolly">
+        <div id="report-meta" class="hidden">
+          <div id="meta-title" class="meta-title"></div>
+          <div id="meta-sub" class="meta-sub"></div>
+          <div id="meta-abstract" class="meta-abstract hidden"></div>
+        </div>
+        <div id="viewer-note" class="note">왼쪽 현황판에서 보고서 행을 클릭하세요.</div>
+        <table id="toc-table" class="hidden">
+          <thead><tr><th>section_id</th><th>위치</th><th>요약</th><th class="num">본문</th></tr></thead>
+          <tbody id="toc-rows"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="scroll">
-      <table id="toc-table" class="hidden" style="margin-top:8px">
-        <thead><tr><th>section_id</th><th>위치</th><th>요약</th><th class="num">본문</th></tr></thead>
-        <tbody id="toc-rows"></tbody>
-      </table>
-    </div>
-    <div id="master-src" class="hidden"></div>
   </div>
 </div>
 
@@ -171,25 +182,56 @@ async function refreshStatus() {
     `보고서 ${s.rows.length}권 · 유닛 요약 ${done}/${total} · 잔여 호출 ${s.remaining_total}건 · 비고 ${s.note_count}건`;
 }
 
+// 카탈로그 메타(제목·연도·연구책임자·요약 — master_index와 동일 소스) + 목차를 함께 렌더
+function renderMeta(rid, meta) {
+  const box = $("report-meta");
+  if (!meta) {
+    $("meta-title").textContent = rid;
+    $("meta-sub").textContent = `reports/${rid}.md — frontmatter를 읽지 못해 카탈로그 요약 생략`;
+    $("meta-abstract").classList.add("hidden");
+    box.classList.remove("hidden");
+    return;
+  }
+  $("meta-title").textContent = meta.title + (meta.year ? ` (${meta.year})` : "");
+  const who = meta.lead_researcher
+    ? meta.lead_researcher + (meta.institution ? ` (${meta.institution})` : "")
+    : meta.institution;
+  $("meta-sub").textContent = [who ? "연구책임자 " + who : "", `reports/${rid}.md`]
+    .filter(Boolean).join(" · ");
+  const ab = $("meta-abstract");
+  if (meta.summary) {
+    ab.textContent = meta.summary;
+    ab.classList.remove("hidden");
+  } else {
+    ab.classList.add("hidden");
+  }
+  box.classList.remove("hidden");
+}
+
 async function selectReport(tr) {
   for (const row of document.querySelectorAll("#status-rows tr")) row.classList.remove("selected");
   tr.classList.add("selected");
   const rid = tr.dataset.reportId;
-  const table = $("toc-table"), tb = $("toc-rows");
-  tb.textContent = "";
-  table.classList.add("hidden");
-  $("toc-note").textContent = `${rid} 목차를 불러오는 중…`;
+  $("viewer-title").textContent = `보고서 카탈로그·목차 — ${rid}`;
+  $("report-meta").classList.add("hidden");
+  $("toc-table").classList.add("hidden");
+  $("toc-rows").textContent = "";
+  const note = $("viewer-note");
+  note.classList.remove("hidden");
+  note.textContent = "불러오는 중…";
   let r, j;
   try {
     r = await fetch("/api/admin/toc?filepath=" + encodeURIComponent(`reports/${rid}.md`));
     j = await r.json();
-  } catch (e) { $("toc-note").textContent = "목차 조회 실패: " + e.message; return; }
+  } catch (e) { note.textContent = "조회 실패: " + e.message; return; }
   if (!r.ok) {
-    $("toc-note").textContent = r.status === 404
-      ? `${rid} — reports.db에 아직 수록되지 않은 보고서입니다 (신규·미반영이면 DB 관리에서 일괄 해결).`
+    note.textContent = r.status === 404
+      ? "reports.db에 아직 수록되지 않은 보고서입니다 (신규·미반영이면 DB 관리에서 일괄 해결)."
       : (j.error || `HTTP ${r.status}`);
     return;
   }
+  renderMeta(rid, j.meta);
+  const tb = $("toc-rows");
   let missing = 0;
   for (const s of j.sections) {
     if (!s.summary) missing++;
@@ -208,34 +250,13 @@ async function selectReport(tr) {
     row.append(tdId, tdLoc, tdSum, tdN);
     tb.appendChild(row);
   }
-  table.classList.remove("hidden");
-  $("toc-note").textContent =
-    `${rid} — ${j.sections.length}행 (요약 ${j.sections.length - missing}건 · 공란 ${missing}건 — 공란은 참고문헌·부록 장이 정상)`;
-}
-
-let masterLoaded = false;
-async function toggleMaster() {
-  const pre = $("master-src"), btn = $("master-btn");
-  if (!pre.classList.contains("hidden")) {
-    pre.classList.add("hidden");
-    btn.textContent = "마스터 카탈로그 보기";
-    return;
-  }
-  if (!masterLoaded) {
-    let r, j;
-    try {
-      r = await fetch("/api/admin/master-index");
-      j = await r.json();
-    } catch (e) { pre.textContent = "조회 실패: " + e.message; pre.classList.remove("hidden"); return; }
-    pre.textContent = r.ok ? j.text : (j.error || `HTTP ${r.status}`);
-    masterLoaded = r.ok;
-  }
-  pre.classList.remove("hidden");
-  btn.textContent = "마스터 카탈로그 닫기";
+  $("toc-table").classList.remove("hidden");
+  $("viewer-body").scrollTop = 0;
+  note.textContent =
+    `목차 ${j.sections.length}행 (요약 ${j.sections.length - missing}건 · 공란 ${missing}건 — 공란은 참고문헌·부록 장이 정상)`;
 }
 
 $("refresh").addEventListener("click", refreshStatus);
-$("master-btn").addEventListener("click", toggleMaster);
 refreshStatus();
 </script>
 </body>

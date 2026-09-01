@@ -26,7 +26,8 @@
   재접속된다. 질의↔DB 작업은 상호 배제(409). 완료 기록은 결과 박스의 [확인(닫기)]
   ack로 닫는다(진행 중 작업 복원은 그대로).
 - /browse = 자료 현황 페이지(2026-09): 보고서별 현황판 표(행 클릭 → 그 보고서의
-  목차·요약 로드) + 마스터 카탈로그 뷰 — reports.db 읽기 전용 조회.
+  카탈로그 요약(master_index와 동일 소스 규칙: abstract 1차 → fallback 블록) +
+  목차·요약을 오른쪽 뷰어에 로드) — reports.db 읽기 전용 + .md frontmatter 조회.
 - 멀티턴(질의 간 세션 유지)은 범위 밖 — perform_search의 "세션=질의 1건" 구조를
   세션 보관소로 바꿔야 하므로 확장 시 별도 설계.
 
@@ -49,6 +50,7 @@ from starlette.applications import Starlette
 from starlette.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.routing import Route
 
+import mdio
 from annotate import AuthError, RetryableError, UsageLimitReached, fatal_msg, setup_auth
 from build_db import file_digest
 from search import DEFAULT_MODEL, MAX_TURNS, TOP_N, perform_search
@@ -811,6 +813,19 @@ def api_admin_reports(request):
     ]})
 
 
+def report_meta(fp: str) -> dict | None:
+    """보고서 카탈로그 메타 — 요약 소스 규칙은 build_index.render_entry와 동일
+    (frontmatter abstract 1차, 공란이면 `> **보고서 요약:**` fallback 블록)."""
+    try:
+        st = mdio.load_report(Path(fp))
+    except Exception:
+        return None
+    fm = st.fm
+    summary = fm.abstract if not fm.abstract_empty else st.existing.get(mdio.REPORT_KEY, "")
+    return {"title": fm.title, "year": fm.year, "lead_researcher": fm.lead_researcher,
+            "institution": fm.institution, "summary": summary}
+
+
 def api_admin_toc(request):
     fp = request.query_params.get("filepath", "")
     con = open_db_ro()
@@ -826,18 +841,11 @@ def api_admin_toc(request):
         con.close()
     if not rows:
         return JSONResponse({"error": f"DB에 없는 filepath: {fp}"}, status_code=404)
-    return JSONResponse({"sections": [
+    # fp는 DB filepath와 일치 확인 후에만 .md를 읽는다(경로 임의 지정 차단)
+    return JSONResponse({"meta": report_meta(fp), "sections": [
         {"section_id": sid, "chapter": ch, "section": sec, "summary": summ, "body_chars": n}
         for sid, ch, sec, summ, n in rows
     ]})
-
-
-def api_admin_master_index(request):
-    p = Path("master_index.md")
-    if not p.exists():
-        return JSONResponse({"error": "master_index.md 없음 — DB 관리에서 카탈로그를 재생성하세요."},
-                            status_code=404)
-    return JSONResponse({"text": p.read_text(encoding="utf-8")})
 
 
 def main() -> None:
@@ -914,7 +922,6 @@ def main() -> None:
             Route("/api/admin/job/ack", api_admin_job_ack, methods=["POST"]),
             Route("/api/admin/reports", api_admin_reports),
             Route("/api/admin/toc", api_admin_toc),
-            Route("/api/admin/master-index", api_admin_master_index),
         ]
     )
     app.state.base_args = args
