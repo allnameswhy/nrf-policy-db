@@ -9,9 +9,13 @@ PROJECT_NOTES §5 / IMPLEMENTATION_NOTES §7의 6단계를 단일 ClaudeSDKClien
   .md에서 뽑은 결과와 바이트 동일(요약 블록 제외 완료)하고, 시작 시 files 원장 해시
   하드 게이트가 .md와의 동일성을 보장하므로 사실상 원본 경유 참조다(불일치 시 중단,
   --allow-stale로만 강행). 낡은 색인 + 새 원본의 짝 불일치도 같은 게이트가 차단한다.
-- "모른다" 방어 3겹(+평가셋은 후속): BM25 0건 시 확인 불가 유도 단락(사전 결정론) /
+- 두 검색 경로 분리(2026-09): bm25_search는 변형별 적중 건수만 반환(순위표는 비공개
+  hold — 앵커링 방지), 라우팅은 카탈로그·get_toc 요약만 읽고 의미 기반 순위 생성
+  (목차 미열람 보고서의 절 지목은 select_sections이 거부), RRF가 두 순위표를 병합.
+  부록·참고문헌 행(summary='')은 BM25 순위에서 하향(질의가 부록류를 명시하면 면제).
+- "모른다" 방어(+평가셋은 후속): BM25 0건 시 확인 불가 유도 단락(사전 결정론) /
   프롬프트 출처 의무 / 답변에 인용된 section_id를 세션이 실제 전달한 본문 집합과
-  대조하는 날조 출처 사후 검사(결정론).
+  대조하는 날조 출처 사후 검사 + 본문 미전달 답변 경고(사후 결정론).
 - 범위 밖(후속 과제): REPL·관련도 평가셋·LIKE 풀스캔 폴백·kiwipiepy·태그 체계.
 
 사용: python src/search.py "질문" [--trace] [--top-n 8] [--model claude-sonnet-5]
@@ -60,7 +64,7 @@ BODY_THRESHOLD = 8000  # 이하 통째 전달 / 초과 시 창·head 절단 (초
 WINDOW_RADIUS = 1750  # 키워드 중심 창 앞뒤 반경
 MAX_WINDOWS = 3  # 병합 후 창 수 상한 — 고빈도 키워드의 사실상 전문화 방지
 TOP_N = 8  # select_sections 기본 전달 절 수
-EVIDENCE_LIMIT = 20  # bm25_search가 에이전트에 보여줄 증거 행 수
+APPENDIX_PENALTY = 0.3  # BM25 순위표의 부록·참고문헌 행(summary='') 점수 계수 — 질의가 부록류를 명시하면 면제
 PER_PATH_LIMIT = 30  # 변형×경로별 SQL LIMIT (RRF 병합 깊이)
 MAX_TURNS = 30  # 세션 턴 가드 (통상 흐름은 10턴 이내)
 DEFAULT_MODEL = "claude-sonnet-5"
@@ -164,15 +168,22 @@ def get_adjacent(con: sqlite3.Connection, section_id: str, direction: str) -> sq
 # ---- RRF · 창 절단 (결정론) ----
 
 
-def rrf_merge(rankings: list[list[str]], k: int = RRF_K) -> list[str]:
+def rrf_merge(
+    rankings: list[list[str]], k: int = RRF_K, penalty: dict[str, float] | None = None
+) -> list[str]:
     """순위표들을 Σ 1/(k+rank)로 융합 — 점수 정규화 없이 이질 경로 병합.
 
     빈 순위표는 기여 0으로 자연 무시(BM25 0건 시 에이전트 순위 단독이 그대로 나옴).
+    penalty는 합산 점수에 곱하는 계수(부록·참고문헌 하향 등).
     """
     scores: dict[str, float] = {}
     for ranking in rankings:
         for i, sid in enumerate(ranking):
             scores[sid] = scores.get(sid, 0.0) + 1.0 / (k + i + 1)
+    if penalty:
+        for sid, factor in penalty.items():
+            if sid in scores:
+                scores[sid] *= factor
     return sorted(scores, key=lambda s: -scores[s])
 
 
@@ -278,7 +289,7 @@ def render_unit(row: sqlite3.Row, body_text: str, notice: str) -> str:
         f"위치: {heading_of(row)}",
     ]
     if row["summary"]:
-        lines.append(f"요약(라우팅 힌트 — 인용 금지): {row['summary']}")
+        lines.append(f"요약(맥락 파악용 — 인용 금지): {row['summary']}")
     if notice:
         lines.append(f"전달 형태: {notice}. 전문·키워드 주변·인접 절은 get_body로 추가 요청 가능.")
     lines += ["본문:", body_text]
@@ -300,9 +311,11 @@ class SearchState:
     top_n: int
     trace: bool
     emit: Callable[[dict], None] | None = None  # 진행 이벤트 콜백(웹) — None이면 stderr(CLI)
-    bm25_ranking: list[str] = field(default_factory=list)  # ② hold — ④의 첫 순위표
+    bm25_ranking: list[str] = field(default_factory=list)  # ② hold — ④의 첫 순위표 (에이전트에 비공개)
     bm25_hits: dict[str, sqlite3.Row] = field(default_factory=dict)
     delivered: set[str] = field(default_factory=set)  # 본문 전달 집합 — 사후 출처 검사 기준
+    toc_viewed: set[str] = field(default_factory=set)  # get_toc 열람 보고서 — select_sections 게이트 기준
+    appendix_penalty_on: bool = True  # 질의가 참고문헌·부록·첨부를 명시하면 run_search가 끔
 
     def log(self, msg: str) -> None:
         if self.emit is not None:
@@ -341,7 +354,8 @@ def build_tools(state: SearchState) -> list:
     @tool(
         "bm25_search",
         "키워드 변형들로 전 보고서 BM25 전문검색. 각 변형은 3글자 이상(2글자 단독 금지 — "
-        "조사·복합어로 확장). 결과 순위표는 select_sections에서 자동 병합된다.",
+        "조사·복합어로 확장). 반환은 변형별 적중 건수뿐이며, 결과 순위표는 비공개로 hold됐다가 "
+        "select_sections에서 자동 병합된다.",
         {
             "type": "object",
             "properties": {
@@ -371,39 +385,41 @@ def build_tools(state: SearchState) -> list:
             return text_result("\n".join(notes) or "유효한 변형이 없다.")
 
         rankings: list[list[str]] = []
-        matched_by: dict[str, list[str]] = {}
+        count_lines: list[str] = []
         for v in ok:
-            exprs = [(fts_query_phrase(v), v)]
+            counts = []
+            exprs = [(fts_query_phrase(v), "평문")]
             fv = fold_text(v)
             if len(fv) >= 3:
-                exprs.append(("body_fold : " + fts_query_phrase(fv), f"{v}(fold)"))
+                exprs.append(("body_fold : " + fts_query_phrase(fv), "fold"))
             for expr, label in exprs:
                 rows = run_bm25(state.con, expr, PER_PATH_LIMIT)
-                ranking = []
+                rankings.append([row["section_id"] for row in rows])
                 for row in rows:
-                    sid = row["section_id"]
-                    ranking.append(sid)
-                    state.bm25_hits.setdefault(sid, row)
-                    tags = matched_by.setdefault(sid, [])
-                    if label not in tags:
-                        tags.append(label)
-                rankings.append(ranking)
-        merged = rrf_merge(rankings)
+                    state.bm25_hits.setdefault(row["section_id"], row)
+                counts.append(f"{label} {len(rows)}건")
+            count_lines.append(f"- {v!r}: " + " / ".join(counts))
+        # 부록·참고문헌 하향 — summary='' 행(색인상 유일 표식), 질의가 부록류 명시 시 면제
+        penalty = None
+        if state.appendix_penalty_on:
+            penalty = {
+                sid: APPENDIX_PENALTY
+                for sid, row in state.bm25_hits.items()
+                if row["summary"] == ""
+            }
+        merged = rrf_merge(rankings, penalty=penalty)
         state.bm25_ranking = merged  # 재호출 시 마지막 검색이 유효 순위표
-        state.log(f"→ 병합 {len(merged)}건, top: {merged[:3]}")
+        state.log(f"→ 병합 {len(merged)}건 hold(비공개), top: {merged[:3]}")
 
         if not merged:
-            return text_result("\n".join(notes + [f"BM25 결과 0건. {NO_HIT_GUIDE}"]))
-        lines = notes + [
-            f"BM25 증거 상위 {min(EVIDENCE_LIMIT, len(merged))}건 (병합 순위표 전체 {len(merged)}건은 절 선정 시 자동 반영, 재검색 시 대체):"
-        ]
-        for i, sid in enumerate(merged[:EVIDENCE_LIMIT], 1):
-            row = state.bm25_hits[sid]
-            excerpt = " ".join(str(row["excerpt"]).split())
-            lines.append(
-                f"{i}. {sid} | {Path(row['filepath']).stem} | {heading_of(row)} | "
-                f"{row['year']} | 발췌: {excerpt} | 적중: {', '.join(matched_by[sid])}"
+            return text_result(
+                "\n".join(notes + ["변형별 적중 건수:"] + count_lines
+                          + [f"BM25 결과 0건. 변형을 재작성해 1회 재시도하거나, {NO_HIT_GUIDE}"])
             )
+        lines = notes + ["변형별 적중 건수:"] + count_lines + [
+            f"병합 순위표 {len(merged)}건 hold됨 — 청크 목록은 비공개(절 선정 시 자동 병합, 재검색 시 대체).",
+            "이제 카탈로그로 후보 보고서를 고르고, get_toc로 목차·요약을 읽어 의미 기반 후보 절을 골라라.",
+        ]
         return text_result("\n".join(lines))
 
     @tool(
@@ -432,19 +448,21 @@ def build_tools(state: SearchState) -> list:
         for r in get_toc_rows(state.con, fp):
             summary = r["summary"] or "(요약 없음 — 참고문헌·부록류)"
             lines.append(f"{r['section_id']} | {heading_of(r)} | {r['n']:,}자 | {summary}")
+        state.toc_viewed.add(rid)
         return text_result("\n".join(lines))
 
     @tool(
         "select_sections",
-        "고른 절들을 관련성 높은 순으로 넘기면 BM25 순위표와 RRF 병합해 상위 절의 본문을 "
-        "전달한다. 큰 절(8,000자 초과)이 있으면 focus_keywords로 절단 중심어를 지정하라.",
+        "고른 절들을 질의 관련도·보고서 내 의미상 중요도 기준 내림차순으로 넘기면 비공개 BM25 "
+        "순위표와 RRF 병합해 상위 절의 본문을 전달한다. 목차를 열람하지 않은 보고서의 절 지목은 "
+        "거부된다(get_toc 선행 필수). 큰 절(8,000자 초과)이 있으면 focus_keywords로 절단 중심어를 지정하라.",
         {
             "type": "object",
             "properties": {
                 "section_ids": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "관련성 높은 순 — 이 순서가 두 번째 순위표가 된다",
+                    "description": "질의 관련도·의미상 중요도 기준 내림차순 — 이 순서가 두 번째 순위표가 된다",
                 },
                 "focus_keywords": {
                     "type": "array",
@@ -462,12 +480,28 @@ def build_tools(state: SearchState) -> list:
         top_n = int(args.get("top_n") or state.top_n)
         state.log(f"select_sections ids={ids!r} keywords={keywords!r} top_n={top_n}")
 
-        valid, invalid = [], []
+        valid, invalid, valid_rows = [], [], {}
         for sid in ids:
-            (valid if get_row(state.con, sid) is not None else invalid).append(sid)
+            row = get_row(state.con, sid)
+            if row is None:
+                invalid.append(sid)
+            else:
+                valid.append(sid)
+                valid_rows[sid] = row
         notes = []
         if invalid:
             notes.append("무효 section_id(제외): " + ", ".join(invalid))
+        # 목차 열람 게이트 — 에이전트 지목 절만 대상(BM25 자동 유입은 안전망이라 제외)
+        unseen = sorted(
+            {Path(r["filepath"]).stem for r in valid_rows.values()} - state.toc_viewed
+        )
+        if unseen:
+            state.log(f"→ 선정 거부(목차 미열람): {unseen}")
+            return text_result(
+                "선정 거부 — 목차를 열람하지 않은 보고서의 절이 포함됨: "
+                + ", ".join(unseen)
+                + ". get_toc로 해당 보고서의 목차·요약을 먼저 확인한 뒤 다시 선정하라."
+            )
         merged = rrf_merge([state.bm25_ranking, valid])
         chosen = merged[:top_n]
         if not chosen:
@@ -542,18 +576,18 @@ def build_tools(state: SearchState) -> list:
 
 # ---- 프롬프트 · 세션 드라이버 ----
 
-SYSTEM_PROMPT = f"""너는 기관 정책연구보고서 코퍼스 전용 검색·답변 에이전트다.
+SYSTEM_PROMPT = f"""너는 기관 정책연구보고서 코퍼스 전용 검색·답변 에이전트다. 검색은 두 경로로 이뤄진다: BM25 키워드 검색(키워드 등장 여부만 보는 색인 — 결과 목록은 비공개로 hold되어 최종 병합에만 쓰임)과 너의 의미 기반 선정(카탈로그·목차·요약을 읽고 판단). 두 순위표는 RRF로 병합된다 — 네 선정이 BM25에 끌려가지 않도록 분리된 것이니, 오직 의미와 맥락으로 판단하라.
 
 절차:
 1. 질의에서 검색 키워드 변형 3~5개를 추출한다. 각 변형은 3글자 이상만(색인이 trigram이라 2글자 이하는 구조적으로 0건). 2글자 개념은 단독 금지 — 조사·복합어로 3글자화한다(예: '예산' → '예산이', 'R&D 예산'). 어휘 불일치에 대비해 동의어·유관어 변형을 섞는다.
-2. bm25_search로 전 보고서를 검색한다.
-3. 첫 메시지의 마스터 카탈로그와 검색 증거를 함께 보고 후보 보고서를 고른 뒤, get_toc로 목차·요약을 확인해 관련 절을 고른다. 검색 증거가 빈약해도 카탈로그 라우팅으로 후보를 찾을 수 있다.
-4. select_sections에 관련성 높은 순으로 section_id를 넘긴다(이 순서가 검색 순위표와 RRF 병합된다). 본문 {BODY_THRESHOLD:,}자 초과 절이 있으면 focus_keywords로 절단 중심어를 지정한다.
+2. bm25_search로 전 보고서를 검색한다. 반환은 변형별 적중 건수뿐이다 — 전 변형 0건이면 변형을 재작성해 1회 재시도할 수 있다.
+3. 첫 메시지의 마스터 카탈로그로 후보 보고서를 고르고, 후보마다 get_toc로 목차·요약을 읽는다. 절 id는 목차에서만 얻을 수 있으며, 목차를 열람하지 않은 보고서의 절 지목은 거부된다.
+4. 질의 관련도와 보고서 내 의미상 중요도를 기준으로 절을 내림차순 정렬해 select_sections에 넘긴다(이 순서가 BM25 순위표와 RRF 병합된다). 본문 {BODY_THRESHOLD:,}자 초과 절이 있으면 focus_keywords로 절단 중심어를 지정한다.
 5. 전달 본문이 부족하면 get_body(full/around/adjacent)로 추가 확보한다.
-6. 답변을 작성한다.
+6. 답변을 작성한다. 각 전달 단위의 '요약'으로 그 절과 질의 의도의 연결을 파악해, 나열이 아니라 질문에 직접 답하는 구성으로 쓴다.
 
 답변 규칙:
-- 근거는 툴이 전달한 '본문' 텍스트뿐이다. 목차·전달 단위의 '요약'은 라우팅 힌트일 뿐 인용·근거 사용 금지.
+- 인용·근거는 툴이 전달한 '본문' 텍스트뿐이다. 목차·전달 단위의 '요약'은 맥락 파악용일 뿐 인용·근거 사용 금지.
 - 모든 주장 뒤에 출처를 단다: (report_id, section_id, 장>절 위치). section_id는 전달 단위 머리의 전체 식별자(예: 2025-13_c2s2s1s3)를 축약 없이 그대로 쓴다.
 - 전달 본문에 없는 내용은 쓰지 않는다. 질의 전부 또는 일부에 답할 근거가 없으면 그 부분을 '보고서 내 확인 불가'로 명시한다. 추측·일반 상식 보충 금지.
 - 한국어로, 질문에 직접 답하는 문체로 쓴다."""
@@ -598,6 +632,7 @@ class SearchResult:
     answer: str  # 빈 문자열 = 답변 미생성
     sources: list[dict]  # 인용 ∩ 전달 교집합의 구조화 출처
     fabricated: list[str]  # audit_citations 결과 (날조 의심)
+    no_delivery: bool  # 본문 전달 0건인데 확인 불가 아님 — 근거 없는 서술 의심
     turns: int
     cost_usd: float | None
     subtype: str | None  # 빈 답변 진단용
@@ -621,7 +656,11 @@ async def perform_search(
             top_n=args.top_n,
             trace=args.trace,
             emit=emit,
+            # 질의가 부록류를 명시하면 하향 면제 — 결정론 판정(LLM 불개입)
+            appendix_penalty_on=not any(w in question for w in ("참고문헌", "부록", "첨부")),
         )
+        if not state.appendix_penalty_on:
+            state.log("부록·참고문헌 하향 면제(질의 명시)")
         server = create_sdk_mcp_server("searchdb", tools=build_tools(state))
         options = make_search_options(server, args)
 
@@ -712,6 +751,7 @@ async def perform_search(
             answer=answer,
             sources=sources,
             fabricated=fabricated,
+            no_delivery=bool(answer.strip()) and not state.delivered and "확인 불가" not in answer,
             turns=turn,
             cost_usd=getattr(result_msg, "total_cost_usd", None) if result_msg else None,
             subtype=getattr(result_msg, "subtype", None) if result_msg else None,
@@ -734,6 +774,8 @@ async def run_search(question: str, args) -> int:
 
     print(result.answer)
 
+    if result.no_delivery:
+        print("[검증] 본문 전달 없이 생성된 답변 — 근거 없는 서술 가능성.", file=sys.stderr)
     if result.fabricated:
         print(
             "[검증] 전달되지 않은 출처 인용(날조 의심): " + ", ".join(result.fabricated),

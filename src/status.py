@@ -192,6 +192,55 @@ def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
     )
 
 
+@dataclass
+class StatusData:
+    """collect_status() 결과 — CLI 렌더(main)와 serve.py 관리 API가 공유하는 단일 소스."""
+    rows: list[Row]
+    new_pdfs: list[str]  # 추출 필요 base_id (= "추출 필요" 행)
+    artifacts: list[tuple[str, bool]]  # (표시문, 할 일 여부) — reports.db, master_index.md 순
+    remaining_total: int
+    note_count: int
+    todo: bool
+
+
+def collect_status(args) -> StatusData:
+    """아티팩트에서 현황 파생 계산 — 디렉터리 존재 검증은 호출자 몫."""
+    pdfs = scan_pdfs(Path(args.pdf_dir))
+    db_path = Path(args.db)
+    ledger = read_db_ledger(db_path)
+
+    rows: list[Row] = []
+    covered_bases: set[str] = set()
+    md_mtimes: list[float] = []
+    md_digests: dict[str, str] = {}
+    for p in sorted(Path(args.reports_dir).glob("*.md")):
+        m = PART_SUFFIX_RE.match(p.stem)
+        base = m.group(1) if m else p.stem
+        covered_bases.add(base)
+        md_mtimes.append(p.stat().st_mtime)
+        fp = p.as_posix()
+        md_digests[fp] = hashlib.sha256(p.read_bytes()).hexdigest()
+        row = build_md_row(p, base, pdfs.get(base), args)
+        if ledger is not None:
+            row.db = "동기화" if ledger.get(fp) == md_digests[fp] else "미반영"
+        rows.append(row)
+
+    new_pdfs = sorted(set(pdfs) - covered_bases)
+    for base in new_pdfs:
+        rows.append(Row(report_id=base, extracted="추출 필요", verify="-"))
+    rows.sort(key=lambda r: r.report_id)
+
+    newest_md = max(md_mtimes) if md_mtimes else None
+    db_line, db_todo = db_sync_line(db_path, ledger, md_digests)
+    idx_line, idx_todo = artifact_line("master_index.md", Path(args.index), "src/build_index.py", newest_md)
+
+    remaining_total = sum(r.remaining for r in rows)
+    note_count = sum(len(r.notes) for r in rows)
+    todo = bool(new_pdfs or remaining_total or db_todo or idx_todo or note_count)
+    return StatusData(rows, new_pdfs, [(db_line, db_todo), (idx_line, idx_todo)],
+                      remaining_total, note_count, todo)
+
+
 def main() -> None:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -215,44 +264,9 @@ def main() -> None:
         print(f"디렉터리가 없습니다: {missing}", file=sys.stderr)
         sys.exit(2)
 
-    warnings: list[str] = []
-    pdfs = scan_pdfs(pdf_dir)
-
-    db_path = Path(args.db)
-    ledger = read_db_ledger(db_path)
-
-    rows: list[Row] = []
-    covered_bases: set[str] = set()
-    md_mtimes: list[float] = []
-    md_digests: dict[str, str] = {}
-    for p in sorted(reports_dir.glob("*.md")):
-        m = PART_SUFFIX_RE.match(p.stem)
-        base = m.group(1) if m else p.stem
-        covered_bases.add(base)
-        md_mtimes.append(p.stat().st_mtime)
-        fp = p.as_posix()
-        md_digests[fp] = hashlib.sha256(p.read_bytes()).hexdigest()
-        row = build_md_row(p, base, pdfs.get(base), args)
-        if ledger is not None:
-            row.db = "동기화" if ledger.get(fp) == md_digests[fp] else "미반영"
-        rows.append(row)
-
-    extract_needed = 0
-    for base in sorted(set(pdfs) - covered_bases):
-        rows.append(Row(report_id=base, extracted="추출 필요", verify="-"))
-        extract_needed += 1
-    rows.sort(key=lambda r: r.report_id)
-
-    newest_md = max(md_mtimes) if md_mtimes else None
-    db_line, db_todo = db_sync_line(db_path, ledger, md_digests)
-    idx_line, idx_todo = artifact_line("master_index.md", Path(args.index), "src/build_index.py", newest_md)
-
-    remaining_total = sum(r.remaining for r in rows)
-    render(rows, warnings, [db_line, idx_line], extract_needed, remaining_total)
-
-    note_count = sum(len(r.notes) for r in rows) + len(warnings)
-    todo = bool(extract_needed or remaining_total or db_todo or idx_todo or note_count)
-    sys.exit(1 if todo else 0)
+    st = collect_status(args)
+    render(st.rows, [], [t for t, _ in st.artifacts], len(st.new_pdfs), st.remaining_total)
+    sys.exit(1 if st.todo else 0)
 
 
 if __name__ == "__main__":
