@@ -109,6 +109,12 @@
     border-radius: 8px; padding: 7px 10px; font: inherit; max-width: 100%;
   }
   td.sum { font-size: 12.5px; color: var(--muted); }
+  .box .mono-block {
+    font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-all; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 8px; margin-top: 6px; max-height: 220px; overflow-y: auto;
+  }
   .hidden { display: none; }
 </style>
 </head>
@@ -186,7 +192,7 @@ const $ = (id) => document.getElementById(id);
 // ---- 파이프라인 단계 정의 (서버 PIPELINE_STEPS와 동일 id) ----
 const STEPS = [
   { id: "extract", label: "extract — PDF → .md 추출", desc: "신규 PDF만 처리 · 레인 적용",
-    hint: "로그의 [skip]/[error]를 확인하세요. structured 감지 실패면 레인을 flat으로 바꿔 재실행하거나 프로파일 승격을 검토(진단은 logs/extract_log.json의 l1_attempts·l1_suspects)." },
+    hint: "로그의 [skip]/[error]를 확인하세요. structured 감지 실패면 아래 감지 실패 카드에서 문서별로 승격 여부(예/아니오)를 결정하세요." },
   { id: "verify", label: "verify — 추출 검증 (A~C)", desc: "PDF 전수 대조 · verified_extract 스탬프",
     hint: "FAIL은 추출 결함 신호 — 원인 해결(재추출 검토) 후 이 단계를 다시 실행하세요." },
   { id: "annotate", label: "annotate — 요약 생성 (LLM)", desc: "요약 없는 유닛만 증분 생성",
@@ -207,6 +213,7 @@ const WARN_RE = /경고|\[skip|WARN|스킵|미반영|주의|게이트/;
 
 let jobId = null, cursor = 0, pollTimer = null, busy = false;
 let lastStatus = null; // 마지막 /api/admin/status 응답 — todo_steps 기반 다음 단계 제안에 사용
+let lastJobPdf = null; // 마지막 job의 대상 PDF(파일 단위 extract·promote) — 실패 후속 버튼에 사용
 
 // ---- 현황판 ----
 function box(cls, html) {
@@ -383,31 +390,47 @@ function clearRun() {
   $("pipe-outcome").textContent = "";
 }
 
+// 완료된 작업 기록을 서버에서 닫고(ack) 화면도 정리 — 이후 새로고침에 재생되지 않음
+async function ackJob() {
+  try { await fetch("/api/admin/job/ack", { method: "POST" }); } catch (e) {}
+  clearRun();
+}
+
+function ackButton(label) {
+  const b = document.createElement("button");
+  b.className = "mini ghost";
+  b.textContent = label;
+  b.addEventListener("click", ackJob);
+  return b;
+}
+
+// 재계산된 현황(lastStatus)에서 다음 필요 단계를 제안 — 순차가 아니라 필요 기준
+function appendNextStep(kids, actions) {
+  const next = lastStatus && lastStatus.todo_steps.length ? lastStatus.todo_steps[0] : null;
+  if (next) {
+    const j = stepIdx(next.step);
+    kids.push(txt(` 다음 필요 단계: ${stepName(j)} — ${next.reason}. 진행할까요?`));
+    const go = document.createElement("button");
+    go.className = "mini";
+    go.textContent = `${stepName(j)} 진행`;
+    go.addEventListener("click", () => startStep(next.step));
+    actions.append(go, ackButton("여기까지"));
+  } else {
+    kids.push(txt(" 필요한 단계가 없습니다 — 모든 아티팩트 최신 🎉"));
+    actions.append(ackButton("확인(닫기)"));
+  }
+}
+
 function showOutcome(step, code) {
-  const i = stepIdx(step);
   const out = $("pipe-outcome");
   out.textContent = "";
+  if (step === "promote") { showPromoteOutcome(out, code); return; }
+  const i = stepIdx(step);
   if (code === 0) {
     const kids = [txt(`✓ ${stepName(i)} 완료 — 특이사항 없음 (exit 0).`)];
     const actions = document.createElement("div");
     actions.className = "actions";
-    // 재계산된 현황(lastStatus)에서 다음 필요 단계를 제안 — 순차가 아니라 필요 기준
-    const next = lastStatus && lastStatus.todo_steps.length ? lastStatus.todo_steps[0] : null;
-    if (next) {
-      const j = stepIdx(next.step);
-      kids.push(txt(` 다음 필요 단계: ${stepName(j)} — ${next.reason}. 진행할까요?`));
-      const go = document.createElement("button");
-      go.className = "mini";
-      go.textContent = `${stepName(j)} 진행`;
-      go.addEventListener("click", () => startStep(next.step));
-      const stop = document.createElement("button");
-      stop.className = "mini ghost";
-      stop.textContent = "여기까지";
-      stop.addEventListener("click", () => { out.textContent = ""; });
-      actions.append(go, stop);
-    } else {
-      kids.push(txt(" 필요한 단계가 없습니다 — 모든 아티팩트 최신 🎉"));
-    }
+    appendNextStep(kids, actions);
     const b = box("ok", kids);
     if (actions.childNodes.length) b.appendChild(actions);
     out.appendChild(b);
@@ -422,11 +445,140 @@ function showOutcome(step, code) {
     retry.className = "mini";
     retry.textContent = `${stepName(i)} 다시 실행`;
     retry.addEventListener("click", () => startStep(step));
-    actions.appendChild(retry);
+    actions.append(retry, ackButton("확인(닫기)"));
     const b = box("err", kids);
     b.append(hint, actions);
     out.appendChild(b);
+    if (step === "extract") renderExtractFailures(out); // 비동기 — 감지 실패·승격 결정 패널
   }
+}
+
+// ---- 프로파일 승격 (감지 실패 패널 → promote 에이전트) ----
+const PROMOTABLE = new Set(["skipped_no_profile", "skipped_no_body_start"]);
+
+function showPromoteOutcome(out, code) {
+  if (code === 0) {
+    const kids = [txt("✓ 프로파일 승격 완료 — extract.py에 새 문법 규칙이 추가되고 검증(목차 대조·전체 회귀)을 통과했습니다.")];
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = "extract.py 변경분은 미커밋 상태입니다 — 검토 후 커밋은 직접 해주세요.";
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    appendNextStep(kids, actions);
+    const b = box("ok", kids);
+    b.appendChild(hint);
+    if (actions.childNodes.length) b.appendChild(actions);
+    out.appendChild(b);
+  } else {
+    const kids = [txt(`✗ 프로파일 승격 실패·부적합 (exit ${code}) — 위 로그의 [promote] 보고를 확인하세요.`)];
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = "부적합 판정이면 이 문서는 플랫 청킹 수용을 권장합니다. extract.py는 에이전트가 원상 복구했는지 로그로 확인하세요.";
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    if (lastJobPdf) {
+      const flat = document.createElement("button");
+      flat.className = "mini";
+      flat.textContent = "플랫 청킹으로 수용";
+      flat.addEventListener("click", () => runJob({ step: "extract", lane: "flat", pdf: lastJobPdf }));
+      const again = document.createElement("button");
+      again.className = "mini ghost";
+      again.textContent = "승격 다시 시도";
+      again.addEventListener("click", () => runJob({ step: "promote", pdf: lastJobPdf }));
+      actions.append(flat, again);
+    }
+    actions.append(ackButton("확인(닫기)"));
+    const b = box("err", kids);
+    b.append(hint);
+    if (actions.childNodes.length) b.appendChild(actions);
+    out.appendChild(b);
+  }
+}
+
+async function renderExtractFailures(out) {
+  let d;
+  try {
+    d = await (await fetch("/api/admin/extract-log")).json();
+  } catch (e) { return; }
+  if (!d.exists || !d.entries.length) return;
+  for (const e of d.entries) out.appendChild(failureCard(e));
+  if (d.entries.filter((e) => PROMOTABLE.has(e.status)).length >= 2) {
+    const kids = [txt("여러 문서가 감지에 실패했습니다 — 개별 결정 대신 한 번에 수용할 수도 있습니다 (structured로 추출된 문서는 스킵 가드가 보호).")];
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const all = document.createElement("button");
+    all.className = "mini";
+    all.textContent = "남은 신규 PDF 전부 플랫으로 수용";
+    all.addEventListener("click", () => {
+      document.querySelector('#lanes input[value="flat"]').checked = true;
+      startStep("extract");
+    });
+    actions.appendChild(all);
+    const b = box("warn", kids);
+    b.appendChild(actions);
+    out.appendChild(b);
+  }
+}
+
+function failureCard(e) {
+  const kids = [bold(e.file || "?"), txt(" — ")];
+  if (e.status === "skipped_flat_guard") {
+    kids.push(txt("본문 텍스트가 400자 미만(이미지 위주 문서)이라 플랫 청킹도 불가합니다. OCR은 별도 과제 — 이 PDF는 보류하거나 pdfs/에서 빼 두세요."));
+    return box("warn", kids);
+  }
+  if (e.status === "error") {
+    kids.push(txt("추출 중 오류가 발생했습니다(문법 문제가 아니라 코드/파일 문제)."));
+    const b = box("err", kids);
+    if (e.error) {
+      const m = document.createElement("div");
+      m.className = "mono-block";
+      m.textContent = e.error;
+      b.appendChild(m);
+    }
+    return b;
+  }
+  // 감지 실패 — 프로파일 승격 결정 카드
+  kids.push(txt("기존 문법에 맞지 않습니다(장-절 구조 감지 실패)."));
+  const b = box("warn", kids);
+  const att = document.createElement("div");
+  att.className = "hint";
+  att.textContent = "후보 프로파일별 정상 장 수: " +
+    (e.l1_attempts && Object.keys(e.l1_attempts).length
+      ? Object.entries(e.l1_attempts).map(([k, v]) => `${k} ${v}`).join(" · ")
+      : "없음(장 번호 후보 신호 자체가 없음)");
+  b.appendChild(att);
+  const sus = e.l1_suspects || [];
+  const cap = document.createElement("div");
+  cap.className = "hint";
+  if (sus.length) {
+    cap.textContent = `헤딩으로 의심되는 줄 ${sus.length}개 — 이 문서의 장 문법 후보:`;
+    const m = document.createElement("div");
+    m.className = "mono-block";
+    m.textContent = sus.join("\n");
+    b.append(cap, m);
+  } else {
+    cap.textContent = "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장).";
+    b.appendChild(cap);
+  }
+  const q = document.createElement("div");
+  q.style.marginTop = "8px";
+  q.append(
+    bold("프로파일 승격을 진행할까요?"),
+    txt(" 예 = 에이전트가 extract.py에 이 문법 규칙을 추가하고 추출·검증·전체 회귀 대조까지 수행합니다(수 분 소요 · LLM 사용량 소모, 서버 기동 기기에서만). 아니오 = 이 문서만 플랫 청킹으로 수용합니다."),
+  );
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  const yes = document.createElement("button");
+  yes.className = "mini";
+  yes.textContent = "예 — 승격 실행";
+  yes.addEventListener("click", () => runJob({ step: "promote", pdf: e.file }));
+  const no = document.createElement("button");
+  no.className = "mini ghost";
+  no.textContent = "아니오 — 플랫 청킹으로 수용";
+  no.addEventListener("click", () => runJob({ step: "extract", lane: "flat", pdf: e.file }));
+  actions.append(yes, no);
+  b.append(q, actions);
+  return b;
 }
 
 async function pollJob() {
@@ -439,6 +591,7 @@ async function pollJob() {
   }
   if (!j.exists) { setBusy(false); return; }
   if (j.id !== jobId) { jobId = j.id; cursor = 0; clearRun(); }
+  lastJobPdf = j.pdf || null;
   if (j.lines.length) addLogLines(j.lines);
   cursor = j.total;
   if (j.running) {
@@ -466,10 +619,13 @@ async function startSync() {
 }
 
 async function startStep(step) {
-  if (busy) return;
-  const lane = document.querySelector('#lanes input:checked').value;
   const body = { step };
-  if (step === "extract") body.lane = lane;
+  if (step === "extract") body.lane = document.querySelector('#lanes input:checked').value;
+  await runJob(body);
+}
+
+async function runJob(body) {
+  if (busy) return;
   let res;
   try {
     res = await fetch("/api/admin/run", {
@@ -490,8 +646,9 @@ async function startStep(step) {
   }
   jobId = j.id;
   cursor = 0;
+  lastJobPdf = body.pdf || null;
   clearRun();
-  setChip(step, "running", "실행 중");
+  setChip(body.step, "running", "실행 중"); // promote는 칩 없음 — setChip이 무시
   setBusy(true);
   clearTimeout(pollTimer);
   pollJob();
@@ -503,8 +660,10 @@ async function attachJob() {
     j = await (await fetch("/api/admin/job?after=0")).json();
   } catch (e) { return; }
   if (!j.exists) return;
+  if (!j.running && j.acked) return; // [확인]으로 닫은 완료 기록 — 재생하지 않음
   jobId = j.id;
   cursor = j.total;
+  lastJobPdf = j.pdf || null;
   clearRun();
   addLogLines(j.lines);
   if (j.running) {

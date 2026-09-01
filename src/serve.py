@@ -19,6 +19,12 @@
   단계 실행 = 기존 파이프라인 CLI를 서브프로세스로 호출(로직 재구현 없음, exit 코드가
   특이사항 판정 기준) — 출력은 서버 버퍼(단일 job)에 쌓고 브라우저가 폴링하므로
   새로고침·이탈에도 작업은 계속되고 재접속된다. 질의↔DB 작업은 상호 배제(409).
+  완료된 작업 기록은 결과 박스의 [확인(닫기)]/[여기까지]가 서버에 ack를 남겨 닫는다 —
+  이후 재접속에서 재생하지 않음(진행 중 작업 복원은 그대로).
+  extract 실패 시 감지 실패 패널(2026-09): /api/admin/extract-log가 마지막 extract
+  로그의 승격 판단 재료(l1_attempts·l1_suspects)를 내려주고, 문서별 카드에서
+  [예 — 승격 실행] = promote.py 에이전트 스텝(코드 수정 수반 — 루프백 요청만 허용),
+  [아니오] = 그 파일만 --lane flat 재실행(pdf 파라미터 — pdfs/ 안 파일명만 허용).
 - 멀티턴(질의 간 세션 유지)은 범위 밖 — perform_search의 "세션=질의 1건" 구조를
   세션 보관소로 바꿔야 하므로 확장 시 별도 설계.
 
@@ -57,15 +63,19 @@ SUBPROC_LINE_LIMIT = 1 << 20  # readline 상한 — 기본 64KB로는 긴 진단
 PIPELINE_STEPS = ("extract", "verify", "annotate", "verify2", "build_db", "build_index")
 
 
-def step_argv(step: str, lane: str | None) -> list[str]:
+def step_argv(step: str, lane: str | None, pdf: str | None = None) -> list[str]:
     py = sys.executable
     if step == "extract":
         # 글롭은 extract가 자체 확장. 기존 출력이 있는 PDF는 기본 스킵되므로
         # 전체 글롭이어도 신규 PDF만 처리된다 — 레인 선택도 신규분에만 적용.
-        argv = [py, "src/extract.py", "pdfs/*.pdf"]
+        # pdf 지정 시(감지 실패 패널의 파일 단위 재실행) 그 파일만 처리.
+        argv = [py, "src/extract.py", f"pdfs/{pdf}" if pdf else "pdfs/*.pdf"]
         if lane in ("structured", "flat"):
             argv += ["--lane", lane]
         return argv
+    if step == "promote":
+        # 프로파일 승격 에이전트(코드 수정 수반) — api_admin_run이 루프백 요청만 허용
+        return [py, "src/promote.py", f"pdfs/{pdf}"]
     if step in ("verify", "verify2"):
         return [py, "src/verify.py"]  # 스탬프 분기가 검사 범위를 스스로 고른다
     if step == "annotate":
@@ -352,10 +362,27 @@ async def api_admin_run(request):
         return JSONResponse({"error": "JSON 본문이 필요합니다."}, status_code=400)
     step = str(payload.get("step", ""))
     lane = payload.get("lane")
-    if step not in PIPELINE_STEPS:
+    pdf = payload.get("pdf")
+    if step not in PIPELINE_STEPS and step != "promote":
         return JSONResponse({"error": f"알 수 없는 단계: {step}"}, status_code=400)
     if lane is not None and lane not in ("structured", "flat", "auto"):
         return JSONResponse({"error": f"알 수 없는 레인: {lane}"}, status_code=400)
+    if pdf is not None:
+        # 파일 단위 지정은 감지 실패 패널 전용(extract 재실행·promote) — 경로 탈출 차단
+        if step not in ("extract", "promote"):
+            return JSONResponse({"error": "pdf 지정은 extract/promote에서만 가능합니다."}, status_code=400)
+        if (not isinstance(pdf, str) or Path(pdf).name != pdf
+                or not pdf.lower().endswith(".pdf") or not (REPO_ROOT / "pdfs" / pdf).is_file()):
+            return JSONResponse({"error": f"pdfs/ 안의 PDF가 아닙니다: {pdf}"}, status_code=400)
+    if step == "promote":
+        if pdf is None:
+            return JSONResponse({"error": "promote에는 pdf 지정이 필요합니다."}, status_code=400)
+        # 코드 수정을 수반하는 승격은 서버 기동 기기(루프백)에서만 — 무인증 LAN 노출 방지
+        client_host = request.client.host if request.client else ""
+        if client_host not in ("127.0.0.1", "::1"):
+            return JSONResponse(
+                {"error": "프로파일 승격은 서버를 띄운 기기의 브라우저에서만 실행할 수 있습니다."},
+                status_code=403)
     state = request.app.state
     if state.job and state.job["running"]:
         return JSONResponse(
@@ -370,12 +397,14 @@ async def api_admin_run(request):
         "id": state.job_seq,
         "step": step,
         "lane": lane if step == "extract" else None,
+        "pdf": pdf if step in ("extract", "promote") else None,
         "lines": [],
         "code": None,
         "running": True,
+        "acked": False,  # [확인]으로 닫은 완료 기록 — 재접속 시 재생하지 않음
     }
     state.job = job
-    argv = step_argv(step, job["lane"])
+    argv = step_argv(step, job["lane"], job["pdf"])
     job["lines"].append("[serve] 실행: " + " ".join(Path(a).name if a == argv[0] else a for a in argv))
     state.job_task = asyncio.create_task(run_job(state, job, argv))
     return JSONResponse({"id": job["id"], "step": step})
@@ -395,11 +424,22 @@ async def api_admin_job(request):
         "id": job["id"],
         "step": job["step"],
         "lane": job["lane"],
+        "pdf": job.get("pdf"),
         "running": job["running"],
         "code": job["code"],
+        "acked": job.get("acked", False),
         "total": len(job["lines"]),
         "lines": job["lines"][after:],
     })
+
+
+async def api_admin_job_ack(request):
+    """완료된 작업 기록을 닫는다 — 이후 새로고침·재접속에서 그 기록을 재생하지 않는다."""
+    job = request.app.state.job
+    if job is None or job["running"]:
+        return JSONResponse({"error": "닫을 완료 작업이 없습니다."}, status_code=409)
+    job["acked"] = True
+    return JSONResponse({"ok": True})
 
 
 async def api_admin_cancel(request):
@@ -418,6 +458,41 @@ async def api_admin_cancel(request):
     else:
         proc.terminate()
     return JSONResponse({"ok": True})
+
+
+def api_admin_extract_log(request):
+    """마지막 extract 실행 로그에서 승격 판단 대상 엔트리만 추림 — 감지 실패 패널 데이터.
+
+    대상 = status가 ok·skipped_exists 밖(감지 실패 스킵 3종 + error). l1_attempts·
+    l1_suspects는 extract가 감지 실패 시 로그에 남기는 승격 판단 재료다.
+    """
+    log_path = REPO_ROOT / "logs" / "extract_log.json"
+    try:
+        data = json.loads(log_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return JSONResponse({"exists": False})
+    if data.get("mode") != "extract":
+        return JSONResponse({"exists": False})
+    entries = []
+    for e in data.get("files", []):
+        status = str(e.get("status", ""))
+        if status in ("ok", "skipped_exists"):
+            continue
+        entries.append({
+            "file": e.get("file"),
+            "report_id": e.get("report_id"),
+            "status": status,
+            "l1_attempts": e.get("l1_attempts"),
+            "l1_suspects": e.get("l1_suspects"),
+            "warnings": e.get("warnings", []),
+            "error": (str(e.get("error"))[:2000] if e.get("error") else None),
+        })
+    return JSONResponse({
+        "exists": True,
+        "run_at": data.get("run_at"),
+        "lane": data.get("lane"),
+        "entries": entries,
+    })
 
 
 def api_admin_reports(request):
@@ -539,6 +614,8 @@ def main() -> None:
             Route("/api/admin/run", api_admin_run, methods=["POST"]),
             Route("/api/admin/job", api_admin_job),
             Route("/api/admin/cancel", api_admin_cancel, methods=["POST"]),
+            Route("/api/admin/job/ack", api_admin_job_ack, methods=["POST"]),
+            Route("/api/admin/extract-log", api_admin_extract_log),
             Route("/api/admin/reports", api_admin_reports),
             Route("/api/admin/toc", api_admin_toc),
             Route("/api/admin/master-index", api_admin_master_index),
