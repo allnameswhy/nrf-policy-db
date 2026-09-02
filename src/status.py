@@ -51,9 +51,18 @@ class Row:
     notes: list[str] = field(default_factory=list)
 
 
-def scan_pdfs(pdf_dir: Path) -> dict[str, Path]:
-    """{base_id: pdf 경로}. NRF 패턴 실패 시 슬러그 유도 — extract와 동일 함수 공유."""
-    return {derive_report_id_any(str(p)): p for p in sorted(pdf_dir.glob("*.pdf"))}
+def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]]]:
+    """({base_id: pdf 경로}, 충돌 그룹). 관리번호 실패 시 슬러그 유도 — extract와 동일 함수 공유.
+
+    같은 base_id로 유도되는 파일이 2개 이상이면(중복 다운로드·파일명 충돌) 매핑에는
+    사전순 첫 파일만 남기고(extract 프리플라이트와 동일 선택) 그룹을 따로 반환한다 —
+    종전 dict 컴프리헨션은 충돌을 조용히 덮어써 현황판 집계를 오염시켰다.
+    """
+    groups: dict[str, list[Path]] = {}
+    for p in sorted(pdf_dir.glob("*.pdf")):
+        groups.setdefault(derive_report_id_any(str(p)), []).append(p)
+    dups = {rid: [p.name for p in ps] for rid, ps in groups.items() if len(ps) > 1}
+    return {rid: ps[0] for rid, ps in groups.items()}, dups
 
 
 def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
@@ -201,11 +210,12 @@ class StatusData:
     remaining_total: int
     note_count: int
     todo: bool
+    dup_ids: dict[str, list[str]] = field(default_factory=dict)  # rid → 같은 rid로 유도된 PDF들
 
 
 def collect_status(args) -> StatusData:
     """아티팩트에서 현황 파생 계산 — 디렉터리 존재 검증은 호출자 몫."""
-    pdfs = scan_pdfs(Path(args.pdf_dir))
+    pdfs, dup_ids = scan_pdfs(Path(args.pdf_dir))
     db_path = Path(args.db)
     ledger = read_db_ledger(db_path)
 
@@ -236,9 +246,9 @@ def collect_status(args) -> StatusData:
 
     remaining_total = sum(r.remaining for r in rows)
     note_count = sum(len(r.notes) for r in rows)
-    todo = bool(new_pdfs or remaining_total or db_todo or idx_todo or note_count)
+    todo = bool(new_pdfs or remaining_total or db_todo or idx_todo or note_count or dup_ids)
     return StatusData(rows, new_pdfs, [(db_line, db_todo), (idx_line, idx_todo)],
-                      remaining_total, note_count, todo)
+                      remaining_total, note_count, todo, dup_ids)
 
 
 def main() -> None:
@@ -265,7 +275,11 @@ def main() -> None:
         sys.exit(2)
 
     st = collect_status(args)
-    render(st.rows, [], [t for t, _ in st.artifacts], len(st.new_pdfs), st.remaining_total)
+    warnings = [
+        f"report_id 충돌: {rid} ← {', '.join(files)} — 중복 삭제 또는 파일명 조정 필요"
+        for rid, files in sorted(st.dup_ids.items())
+    ]
+    render(st.rows, warnings, [t for t, _ in st.artifacts], len(st.new_pdfs), st.remaining_total)
     sys.exit(1 if st.todo else 0)
 
 

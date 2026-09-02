@@ -325,6 +325,18 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
     cards: list[dict] = []
     name_of = {b: p.name for b, p in pdf_names.items()}
 
+    # report_id 충돌(2026-09): 같은 rid로 유도되는 PDF가 2개 이상 — 자동 조치 없음.
+    # extract 프리플라이트가 어차피 스킵하므로 카드는 정리 안내만 한다.
+    for rid, files in sorted(st.dup_ids.items()):
+        cards.append({
+            "kind": "dup_id", "severity": "err", "files": files,
+            "title": f"report_id 충돌 — {rid}",
+            "detail": "여러 PDF가 같은 report_id로 유도됩니다. 같은 파일이 중복 저장된"
+                      " 경우라면 하나만 남기고 지우고, 서로 다른 문서라면 파일명을"
+                      " 조정하세요 — 정리 전에는 추출이 자동 스킵합니다.",
+            "control": None,
+        })
+
     for b in st.new_pdfs:
         fname = name_of.get(b)
         if not fname:
@@ -351,6 +363,8 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
                 "control": {"type": "detect", "pdf": fname, "default": "skip"},
                 "extra": {"l1_attempts": e["l1_attempts"], "l1_suspects": e["l1_suspects"]},
             })
+        elif e["status"] in ("skipped_duplicate", "skipped_id_collision"):
+            continue  # 위 dup_id 카드가 안내 — 파일 정리 전 재시도는 무의미
         elif e["status"] == "skipped_flat_guard":
             cards.append({
                 "kind": "flat_guard", "severity": "warn", "files": [fname],
@@ -575,7 +589,7 @@ def api_admin_status(request):  # sync def → starlette가 스레드풀에서 �
     st = collect_status(status_args())
     ok, msg = check_freshness()
     request.app.state.freshness = (ok, msg)  # 현황판 새로고침 = 캐시 갱신 시점
-    cards = derive_cards(st, scan_pdfs(Path("pdfs")), read_extract_log())
+    cards = derive_cards(st, scan_pdfs(Path("pdfs"))[0], read_extract_log())
     return JSONResponse({
         "cards": cards,
         "rows": [
@@ -696,7 +710,7 @@ async def api_admin_resolve(request):
 
     def compute():
         st = collect_status(status_args())
-        return derive_plan(st, scan_pdfs(Path("pdfs")), read_extract_log(), decisions)
+        return derive_plan(st, scan_pdfs(Path("pdfs"))[0], read_extract_log(), decisions)
 
     stages, errors = await asyncio.to_thread(compute)
     if errors:

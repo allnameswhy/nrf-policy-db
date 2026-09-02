@@ -68,8 +68,14 @@ MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
 MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
 
 REPORT_ID_RE = re.compile(r"정책연구-(\d{4}-\d{2})")
+# 괄호 표기 관리번호 '(YYYY-N) 제목' — 정책연구 시리즈 확인(2026-09 문답)으로 NN 승격
+PAREN_ID_RE = re.compile(r"^\s*\((\d{4})-(\d{1,2})\)")
+# 다권본 파일명 '제N권' → rid '-vN' 접미사 (관리번호 레인 전용; '권역' 등 오인 차단)
+VOLUME_RE = re.compile(r"제\s*(\d{1,2})\s*권(?![가-힣])")
 # 비NRF 파일명의 report_id 슬러그 문자셋 — 밑줄 제외('_NN'은 합본 파트 접미사 전용)
 SLUG_STRIP_RE = re.compile(r"[^0-9A-Za-z가-힣-]+")
+# 슬러그 레인의 보일러플레이트 접두 — '죄종보고서'는 실측 오타(2026-09, 292권 배치)
+BOILERPLATE_PREFIX_RE = re.compile(r"^(?:\(\s*최종보고서\s*\)|최종보고서|죄종보고서)[\s_\-.·]*")
 
 # L1(장) 프로파일 — (이름, 패턴, 두줄형 여부). 시도 순서 = 이 순서.
 PROFILES = [
@@ -451,30 +457,46 @@ def table_covers(text: str, table_fold: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def derive_report_id(path: str) -> str | None:
+    """관리번호 기반 rid — '정책연구-YYYY-NN' 또는 괄호 표기 '(YYYY-N)'.
+
+    다권본('제N권' 파일명, 2018-49 실측 4권)은 '-vN'을 덧붙여 권별로 분리한다 —
+    ASCII 유지, 밑줄이 아니므로 합본 파트 접미사('_NN')와 충돌하지 않는다.
+    """
     name = unicodedata.normalize("NFC", Path(path).name)
+    stem = Path(name).stem
     m = REPORT_ID_RE.search(name)
-    return m.group(1) if m else None
+    if m:
+        rid = m.group(1)
+    else:
+        mp = PAREN_ID_RE.match(stem)
+        if mp is None:
+            return None
+        rid = f"{mp.group(1)}-{int(mp.group(2)):02d}"
+    mv = VOLUME_RE.search(stem)
+    return rid + (f"-v{int(mv.group(1))}" if mv else "")
 
 
 def derive_report_id_any(path: str) -> str:
-    """NRF 패턴 우선, 실패 시 파일명 스템 슬러그 — 타 기관·이형 문서 수용.
+    """관리번호 패턴 우선, 실패 시 파일명 스템 슬러그 — 타 기관·이형 문서 수용.
 
-    슬러그 문자셋에서 밑줄을 제외해 합본 파트 접미사('_NN')와의 충돌을 차단한다.
+    슬러그 문자셋에서 밑줄을 제외해 합본 파트 접미사('_NN')와의 충돌을 차단하고,
+    '최종보고서' 류 보일러플레이트 접두는 제거한다(2026-09, 127건 실측·충돌 0건).
     verify.py·status.py가 같은 함수로 PDF↔.md를 대응시킨다.
     """
     rid = derive_report_id(path)
     if rid is not None:
         return rid
     stem = unicodedata.normalize("NFC", Path(path).stem)
-    slug = SLUG_STRIP_RE.sub("-", stem).strip("-")
+    stripped = BOILERPLATE_PREFIX_RE.sub("", stem) or stem
+    slug = SLUG_STRIP_RE.sub("-", stripped).strip("-")
     return slug or "report"
 
 
 def find_existing_outputs(out_dir: Path, base_id: str) -> list[Path]:
     """단독본({id}.md)과 합본 파트({id}_NN.md) 기존 출력 탐지.
 
-    report_id는 고정폭 7자(\\d{4}-\\d{2}), 파트 접미사는 두 자리 고정이라
-    다른 보고서와 접두 충돌이 불가능하다.
+    rid 형태는 관리번호(YYYY-NN, 다권본 -vN 접미 포함)·슬러그 혼재지만, rid 문자셋이
+    밑줄을 배제하므로 '{id}_NN' 글롭이 다른 보고서와 접두 충돌하는 일은 불가능하다.
     """
     out: list[Path] = []
     single = out_dir / f"{base_id}.md"
@@ -1708,12 +1730,17 @@ def yaml_str(s: str) -> str:
 def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str:
     meta = result.meta
     rid = result.report_id
-    # 연도: NRF rid는 앞 4자리, 슬러그 rid는 파일명 내 연도 검색, 실패 시 공란
+    # 연도: 관리번호 rid는 앞 4자리, 슬러그 rid는 내부 연도 검색 → 두 자리 연도
+    # ('19년…' 시작) 폴백(2026-09) → 실패 시 공란
     if rid[:4].isdigit():
         year = rid[:4]
     else:
         m = re.search(r"(?:19|20)\d{2}", rid)
-        year = m.group(0) if m else ""
+        if m:
+            year = m.group(0)
+        else:
+            m2 = re.match(r"(\d{2})년", rid)
+            year = f"20{m2.group(1)}" if m2 else ""
     lines = ["---"]
     lines.append(f"report_id: {rid}")
     lines.append(f"title: {yaml_str(meta.title)}")
@@ -1936,11 +1963,41 @@ def main() -> None:
         print("입력 PDF가 없습니다.", file=sys.stderr)
         sys.exit(1)
 
+    # 중복·충돌 프리플라이트(2026-09): 배치 전체의 rid를 먼저 유도해 같은 rid로
+    # 모이는 파일을 걸러낸다 — 크기까지 동일하면 중복 다운로드 의심(사전순 첫 파일만
+    # 진행), 크기가 다르면 진짜 충돌(전원 스킵·파일명 조정 필요). --scan은 진단
+    # 모드이므로 경고만 남기고 전부 처리한다.
+    by_rid: dict[str, list[str]] = {}
+    for path in paths:
+        by_rid.setdefault(derive_report_id_any(path), []).append(path)
+    dropped: dict[str, dict] = {}
+    for rid, group in sorted(by_rid.items()):
+        if len(group) < 2:
+            continue
+        group = sorted(group)
+        if len({Path(p).stat().st_size for p in group}) == 1:
+            for p in group[1:]:
+                dropped[p] = {"status": "skipped_duplicate", "report_id": rid,
+                              "duplicate_of": Path(group[0]).name}
+            print(f"[중복] {rid}: 동일 크기 파일 {len(group)}개 — "
+                  f"'{Path(group[0]).name}'만 진행, 나머지는 삭제 권장", file=sys.stderr)
+        else:
+            for p in group:
+                dropped[p] = {"status": "skipped_id_collision", "report_id": rid}
+            print(f"[충돌] {rid}: 서로 다른 파일 {len(group)}개가 같은 report_id로 유도 — "
+                  "파일명 조정 필요, 전원 스킵", file=sys.stderr)
+
     log_entries = []
     scan_dump = []
     all_ok = True
 
     for path in paths:
+        drop = dropped.get(path)
+        if drop is not None and not args.scan:
+            all_ok = False
+            log_entries.append({"file": Path(path).name, **drop})
+            continue
+
         # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
         base_id = derive_report_id_any(path)
         if not args.scan and not args.force:
