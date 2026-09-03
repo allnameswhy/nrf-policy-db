@@ -7,9 +7,10 @@ PROJECT_NOTES.md §5 참조.
 - 라우팅 에이전트가 이 파일을 읽고 후보 보고서를 선택한다(문자열 매칭 아님).
 - 파생 생성물이지만 유지 대상(§2) — git에 포함.
 
-요약 소스는 frontmatter `abstract`(저자 초록 요약)가 1차, 공란인 보고서만
-`> **보고서 요약:**` fallback 블록(annotate.py 삽입물)을 쓴다. 둘 다 없으면
-빈 값 + 경고(추측 금지).
+요약 소스는 `> **보고서 요약:**` 블록(annotate.py 상시 생성물, 1~2문장 판별형)
+단독이다. frontmatter `abstract`(저자 초록)는 카탈로그 비대화 방지를 위해 싣지
+않는다(원문은 .md frontmatter, 열람은 /browse 뷰어 병기). 블록이 없으면 abstract
+대체 없이 빈 값 + 경고(추측 금지 — annotate 실행 필요).
 """
 
 import argparse
@@ -32,19 +33,10 @@ def render_entry(state: mdio.ReportState, warnings: list[str]) -> list[str]:
             who = f"{who} ({fm.institution})" if who else fm.institution
         lines.append(f"- 연구책임자: {who}")
 
-    if not fm.abstract_empty:
-        summary_lines = fm.abstract.split("\n")
-    else:
-        report_summary = state.existing.get(mdio.REPORT_KEY, "")
-        if not report_summary:
-            warnings.append(f"{fm.report_id}: abstract 공란 + 보고서 요약 블록 없음 — 요약 없이 수록")
-        summary_lines = [report_summary] if report_summary else []
-
-    if len(summary_lines) <= 1:
-        lines.append(f"- 요약: {summary_lines[0]}" if summary_lines else "- 요약:")
-    else:
-        lines.append("- 요약:")
-        lines.extend(f"  {ln}" for ln in summary_lines)
+    report_summary = state.existing.get(mdio.REPORT_KEY, "")
+    if not report_summary:
+        warnings.append(f"{fm.report_id}: 보고서 요약 블록 없음 — 요약 없이 수록 (annotate 실행 필요)")
+    lines.append(f"- 요약: {report_summary}" if report_summary else "- 요약:")
     return lines
 
 

@@ -26,8 +26,8 @@
   재접속된다. 질의↔DB 작업은 상호 배제(409). 완료 기록은 결과 박스의 [확인(닫기)]
   ack로 닫는다(진행 중 작업 복원은 그대로).
 - /browse = 자료 현황 페이지(2026-09): 보고서별 현황판 표(행 클릭 → 그 보고서의
-  카탈로그 요약(master_index와 동일 소스 규칙: abstract 1차 → fallback 블록) +
-  목차·요약을 오른쪽 뷰어에 로드) — reports.db 읽기 전용 + .md frontmatter 조회.
+  카탈로그 요약(master_index와 동일 소스 규칙: 보고서 요약 블록 단독) + 저자 초록
+  병기 + 목차·요약을 오른쪽 뷰어에 로드) — reports.db 읽기 전용 + .md frontmatter 조회.
 - 멀티턴(질의 간 세션 유지)은 범위 밖 — perform_search의 "세션=질의 1건" 구조를
   세션 보관소로 바꿔야 하므로 확장 시 별도 설계.
 
@@ -829,15 +829,15 @@ def api_admin_reports(request):
 
 def report_meta(fp: str) -> dict | None:
     """보고서 카탈로그 메타 — 요약 소스 규칙은 build_index.render_entry와 동일
-    (frontmatter abstract 1차, 공란이면 `> **보고서 요약:**` fallback 블록)."""
+    (`> **보고서 요약:**` 블록 단독). abstract(저자 초록)는 별도 필드로 병기용."""
     try:
         st = mdio.load_report(Path(fp))
     except Exception:
         return None
     fm = st.fm
-    summary = fm.abstract if not fm.abstract_empty else st.existing.get(mdio.REPORT_KEY, "")
     return {"title": fm.title, "year": fm.year, "lead_researcher": fm.lead_researcher,
-            "institution": fm.institution, "summary": summary}
+            "institution": fm.institution,
+            "summary": st.existing.get(mdio.REPORT_KEY, ""), "abstract": fm.abstract}
 
 
 def api_admin_toc(request):

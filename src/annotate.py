@@ -2,8 +2,9 @@
 
 - 유닛 분할: mdio.split_units — 크기 기반 헤딩 트리 분할 (PROJECT_NOTES §3 단계②)
 - 절 요약: 유닛 루트 헤딩 아래 `> **요약:** …` 1~2문장 한 줄
-- 보고서 요약: frontmatter abstract 공란인 보고서에만 `> **보고서 요약:** …`
-  (입력은 그 보고서의 유닛 요약 전체 — §3 단계③ fallback)
+- 보고서 요약: 전 보고서에 `> **보고서 요약:** …` 상시 생성 — 1~2문장 150자 내외
+  판별형(카탈로그 라우팅용). 입력 = 유닛 요약 전체 + abstract + frontmatter 키워드
+  (§3 단계③). 유닛 요약이 1건이라도 새로 쓰인 파일은 보고서 요약도 재생성(입력 일관성).
 - LLM: claude-agent-sdk 경유, Claude Code 구독 로그인 재사용 (API 키 불필요)
 - 본문은 LLM에 보내되 돌려받은 요약만 삽입. 쓰기 전마다 왕복 검증
   (요약 블록 제거 시 base와 바이트 일치)으로 원문 무변경을 보장한다.
@@ -152,20 +153,20 @@ async def call_llm(
     return text, usage
 
 
-def postprocess(raw: str) -> str:
+def postprocess(raw: str, max_len: int = 400) -> str:
     """1~2문장 한 줄로 정규화. 형식 복구 불능이면 RetryableError."""
     s = re.sub(r"\s+", " ", raw).strip()
     s = re.sub(r"^(?:[-*•>]\s+)+", "", s)
     s = re.sub(r"^\*\*요약[::]?\*\*\s*", "", s)
     s = re.sub(r"^요약[::]\s*", "", s)
     s = s.strip("\"'“”‘’ ")
-    if len(s) > 400:
-        cut = s[:400]
-        pos = max(cut.rfind("다."), cut.rfind(". "))
+    if len(s) > max_len:
+        cut = s[:max_len]
+        pos = max(cut.rfind("다."), cut.rfind(". "), cut.rfind("함."))
         if pos >= 100:
             s = cut[: pos + 2].rstrip()
         else:
-            raise RetryableError(f"요약 400자 초과({len(s)}자), 문장 경계 없음")
+            raise RetryableError(f"요약 {max_len}자 초과({len(s)}자), 문장 경계 없음")
     if not s:
         raise RetryableError("빈 요약")
     return s
@@ -199,13 +200,33 @@ def build_unit_prompt(fm: mdio.Frontmatter, unit: mdio.Unit, text: str) -> str:
     return f"보고서: {fm.title}\n위치: {path}{note}\n\n아래 본문을 1~2문장으로 요약하라.\n\n{text}"
 
 
+# 보고서 요약 길이: 목표 150자는 프롬프트로, 300자는 postprocess 하드 가드(폭주 방지 —
+# 250 실측: 내용 많은 보고서의 252자 개조식 한 문장이 경계 컷 불가로 3회 재시도 실패)
+REPORT_SUMMARY_MAX_LEN = 300
+
+
 def build_report_prompt(fm: mdio.Frontmatter, pairs: list[tuple[str, str]]) -> str:
     listing = "\n".join(f"- {p}: {s}" for p, s in pairs)
-    return (
-        f"보고서 제목: {fm.title}\n\n"
-        "아래는 이 보고서의 절별 요약 전체다. 이를 근거로 보고서 전체를 소개하는 "
-        "2~3문장 요약을 개행 없이 한 줄로 작성하라.\n\n" + listing
+    parts = [f"보고서 제목: {fm.title}"]
+    if fm.keywords_ko or fm.keywords_en:
+        kw = " / ".join(v for v in (fm.keywords_ko, fm.keywords_en) if v)
+        parts.append(f"[키워드] {kw}")
+    if not fm.abstract_empty:
+        parts.append(f"[저자 초록 — 참고 입력]\n{fm.abstract}")
+    parts.append(
+        "위는 이 보고서의 메타데이터, 아래는 절별 요약 전체다. 이를 근거로 이 보고서를 소개하는 "
+        "요약을 1~2문장, 150자 내외, 개행 없이 한 줄로 작성하라(개조식 종결 '~함' 허용). "
+        "이 요약만 보고 수백 권 카탈로그에서 이 보고서를 다른 보고서와 구별·발견할 수 있어야 한다. "
+        "구체 대상(제도·사업명·기술명·국가 등 고유명사)을 최우선으로 담고, 핵심 결론·제언과 "
+        "어떤 수치 데이터가 담겼는지 연상되게 써라. 어느 보고서에나 붙는 범용 문구는 금지한다.\n"
+        "나쁜 예(판별력 없음): 본 보고서는 6대 융합신기술과 각 기술별 중장기 로드맵을 제시하였으며, "
+        "보다 체계적인 기술 발굴 및 중장기적 투자를 요청하였다.\n"
+        "좋은 예: 제론테크, 뇌-신경브릿지, 소프트 로보틱스, 실시간 학습 판단 지능, 첨단 냉각 소재 및 "
+        "열제어, IoT 앰비언트 에너지 등 6대 융합신기술을 도출하였고, 이를 바탕으로 상시 발굴-선정-관리 "
+        "체계 구축, 도전성 파급효과 중심 평가, 10년 로드맵형 목표 수립, 선제적 투자 체계 확립, 민관 "
+        "협의체 상설화 등을 제언함.\n\n[절별 요약 전체]\n" + listing
     )
+    return "\n\n".join(parts)
 
 
 # ---- 파일 처리 ----
@@ -227,7 +248,9 @@ class FileEntry:
     errors: list[str] = field(default_factory=list)
 
 
-async def call_with_retry(prompt: str, args, entry: FileEntry, retries: int = 2) -> str:
+async def call_with_retry(
+    prompt: str, args, entry: FileEntry, retries: int = 2, max_len: int = 400
+) -> str:
     delays = RETRY_DELAYS
     last: RetryableError | None = None
     for attempt in range(retries + 1):
@@ -235,7 +258,7 @@ async def call_with_retry(prompt: str, args, entry: FileEntry, retries: int = 2)
             raw, usage = await call_llm(prompt, model=args.model, timeout=args.timeout)
             entry.calls += 1
             entry.total_cost_usd += usage.get("cost") or 0.0
-            return postprocess(raw)
+            return postprocess(raw, max_len)
         except RetryableError as e:
             entry.calls += 1
             last = e
@@ -260,7 +283,7 @@ async def process_file(
     existing = {} if args.force else st.existing
     units = st.units
     will_write = any(u.hid not in existing for u in units) or (
-        fm.abstract_empty and mdio.REPORT_KEY not in existing and bool(units)
+        mdio.REPORT_KEY not in existing and bool(units)
     )
     if will_write and fm.verified_annotate:
         # 요약이 바뀌는 파일은 미감사 상태로 리셋 — verified_annotate 제거 후
@@ -321,13 +344,17 @@ async def process_file(
         entry.status = "aborted"
         return
 
-    # 보고서 요약 fallback (§3 단계③): abstract 공란 + 전 유닛 요약 완료 시에만
+    # 보고서 요약 (§3 단계③): 전 유닛 요약 완료 시 상시 생성. 유닛 요약이 새로
+    # 쓰인 파일은 기존 보고서 요약도 낡은 입력 기반이므로 덮어 재생성(입력 일관성).
     all_done = all(u.hid in summaries for u in units)
-    if fm.abstract_empty and mdio.REPORT_KEY not in summaries and all_done and units:
+    if all_done and units and (mdio.REPORT_KEY not in summaries or entry.units_new > 0):
         pairs = [(" > ".join(u.heading_path), summaries[u.hid]) for u in units]
         try:
             async with sema:
-                summary = await call_with_retry(build_report_prompt(fm, pairs), args, entry)
+                summary = await call_with_retry(
+                    build_report_prompt(fm, pairs), args, entry,
+                    max_len=REPORT_SUMMARY_MAX_LEN,
+                )
             async with write_lock:
                 summaries[mdio.REPORT_KEY] = summary
                 write_now()
@@ -359,7 +386,7 @@ def run_scan(paths: list[str], args) -> tuple[int, list[dict]]:
         new = [u for u in units if u.hid not in existing]
         over = sum(1 for u in units if u.char_count > args.input_cap)
         expected = len(new) + (
-            1 if fm.abstract_empty and mdio.REPORT_KEY not in existing and units else 0
+            1 if units and (mdio.REPORT_KEY not in existing or new) else 0
         )
         reports.append(
             {

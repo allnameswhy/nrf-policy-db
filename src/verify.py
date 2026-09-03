@@ -426,8 +426,9 @@ def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) 
 def annotate_complete(st) -> bool:
     """status.py·annotate --scan과 동일 산식: 잔여 호출 0 + 요약 배치 규약 일치."""
     done = sum(1 for u in st.units if u.hid in st.existing)
-    remaining = (len(st.units) - done) + (
-        1 if st.fm.abstract_empty and mdio.REPORT_KEY not in st.existing and st.units else 0)
+    new = len(st.units) - done
+    remaining = new + (
+        1 if st.units and (mdio.REPORT_KEY not in st.existing or new) else 0)
     return remaining == 0 and st.roundtrip_ok()
 
 
@@ -462,8 +463,13 @@ JUDGE_SYSTEM_PROMPT = (
     "할루시네이션(본문에 없는 사실 주장) / 왜곡(수치·주체·인과가 본문과 다름) / "
     "무관(요약이 본문 주제와 무관). WARN: 핵심은 담겼으나 부차 내용에 편중. "
     "그 외 PASS. 본문 내용의 압축·환언·표현 선택은 문제 삼지 않는다. "
-    "숫자 표기의 단위 환산(예: 1,520,000 위안 = 152만 위안)은 산술적으로 같으면 "
-    "왜곡이 아니다. 본문 안에서 서술문과 표 등 표기가 서로 모순될 때 요약이 그중 "
+    "수치 왜곡 판정 전에는 반드시 두 표기를 같은 단위로 환산해 계산 비교하라 — "
+    "만=10^4, 억=10^8이므로 152만 = 1,520,000이며, 이렇게 산술적으로 같은 단위 "
+    "환산 쌍은 왜곡이 아니고, '명확성 손상'·'축약' 등 어떤 명분으로도 문제 삼지 않는다. "
+    "서술 순서의 압축이나 구조의 환언(N개 항목을 'N단계'로 부르는 등)도 왜곡·누락이 아니다. "
+    "FAIL은 검색·발견을 해치는 결함(산술적으로 다른 수치, 본문에 없는 사실, 핵심 주제 부재)에 "
+    "한정하고, 문체·표기·명확성 선호는 판정 대상이 아니다. "
+    "본문 안에서 서술문과 표 등 표기가 서로 모순될 때 요약이 그중 "
     "한쪽을 그대로 따랐다면 FAIL이 아니라 WARN으로 하고 note에 원문 모순임을 밝힌다. "
     "출력은 JSON 한 줄만, 다른 텍스트 금지: "
     '{"verdict":"PASS|WARN|FAIL","issues":[{"type":"누락|할루시네이션|왜곡|무관",'
@@ -515,13 +521,27 @@ def build_judge_unit_prompt(an, fm, unit, base: list[str], summary: str, cap: in
 
 
 def build_judge_report_prompt(fm, pairs: list[tuple[str, str]], summary: str) -> str:
-    """보고서 요약은 생성 때와 동일하게 유닛 요약 전체를 근거로 판정한다."""
+    """보고서 요약은 생성 때와 동일 근거(키워드·저자 초록·유닛 요약 전체)로 판정한다."""
     listing = "\n".join(f"- {p}: {s}" for p, s in pairs)
-    return (
-        f"보고서 제목: {fm.title}\n\n[절별 요약 전체 — 이 보고서 요약의 근거 입력]\n"
-        f"{listing}\n\n[검사 대상 보고서 요약]\n{summary}\n\n"
-        "위 보고서 요약을 판정 기준에 따라 JSON으로 판정하라."
+    parts = [f"보고서 제목: {fm.title}"]
+    if fm.keywords_ko or fm.keywords_en:
+        kw = " / ".join(v for v in (fm.keywords_ko, fm.keywords_en) if v)
+        parts.append(f"[키워드 — 근거 입력]\n{kw}")
+    if not fm.abstract_empty:
+        parts.append(f"[저자 초록 — 근거 입력]\n{fm.abstract}")
+    parts.append(f"[절별 요약 전체 — 근거 입력]\n{listing}")
+    parts.append(
+        f"[검사 대상 보고서 요약]\n{summary}\n\n"
+        "위 보고서 요약을 판정 기준에 따라 JSON으로 판정하라. 보고서 요약 전용 추가 기준 2축: "
+        "① 판별력 — 이 요약만 보고 수백 권 카탈로그에서 이 보고서를 다른 보고서와 구별·발견할 수 "
+        "있어야 한다. 구체 키워드(제도·사업명·기술명·국가 등 고유명사) 없이 어느 보고서에나 붙는 "
+        "범용 문구뿐이면 FAIL(누락). ② 내용 충실성 — 보고서의 핵심 주제·결론을 대표해야 하며 핵심 "
+        "부재는 FAIL(누락), 근거 입력에 없는 내용·상이한 수치는 공용 기준대로 FAIL(할루시네이션·왜곡). "
+        "주의: 1~2문장 보고서 요약은 극도 압축이 전제다 — 근거에 있는 내용의 환언, 하위 항목·단계의 "
+        "미열거는 누락이 아니다. 누락 FAIL은 핵심 주제 자체가 빠졌거나 범용 문구뿐이라 판별이 "
+        "불가한 경우로 한정하라."
     )
+    return "\n\n".join(parts)
 
 
 async def judge_call(an, prompt: str, args, jstats: dict) -> dict:
@@ -554,7 +574,7 @@ async def judge_file(an, st, args, jstats: dict) -> dict[str, dict]:
         (u.hid, build_judge_unit_prompt(an, st.fm, u, st.base, st.existing[u.hid], args.input_cap))
         for u in st.units
     ]
-    if st.fm.abstract_empty and mdio.REPORT_KEY in st.existing:
+    if mdio.REPORT_KEY in st.existing:
         pairs = [(" > ".join(u.heading_path), st.existing[u.hid]) for u in st.units]
         targets.append(
             (mdio.REPORT_KEY, build_judge_report_prompt(st.fm, pairs, st.existing[mdio.REPORT_KEY]))
@@ -829,7 +849,7 @@ def main() -> None:
             if aborted:
                 rep.notes.append("D 판정 미수행(한도/인증 중단) — 재실행하면 이어서 진행")
                 continue
-            n = len(st.units) + (1 if st.fm.abstract_empty and mdio.REPORT_KEY in st.existing else 0)
+            n = len(st.units) + (1 if mdio.REPORT_KEY in st.existing else 0)
             print(f"[판정] {stem}: {n}건 ({args.judge_model})", file=sys.stderr)
             try:
                 judged[stem] = asyncio.run(judge_file(an, st, args, jstats))

@@ -45,7 +45,7 @@ class Row:
     extracted: str = "완료"
     summary: str = "-"  # "M/N"
     remaining: int = 0
-    report_summary: str = "-"  # abstract | 완료 | 대기 | -
+    report_summary: str = "-"  # 완료 | 대기 | - (annotate 상시 생성 — abstract는 요약 소스 아님)
     verify: str = "미검증"  # 미검증 | extract | annotate
     db: str = "-"  # 동기화 | 미반영 | -
     notes: list[str] = field(default_factory=list)
@@ -81,14 +81,13 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
     done = sum(1 for u in units if u.hid in existing)
     new = len(units) - done
     # 잔여 호출 산식 = annotate.run_scan()의 expected_calls와 동일
+    # (신규 유닛이 있으면 보고서 요약 재생성이 따라오므로 +1 — 입력 일관성 규칙)
     row.remaining = new + (
-        1 if fm.abstract_empty and mdio.REPORT_KEY not in existing and units else 0
+        1 if units and (mdio.REPORT_KEY not in existing or new) else 0
     )
     row.summary = f"{done}/{len(units)}"
 
-    if not fm.abstract_empty:
-        row.report_summary = "abstract"
-    elif mdio.REPORT_KEY in existing:
+    if mdio.REPORT_KEY in existing:
         row.report_summary = "완료"
     elif units:
         row.report_summary = "대기"

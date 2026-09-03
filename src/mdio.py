@@ -66,6 +66,8 @@ class Frontmatter:
     lead_researcher: str = ""
     institution: str = ""
     abstract: str = ""  # 'abstract: |' 블록 원문 (줄바꿈 유지, 공란이면 "")
+    keywords_ko: str = ""  # extract가 직렬화한 한 줄 배열 표기 원문 (없으면 "")
+    keywords_en: str = ""
 
 
 def _unquote(v: str) -> str:
@@ -89,6 +91,8 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     lead_researcher = ""
     institution = ""
     abstract = ""
+    keywords_ko = ""
+    keywords_en = ""
     for i in range(1, len(lines)):
         line = lines[i]
         if line == "---":
@@ -104,6 +108,10 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
             lead_researcher = _unquote(line.split(":", 1)[1])
         elif line.startswith("institution:"):
             institution = _unquote(line.split(":", 1)[1])
+        elif line.startswith("keywords_ko:"):
+            keywords_ko = line.split(":", 1)[1].strip()
+        elif line.startswith("keywords_en:"):
+            keywords_en = line.split(":", 1)[1].strip()
         elif line.startswith("abstract:"):
             val = line.split(":", 1)[1].strip()
             # extract.py: 내용 있으면 'abstract: |' 블록(연속 줄 2칸 들여쓰기), 공란이면 'abstract: ""'
@@ -123,7 +131,8 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     if end_line < 0:
         raise ValueError("frontmatter 닫는 '---'가 없습니다")
     return Frontmatter(report_id, title, abstract_empty, end_line, verified_extract, verified_annotate,
-                       year=year, lead_researcher=lead_researcher, institution=institution, abstract=abstract)
+                       year=year, lead_researcher=lead_researcher, institution=institution, abstract=abstract,
+                       keywords_ko=keywords_ko, keywords_en=keywords_en)
 
 
 # ---- 헤딩 트리 ----
