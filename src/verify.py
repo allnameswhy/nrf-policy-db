@@ -30,7 +30,13 @@ PROJECT_NOTES §3의 "검증 스텝": frontmatter verified_extract/verified_anno
                    네이션) / 수치·주체·인과 상이=FAIL(왜곡) / 본문과 무관=FAIL(무관)
                    / 핵심 포함·부차 편중=WARN. 판정 입력은 annotate 생성 입력과
                    동일 절단(--input-cap). FAIL은 자동 수정하지 않고 리포트만 —
-                   수정 경로: 요약 줄 삭제 → annotate 재실행 → verify 재실행.
+                   수정 경로: 요약 줄 삭제(src/strip_fail.py) → annotate → verify.
+                   판정 캐시(--judge-cache, 기본 logs/judge_cache.json, 2026-09):
+                   유닛별 최종 verdict를 판정 입력 전문(근거 본문+요약+제목+모델)의
+                   sha256과 함께 저장하고 입력이 같으면 LLM 없이 재사용한다 —
+                   파일 단위 전건 재판정은 실행마다 ~2% 무작위 FAIL이 새로 생겨
+                   수렴하지 않았다(W0 실측). --reaudit는 캐시를 무시하고 재판정,
+                   ERROR(판정불능)는 캐시하지 않는다.
 
 플랫 문서(frontmatter 'structure: flat' — extract 플랫 폴백 산출물): 풀 검사에서
 find_body_start/detect_structure 재현 대신 extract와 공유하는 find_body_start_flat로
@@ -59,6 +65,7 @@ import argparse
 import asyncio
 import dataclasses
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -477,6 +484,37 @@ JUDGE_SYSTEM_PROMPT = (
 )
 
 VERDICTS = ("PASS", "WARN", "FAIL")
+JUDGE_CACHE_DEFAULT = "logs/judge_cache.json"
+
+
+def judge_key(prompt: str, model: str) -> str:
+    """판정 캐시 키 — 판정 입력 전문(근거 본문·요약·제목·위치)과 모델의 sha256."""
+    return hashlib.sha256(f"{model}\n{prompt}".encode("utf-8")).hexdigest()
+
+
+def load_judge_cache(path: str) -> dict:
+    """{stem: {hid: {key, verdict, issues, model, judged_at}}}. 없거나 손상이면 빈 dict."""
+    if not path:
+        return {}
+    p = Path(path)
+    if not p.is_file():
+        return {}
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return obj if isinstance(obj, dict) else {}
+
+
+def save_judge_cache(path: str, cache: dict) -> None:
+    """원자적 저장(tmp → replace) — 한도 중단 중에도 부분 진행도가 깨지지 않게."""
+    if not path:
+        return
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, p)
 
 
 def _annotate():
@@ -568,8 +606,8 @@ async def judge_call(an, prompt: str, args, jstats: dict) -> dict:
     return {"verdict": "ERROR", "issues": [{"type": "판정불능", "claim": "", "note": str(last)[:120]}]}
 
 
-async def judge_file(an, st, args, jstats: dict) -> dict[str, dict]:
-    """파일 1개의 요약 전건 판정. 한도/인증 예외는 전파(전체 실행 중단)."""
+def build_judge_targets(an, st, args) -> list[tuple[str, str]]:
+    """파일 1개의 판정 대상 (hid, 프롬프트) — 유닛 전건 + (있으면) 보고서 요약."""
     targets: list[tuple[str, str]] = [
         (u.hid, build_judge_unit_prompt(an, st.fm, u, st.base, st.existing[u.hid], args.input_cap))
         for u in st.units
@@ -579,22 +617,50 @@ async def judge_file(an, st, args, jstats: dict) -> dict[str, dict]:
         targets.append(
             (mdio.REPORT_KEY, build_judge_report_prompt(st.fm, pairs, st.existing[mdio.REPORT_KEY]))
         )
+    return targets
 
+
+def cache_hits(targets: list[tuple[str, str]], bucket: dict, model: str) -> dict[str, dict]:
+    """캐시에 같은 키(입력 전문+모델)의 최종 verdict가 있는 대상 → {hid: verdict dict}."""
+    hits: dict[str, dict] = {}
+    for hid, prompt in targets:
+        ent = bucket.get(hid)
+        if ent and ent.get("key") == judge_key(prompt, model) and ent.get("verdict") in VERDICTS:
+            hits[hid] = {"verdict": ent["verdict"], "issues": ent.get("issues") or [], "cached": True}
+    return hits
+
+
+async def judge_file(an, targets: list[tuple[str, str]], args, jstats: dict,
+                     bucket: dict, hits: dict[str, dict]) -> dict[str, dict]:
+    """파일 1개 판정 — 캐시 적중은 재사용, 나머지만 호출하고 결과를 bucket에 즉시 기록.
+
+    한도/인증 예외는 전파(전체 실행 중단)하되 그때까지의 verdict는 bucket에 남는다
+    (호출자가 finally에서 저장) — 재실행 시 미판정 유닛만 이어서 판정한다.
+    """
     sema = asyncio.Semaphore(args.concurrency)
     fatal: list[Exception] = []
-    results: dict[str, dict] = {}
+    results: dict[str, dict] = dict(hits)
+    jstats["cached"] += len(hits)
+    now = datetime.datetime.now().isoformat(timespec="seconds")
 
     async def one(hid: str, prompt: str) -> None:
         async with sema:
             if fatal:
                 return
             try:
-                results[hid] = await judge_call(an, prompt, args, jstats)
+                v = await judge_call(an, prompt, args, jstats)
             except (an.UsageLimitReached, an.AuthError) as e:
                 if not fatal:
                     fatal.append(e)
+                return
+            results[hid] = dict(v, cached=False)
+            if v["verdict"] in VERDICTS:  # ERROR(판정불능)는 캐시하지 않음 — 재실행 시 재시도
+                bucket[hid] = {
+                    "key": judge_key(prompt, args.judge_model), "verdict": v["verdict"],
+                    "issues": v["issues"], "model": args.judge_model, "judged_at": now,
+                }
 
-    await asyncio.gather(*(one(h, p) for h, p in targets))
+    await asyncio.gather(*(one(h, p) for h, p in targets if h not in hits))
     if fatal:
         raise fatal[0]
     return results
@@ -728,6 +794,8 @@ def main() -> None:
     parser.add_argument("--llm-timeout", type=float, default=240, help="판정 호출당 타임아웃 초 (기본: 240)")
     parser.add_argument("--input-cap", type=int, default=8000, help="판정 입력 절단 상한 — annotate와 동일해야 함 (기본: 8000)")
     parser.add_argument("--log", default="logs/verify_log.json", help="결과 로그 경로")
+    parser.add_argument("--judge-cache", default=JUDGE_CACHE_DEFAULT,
+                        help=f"유닛별 판정 캐시 경로 (기본: {JUDGE_CACHE_DEFAULT}; 빈 문자열이면 비활성)")
     parser.add_argument("--misses-cap", type=int, default=20, help="소실 개별 표시 상한 (기본 20)")
     parser.add_argument("--min-chars", type=int, default=200, help="유닛 최소 크기 (annotate와 동일해야 함)")
     parser.add_argument("--max-chars", type=int, default=4000, help="유닛 최대 크기 (annotate와 동일해야 함)")
@@ -838,25 +906,31 @@ def main() -> None:
         cands.append(stem)
 
     judged: dict[str, dict] = {}  # stem → {hid: verdict dict}
-    jstats = {"calls": 0, "cost": 0.0}
+    jstats = {"calls": 0, "cost": 0.0, "cached": 0}
     aborted = False
     if cands:
         an = _annotate()
         os.environ.setdefault("CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK", "1")
         an.setup_auth(args)
+        cache = load_judge_cache(args.judge_cache)
         for stem in cands:
             rep, mp, st = states[stem]
             if aborted:
                 rep.notes.append("D 판정 미수행(한도/인증 중단) — 재실행하면 이어서 진행")
                 continue
-            n = len(st.units) + (1 if mdio.REPORT_KEY in st.existing else 0)
-            print(f"[판정] {stem}: {n}건 ({args.judge_model})", file=sys.stderr)
+            targets = build_judge_targets(an, st, args)
+            bucket = cache.setdefault(stem, {})
+            hits = {} if args.reaudit else cache_hits(targets, bucket, args.judge_model)
+            print(f"[판정] {stem}: {len(targets)}건 — 캐시 재사용 {len(hits)}, 호출 "
+                  f"{len(targets) - len(hits)} ({args.judge_model})", file=sys.stderr)
             try:
-                judged[stem] = asyncio.run(judge_file(an, st, args, jstats))
+                judged[stem] = asyncio.run(judge_file(an, targets, args, jstats, bucket, hits))
             except (an.UsageLimitReached, an.AuthError) as e:
                 aborted = True
                 print(an.fatal_msg(e), file=sys.stderr)
                 rep.notes.append("D 판정 중단 — 재실행하면 이어서 진행")
+            finally:
+                save_judge_cache(args.judge_cache, cache)
 
     # ---- 판정 결과 반영 ----
     for stem, verdicts in judged.items():
@@ -870,6 +944,7 @@ def main() -> None:
             elif v["verdict"] == "WARN":
                 rep.warns.append(_verdict_desc(hid, v, lmap))
         rep.stats["judge"] = counts
+        rep.stats["judge_cached"] = sum(1 for v in verdicts.values() if v.get("cached"))
 
     # ---- 스탬프 기록 (검사 아님 — 최종 단계) ----
     today = datetime.date.today().isoformat()
@@ -904,7 +979,8 @@ def main() -> None:
             cov = f"  (대조 {rep.stats['needles']}줄, 미스 {rep.stats['misses']})"
         jd = rep.stats.get("judge")
         if jd:
-            cov += f"  [판정 PASS {jd['PASS']} / WARN {jd['WARN']} / FAIL {jd['FAIL'] + jd['ERROR']}]"
+            cov += f"  [판정 PASS {jd['PASS']} / WARN {jd['WARN']} / FAIL {jd['FAIL'] + jd['ERROR']}"
+            cov += f" · 캐시 {rep.stats['judge_cached']}]" if rep.stats.get("judge_cached") else "]"
         print(f"{rep.report_id}: {status} [{rep.mode}]{tag}{cov}")
         for f_ in rep.fails + rep.qfails:
             print(f"  x {f_}")
@@ -916,8 +992,9 @@ def main() -> None:
     n_warn = sum(len(r.warns) for r in reports)
     print()
     print(f"== 합계 == PASS {len(reports) - n_fail} / FAIL {n_fail} / 경고 {n_warn}")
-    if jstats["calls"]:
-        print(f"[판정 합계] 호출 {jstats['calls']}회, 비용 ${jstats['cost']:.4f}")
+    if jstats["calls"] or jstats["cached"]:
+        print(f"[판정 합계] 호출 {jstats['calls']}회, 비용 ${jstats['cost']:.4f}, "
+              f"캐시 재사용 {jstats['cached']}건")
     if aborted:
         print("[중단] 한도/인증으로 D 판정이 중단됨 — 재실행하면 미기록 파일만 이어서 판정", file=sys.stderr)
 
@@ -928,7 +1005,7 @@ def main() -> None:
         "mode": "verify",
         "no_stamp": args.no_stamp,
         "flags": {"full": args.full, "reaudit": args.reaudit, "no_llm": args.no_llm,
-                  "judge_model": args.judge_model},
+                  "judge_model": args.judge_model, "judge_cache": args.judge_cache},
         "judge_totals": jstats,
         "judgements": {stem: verdicts for stem, verdicts in judged.items()},
         "files": [dataclasses.asdict(r) for r in reports],
