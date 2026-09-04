@@ -67,6 +67,10 @@
   }
   .box .ctl { margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; }
   .box .ctl label { cursor: pointer; white-space: nowrap; }
+  .box .rid-input {
+    font: inherit; font-size: 13.5px; padding: 5px 10px; min-width: 300px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text);
+  }
   .box .mono-block {
     font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
     white-space: pre-wrap; word-break: break-all; color: var(--text);
@@ -231,6 +235,51 @@ function checkbox(label, checked) {
   return l;
 }
 
+// 관리번호 기입 필요 카드의 입력칸 — 표(report_ids.tsv)를 손으로 고치지 않게 서버가 대신 기록.
+// 저장 성공 시 현황을 다시 읽어 카드가 '추출 대기'로 바뀐다(값 검증은 서버 register.set_rid).
+function registerInput(file) {
+  const w = el("div", "actions");
+  const inp = document.createElement("input");
+  inp.type = "text";
+  inp.placeholder = "예: 2022-04 · 같은 번호의 다른 문서면 2022-04-b · 번호 모르면 2021-00(자동 -vN) · 연도도 모르면 0000-00";
+  inp.className = "rid-input";
+  inp.setAttribute("aria-label", "관리번호");
+  const save = document.createElement("button");
+  save.className = "mini";
+  save.textContent = "저장";
+  const msg = el("span", "note");
+  async function submit() {
+    const rid = inp.value.trim();
+    if (!rid) { msg.textContent = "번호를 입력하세요."; return; }
+    save.disabled = true; inp.disabled = true;
+    msg.textContent = "저장 중…";
+    let res, j;
+    try {
+      res = await fetch("/api/admin/register_set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file, rid }),
+      });
+      j = await res.json();
+    } catch (e) {
+      msg.textContent = "서버 연결 실패: " + e.message;
+      save.disabled = false; inp.disabled = false;
+      return;
+    }
+    if (!res.ok) {
+      msg.textContent = "✗ " + (j.error || `HTTP ${res.status}`);
+      save.disabled = false; inp.disabled = false;
+      return;
+    }
+    msg.textContent = "✓ 기록됨" + (j.warning ? " — " + j.warning : "");
+    await refreshStatus();
+  }
+  save.addEventListener("click", submit);
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+  w.append(inp, save, msg);
+  return w;
+}
+
 let ctlSeq = 0;
 function renderCards(cards) {
   const host = $("cards");
@@ -261,6 +310,7 @@ function renderCards(cards) {
         b.appendChild(el("div", "hint", "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장)."));
       }
     }
+    if (c.kind === "register_manual") b.appendChild(registerInput(c.files[0]));
     if (ex.error) b.appendChild(el("div", "mono-block", ex.error));
     if (ex.errors && ex.errors.length) b.appendChild(el("div", "mono-block", ex.errors.join("\n")));
     if (ex.items && ex.items.length) {

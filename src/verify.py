@@ -44,7 +44,7 @@ body 범위를 재현해 B를 동일하게 실행한다. A는 합성 '구간 N (
 검사로 바뀌고(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수 2→1) C는 생략하되, L1 구조
 신호(find_body_start 성공)가 있으면 경고한다(구조 문서가 폴백 또는 --lane flat 강제로
 플랫 처리된 의심 — 레인 정합 안전망).
-비NRF 슬러그 스템은 검사 대상에 포함되며 year 대조는 NRF 스템에서만 수행한다.
+비표준(수동 기입) rid 스템도 검사 대상에 포함되며 year 대조는 표준형 stem에서만 수행한다.
 
 스탬프 기록(검사 아님 — 최종 단계): 통과 상태에 맞는 스탬프를 이중 가드(스탬프 외
 무변경 바이트 대조 + 재파싱 값 일치)로 기록. verified_annotate = 커버리지·배치
@@ -79,7 +79,6 @@ from extract import (
     CAPTION_RE,
     PROFILES,
     TEMPLATE_FOLD,
-    derive_report_id_any,
     detect_structure,
     find_body_start,
     find_body_start_flat,
@@ -93,10 +92,11 @@ from extract import (
     split_bundle,
     table_covers,
 )
+from registry import STEM_RE, rid_for, rid_reason
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-NRF_STEM_RE = re.compile(r"^(\d{4}-\d{2})(?:_\d{2})?$")  # NRF 표준 스템 — year 대조는 이 형식에서만
+NRF_STEM_RE = STEM_RE  # 표준형 stem YYYY-NN[-vN][-b][_NN](registry) — year 대조는 이 형식에서만
 FLAT_HEADING_RE = re.compile(r"^구간 \d+ \(p\.\d+(?:-\d+)?\)$")  # extract 플랫 폴백의 합성 헤딩 제목
 FM_KEY_RE = re.compile(r"^([a-z_]+):(.*)$")
 RAW_BULLET_RE = re.compile(r"^\s*[□○ㅇ❍◉▸▪‣∙•Ÿ](\s|$)")
@@ -154,12 +154,13 @@ def check_frontmatter(rep: Report, raw: dict, st, stem: str, part, n_parts: int)
     if st.fm.report_id != stem:
         rep.fails.append(f"report_id({st.fm.report_id}) ≠ 파일명({stem})")
     if NRF_STEM_RE.match(stem):
-        if raw.get("year") != stem[:4]:
-            rep.fails.append(f"year({raw.get('year')}) ≠ 파일명 연도({stem[:4]})")
+        expected = "" if stem.startswith("0000") else stem[:4]  # 연도 미상 규약 0000-00-vN → year 공란
+        if (raw.get("year") or "") != expected:
+            rep.fails.append(f"year({raw.get('year')}) ≠ 파일명 연도({expected or '공란'})")
     else:
         y = raw.get("year", "")
         if y and not re.fullmatch(r"\d{4}", y):
-            rep.fails.append(f"year({y}) — 슬러그 rid는 4자리 연도 또는 공란이어야 함")
+            rep.fails.append(f"year({y}) — 비표준(수동) rid는 4자리 연도 또는 공란이어야 함")
     sv = raw.get("structure")
     if sv is not None and sv != "flat":
         rep.fails.append(f"structure 키 값 위반: {sv} (허용: flat)")
@@ -811,7 +812,7 @@ def main() -> None:
         print(f"디렉터리가 없습니다: {reports_dir}", file=sys.stderr)
         sys.exit(2)
 
-    all_md = {p.stem: p for p in sorted(reports_dir.glob("*.md"))}  # 슬러그 스템 포함 전수
+    all_md = {p.stem: p for p in sorted(reports_dir.glob("*.md"))}  # 비표준 스템 포함 전수
     if args.ids:
         sel = {}
         for rid in args.ids:
@@ -868,7 +869,11 @@ def main() -> None:
 
     for pdf_path, members in sorted(groups.items()):
         print(f"[스캔] {Path(pdf_path).name}", file=sys.stderr)
-        base = derive_report_id_any(pdf_path)
+        base = rid_for(pdf_path)
+        if base is None:  # 등록부 게이트(2026-09-04) — 표에 rid가 없으면 대조 자체를 못 한다
+            for _stem, _mp, rep in members:
+                rep.fails.append(f"미등록 PDF(report_ids.tsv) — {rid_reason(pdf_path)}: 등록 후 재검증")
+            continue
         doc = pymupdf.open(pdf_path)
         try:
             scans = scan_document(doc)

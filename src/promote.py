@@ -43,7 +43,7 @@ from claude_agent_sdk import (
     ToolUseBlock,
     query,
 )
-from extract import derive_report_id_any
+from registry import rid_for, rid_reason
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -232,7 +232,11 @@ def main() -> None:
         print(f"[promote] 대상 PDF가 없습니다: {args.pdf}", file=sys.stderr)
         sys.exit(2)
     pdf_rel = pdf.relative_to(REPO_ROOT).as_posix() if pdf.is_relative_to(REPO_ROOT) else str(pdf)
-    rid = derive_report_id_any(str(pdf))
+    rid = rid_for(str(pdf))
+    if rid is None:  # 등록부 게이트(2026-09-04) — register 단계가 먼저
+        print(f"[promote] 미등록 PDF — {rid_reason(str(pdf))}: {pdf.name} "
+              "(python src/register.py 실행 후 재시도)", file=sys.stderr)
+        sys.exit(2)
 
     setup_auth(args)
     scratch = Path(tempfile.mkdtemp(prefix="promote_")).as_posix()

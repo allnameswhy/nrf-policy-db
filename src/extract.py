@@ -8,8 +8,9 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 - 계층 판별: 북마크 미사용. L1(장) 문법 프로파일 6종 순차 시도 + 하위 패밀리 캐스케이드
   (보고서 전역 첫 등장 순서 → ##~####, 4단계 캡, 부모 범위 내 1부터 단조증가 검증).
 - 헤딩 ID: 감지 서수 경로 {report_id}_c{i}s{j}… (PROJECT_NOTES §4)
-- report_id: 파일명의 정책연구-YYYY-NN 우선, 비NRF 파일명은 스템 슬러그(밑줄 제외 —
-  '_NN'은 합본 파트 접미사 전용)로 유도. verify·status가 같은 함수를 공유한다.
+- report_id: **등록부 report_ids.tsv 조회만**(src/registry.py — 1단계 register.py가 표지
+  관리번호로 채움, 2026-09-04). 파일명 유도·슬러그 폴백 없음 — 미등록 PDF는 프리플라이트에서
+  `skipped_unregistered`로 시끄럽게 스킵. 합본 파트 접미 '_NN'은 여기서 붙인다.
 - 진단: --scan (md 미작성, 감지 결과만 덤프). 로그: logs/extract_log.json
 - 구조(장 문법)가 잡히지 않는 문서는 **플랫 청킹 폴백**(투 레인): 문단 경계 그리디
   크기 청킹 → 합성 '# 구간 N (p.a-b)' 헤딩 + frontmatter 'structure: flat' 표식으로
@@ -41,6 +42,8 @@ from pathlib import Path
 
 import pymupdf
 
+from registry import rid_for, rid_reason
+
 # ---------------------------------------------------------------------------
 # 상수 · 정규식
 # ---------------------------------------------------------------------------
@@ -66,16 +69,6 @@ SUSPECT_BULLETS = set("◈☐■◦▶►●◇◆▷▹✓✔")
 
 MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
 MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
-
-REPORT_ID_RE = re.compile(r"정책연구-(\d{4}-\d{2})")
-# 괄호 표기 관리번호 '(YYYY-N) 제목' — 정책연구 시리즈 확인(2026-09 문답)으로 NN 승격
-PAREN_ID_RE = re.compile(r"^\s*\((\d{4})-(\d{1,2})\)")
-# 다권본 파일명 '제N권' → rid '-vN' 접미사 (관리번호 레인 전용; '권역' 등 오인 차단)
-VOLUME_RE = re.compile(r"제\s*(\d{1,2})\s*권(?![가-힣])")
-# 비NRF 파일명의 report_id 슬러그 문자셋 — 밑줄 제외('_NN'은 합본 파트 접미사 전용)
-SLUG_STRIP_RE = re.compile(r"[^0-9A-Za-z가-힣-]+")
-# 슬러그 레인의 보일러플레이트 접두 — '죄종보고서'는 실측 오타(2026-09, 292권 배치)
-BOILERPLATE_PREFIX_RE = re.compile(r"^(?:\(\s*최종보고서\s*\)|최종보고서|죄종보고서)[\s_\-.·]*")
 
 # L1(장) 프로파일 — (이름, 패턴, 두줄형 여부). 시도 순서 = 이 순서.
 PROFILES = [
@@ -456,47 +449,11 @@ def table_covers(text: str, table_fold: str) -> bool:
 # report_id · 합본 분리
 # ---------------------------------------------------------------------------
 
-def derive_report_id(path: str) -> str | None:
-    """관리번호 기반 rid — '정책연구-YYYY-NN' 또는 괄호 표기 '(YYYY-N)'.
-
-    다권본('제N권' 파일명, 2018-49 실측 4권)은 '-vN'을 덧붙여 권별로 분리한다 —
-    ASCII 유지, 밑줄이 아니므로 합본 파트 접미사('_NN')와 충돌하지 않는다.
-    """
-    name = unicodedata.normalize("NFC", Path(path).name)
-    stem = Path(name).stem
-    m = REPORT_ID_RE.search(name)
-    if m:
-        rid = m.group(1)
-    else:
-        mp = PAREN_ID_RE.match(stem)
-        if mp is None:
-            return None
-        rid = f"{mp.group(1)}-{int(mp.group(2)):02d}"
-    mv = VOLUME_RE.search(stem)
-    return rid + (f"-v{int(mv.group(1))}" if mv else "")
-
-
-def derive_report_id_any(path: str) -> str:
-    """관리번호 패턴 우선, 실패 시 파일명 스템 슬러그 — 타 기관·이형 문서 수용.
-
-    슬러그 문자셋에서 밑줄을 제외해 합본 파트 접미사('_NN')와의 충돌을 차단하고,
-    '최종보고서' 류 보일러플레이트 접두는 제거한다(2026-09, 127건 실측·충돌 0건).
-    verify.py·status.py가 같은 함수로 PDF↔.md를 대응시킨다.
-    """
-    rid = derive_report_id(path)
-    if rid is not None:
-        return rid
-    stem = unicodedata.normalize("NFC", Path(path).stem)
-    stripped = BOILERPLATE_PREFIX_RE.sub("", stem) or stem
-    slug = SLUG_STRIP_RE.sub("-", stripped).strip("-")
-    return slug or "report"
-
-
 def find_existing_outputs(out_dir: Path, base_id: str) -> list[Path]:
     """단독본({id}.md)과 합본 파트({id}_NN.md) 기존 출력 탐지.
 
-    rid 형태는 관리번호(YYYY-NN, 다권본 -vN 접미 포함)·슬러그 혼재지만, rid 문자셋이
-    밑줄을 배제하므로 '{id}_NN' 글롭이 다른 보고서와 접두 충돌하는 일은 불가능하다.
+    rid는 등록부 값(YYYY-NN[-vN][-b] 표준형 또는 수동 ASCII rid) — 문자셋이 밑줄을
+    배제하므로(registry.RID_RE) '{id}_NN' 글롭이 다른 보고서와 접두 충돌하는 일은 불가능하다.
     """
     out: list[Path] = []
     single = out_dir / f"{base_id}.md"
@@ -1730,17 +1687,9 @@ def yaml_str(s: str) -> str:
 def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str:
     meta = result.meta
     rid = result.report_id
-    # 연도: 관리번호 rid는 앞 4자리, 슬러그 rid는 내부 연도 검색 → 두 자리 연도
-    # ('19년…' 시작) 폴백(2026-09) → 실패 시 공란
-    if rid[:4].isdigit():
-        year = rid[:4]
-    else:
-        m = re.search(r"(?:19|20)\d{2}", rid)
-        if m:
-            year = m.group(0)
-        else:
-            m2 = re.match(r"(\d{2})년", rid)
-            year = f"20{m2.group(1)}" if m2 else ""
+    # 연도: 등록부 rid는 표준형 YYYY-NN…이라 앞 4자리. 비표준 수동 rid와 연도 미상 규약
+    # `0000-00-vN`(사용자 결정 2026-09-04)은 공란(결측 허용)
+    year = rid[:4] if rid[:4].isdigit() and rid[:4] != "0000" else ""
     lines = ["---"]
     lines.append(f"report_id: {rid}")
     lines.append(f"title: {yaml_str(meta.title)}")
@@ -1775,12 +1724,9 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 
 def process_pdf(path: str, lane: str = "auto"):
     """PDF 1개 → PartResult 목록(합본이면 여러 개). lane: auto|structured|flat (--lane)."""
-    base_id = derive_report_id_any(path)
-    if derive_report_id(path) is None:
-        # 비NRF 파일명 — 슬러그 rid로 수용 (타 기관·이형 문서)
-        slug_warning = f"비표준 파일명 — report_id 슬러그 유도: {base_id}"
-    else:
-        slug_warning = None
+    base_id = rid_for(path)
+    if base_id is None:  # 프리플라이트가 막으므로 방어용
+        raise ValueError(f"미등록 PDF — {rid_reason(path)}: {Path(path).name}")
 
     doc = pymupdf.open(path)
     try:
@@ -1795,8 +1741,6 @@ def process_pdf(path: str, lane: str = "auto"):
         r = PartResult(report_id=rid, part_index=pi, n_parts=len(parts), part_range=part)
         r.stats["diag"] = {}
         diag = r.stats["diag"]
-        if slug_warning:
-            r.warnings.append(slug_warning)
 
         meta = parse_abstract(scans, part)
         fallback_institution(scans, part, meta)
@@ -1955,7 +1899,9 @@ def main() -> None:
     # PowerShell은 글롭을 확장하지 않으므로 자체 확장
     paths = []
     for p in args.pdf:
-        if any(c in p for c in "*?["):
+        # 실존 파일은 글롭 확장하지 않는다 — "[별권] 우수사례집.pdf"처럼 이름에 [가 들어간
+        # 파일이 빈 글롭으로 조용히 사라지던 문제(2026-09-04 실측)
+        if not Path(p).is_file() and any(c in p for c in "*?["):
             paths.extend(sorted(globmod.glob(p)))
         else:
             paths.append(p)
@@ -1967,10 +1913,18 @@ def main() -> None:
     # 모이는 파일을 걸러낸다 — 크기까지 동일하면 중복 다운로드 의심(사전순 첫 파일만
     # 진행), 크기가 다르면 진짜 충돌(전원 스킵·파일명 조정 필요). --scan은 진단
     # 모드이므로 경고만 남기고 전부 처리한다.
+    # 등록부 게이트(2026-09-04): rid는 report_ids.tsv 조회만 — 미등록은 --scan에서도
+    # 스킵한다(rid 없이는 출력 파일명·헤딩 ID를 만들 수 없음). 사람이 표에 기입 후 재실행.
     by_rid: dict[str, list[str]] = {}
-    for path in paths:
-        by_rid.setdefault(derive_report_id_any(path), []).append(path)
     dropped: dict[str, dict] = {}
+    for path in paths:
+        rid = rid_for(path)
+        if rid is None:
+            reason = rid_reason(path)
+            dropped[path] = {"status": "skipped_unregistered", "reason": reason}
+            print(f"[미등록] {Path(path).name}: {reason}", file=sys.stderr)
+            continue
+        by_rid.setdefault(rid, []).append(path)
     for rid, group in sorted(by_rid.items()):
         if len(group) < 2:
             continue
@@ -1993,13 +1947,13 @@ def main() -> None:
 
     for path in paths:
         drop = dropped.get(path)
-        if drop is not None and not args.scan:
+        if drop is not None and (not args.scan or drop["status"] == "skipped_unregistered"):
             all_ok = False
             log_entries.append({"file": Path(path).name, **drop})
             continue
 
         # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
-        base_id = derive_report_id_any(path)
+        base_id = rid_for(path)
         if not args.scan and not args.force:
             existing = find_existing_outputs(Path(args.out_dir), base_id)
             if existing:

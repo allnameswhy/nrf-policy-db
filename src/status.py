@@ -31,10 +31,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import mdio
-from extract import derive_report_id_any
+import registry
 
 # .md 파일명 = {report_id}.md — 단독본(2025-02) 또는 합본 파트(2025-17_01).
-# 슬러그 rid는 밑줄을 포함하지 않으므로 '_NN' 꼬리는 언제나 합본 파트 접미사다.
+# rid 문자셋(registry.RID_RE)이 밑줄을 배제하므로 '_NN' 꼬리는 언제나 합본 파트 접미사다.
 PART_SUFFIX_RE = re.compile(r"^(.+)_(\d{2})$")
 MTIME_TOLERANCE = 2.0  # FAT/exFAT mtime 정밀도
 
@@ -51,18 +51,24 @@ class Row:
     notes: list[str] = field(default_factory=list)
 
 
-def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]]]:
-    """({base_id: pdf 경로}, 충돌 그룹). 관리번호 실패 시 슬러그 유도 — extract와 동일 함수 공유.
+def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]], list[tuple[str, str]]]:
+    """({base_id: pdf 경로}, 충돌 그룹, 미등록 [(파일명, 사유)]). rid는 등록부 조회만(registry — extract와 동일).
 
-    같은 base_id로 유도되는 파일이 2개 이상이면(중복 다운로드·파일명 충돌) 매핑에는
+    같은 base_id로 등록된 파일이 2개 이상이면(표 오기입·중복 다운로드) 매핑에는
     사전순 첫 파일만 남기고(extract 프리플라이트와 동일 선택) 그룹을 따로 반환한다 —
     종전 dict 컴프리헨션은 충돌을 조용히 덮어써 현황판 집계를 오염시켰다.
+    미등록(표에 없음·공란)은 매핑에서 빼고 사유와 함께 돌려준다 — "등록 필요" 행.
     """
     groups: dict[str, list[Path]] = {}
+    unreg: list[tuple[str, str]] = []
     for p in sorted(pdf_dir.glob("*.pdf")):
-        groups.setdefault(derive_report_id_any(str(p)), []).append(p)
+        rid = registry.rid_for(p)
+        if rid is None:
+            unreg.append((registry.norm_name(p), registry.rid_reason(p)))
+            continue
+        groups.setdefault(rid, []).append(p)
     dups = {rid: [p.name for p in ps] for rid, ps in groups.items() if len(ps) > 1}
-    return {rid: ps[0] for rid, ps in groups.items()}, dups
+    return {rid: ps[0] for rid, ps in groups.items()}, dups, unreg
 
 
 def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
@@ -108,7 +114,7 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
     if not st.roundtrip_ok():
         row.notes.append("요약 배치 규약 불일치 — annotate가 이 파일을 건너뜀")
     if pdf is None:
-        row.notes.append("원본 PDF 없음")
+        row.notes.append("원본 PDF 대응 없음(삭제·개명 또는 미등록 — report_ids.tsv 확인)")
     elif pdf.stat().st_mtime > path.stat().st_mtime + MTIME_TOLERANCE:
         row.notes.append("PDF가 .md보다 최신 — 재추출 검토(--force 시 요약 소실 주의)")
     return row
@@ -161,7 +167,7 @@ def pad(s: str, width: int) -> str:
 
 
 def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
-           extract_needed: int, remaining_total: int) -> None:
+           extract_needed: int, remaining_total: int, register_needed: int = 0) -> None:
     headers = ["report_id", "추출", "요약", "잔여 호출", "보고서요약", "검증", "DB", "비고"]
     cells = [
         [r.report_id, r.extracted, r.summary, str(r.remaining), r.report_summary,
@@ -193,7 +199,8 @@ def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
     print()
     print("== 합계 ==")
     print(
-        f"보고서 {len(rows)} (추출 필요 {extract_needed}) · 유닛 {done_total}/{units_total} · "
+        f"보고서 {len(rows)} (추출 필요 {extract_needed}, 등록 필요 {register_needed}) · "
+        f"유닛 {done_total}/{units_total} · "
         f"잔여 호출 {remaining_total} · 검증: 미검증 {verify_counts['미검증']} / "
         f"extract {verify_counts['extract']} / annotate {verify_counts['annotate']} · "
         f"경고 {note_count}"
@@ -209,12 +216,13 @@ class StatusData:
     remaining_total: int
     note_count: int
     todo: bool
-    dup_ids: dict[str, list[str]] = field(default_factory=dict)  # rid → 같은 rid로 유도된 PDF들
+    dup_ids: dict[str, list[str]] = field(default_factory=dict)  # rid → 같은 rid로 등록된 PDF들
+    unregistered: list[tuple[str, str]] = field(default_factory=list)  # (파일명, 사유) — 등록 필요
 
 
 def collect_status(args) -> StatusData:
     """아티팩트에서 현황 파생 계산 — 디렉터리 존재 검증은 호출자 몫."""
-    pdfs, dup_ids = scan_pdfs(Path(args.pdf_dir))
+    pdfs, dup_ids, unreg = scan_pdfs(Path(args.pdf_dir))
     db_path = Path(args.db)
     ledger = read_db_ledger(db_path)
 
@@ -237,6 +245,8 @@ def collect_status(args) -> StatusData:
     new_pdfs = sorted(set(pdfs) - covered_bases)
     for base in new_pdfs:
         rows.append(Row(report_id=base, extracted="추출 필요", verify="-"))
+    for fname, reason in unreg:  # 등록부 게이트(2026-09-04) — 기입 전엔 어느 단계도 못 지남
+        rows.append(Row(report_id=fname, extracted="등록 필요", verify="-", notes=[reason]))
     rows.sort(key=lambda r: r.report_id)
 
     newest_md = max(md_mtimes) if md_mtimes else None
@@ -245,9 +255,9 @@ def collect_status(args) -> StatusData:
 
     remaining_total = sum(r.remaining for r in rows)
     note_count = sum(len(r.notes) for r in rows)
-    todo = bool(new_pdfs or remaining_total or db_todo or idx_todo or note_count or dup_ids)
+    todo = bool(new_pdfs or unreg or remaining_total or db_todo or idx_todo or note_count or dup_ids)
     return StatusData(rows, new_pdfs, [(db_line, db_todo), (idx_line, idx_todo)],
-                      remaining_total, note_count, todo, dup_ids)
+                      remaining_total, note_count, todo, dup_ids, unreg)
 
 
 def main() -> None:
@@ -275,10 +285,14 @@ def main() -> None:
 
     st = collect_status(args)
     warnings = [
-        f"report_id 충돌: {rid} ← {', '.join(files)} — 중복 삭제 또는 파일명 조정 필요"
+        f"report_id 충돌: {rid} ← {', '.join(files)} — 표(report_ids.tsv) 오기입 또는 중복 다운로드"
         for rid, files in sorted(st.dup_ids.items())
     ]
-    render(st.rows, warnings, [t for t, _ in st.artifacts], len(st.new_pdfs), st.remaining_total)
+    if st.unregistered:
+        warnings.append(f"미등록 PDF {len(st.unregistered)}건 — python src/register.py 실행 후 "
+                        "「사람이 고칠 것」을 report_ids.tsv에 기입 (기입 전엔 추출 불가)")
+    render(st.rows, warnings, [t for t, _ in st.artifacts], len(st.new_pdfs), st.remaining_total,
+           len(st.unregistered))
     sys.exit(1 if st.todo else 0)
 
 
