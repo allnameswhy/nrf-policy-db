@@ -363,12 +363,16 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
                           " 추출·검증·DB 어느 단계도 지나지 못합니다.",
                 "control": None,
             })
+    held = registry.held_names(REPO_ROOT / "pdfs")
     for fname in registry.orphans(REPO_ROOT / "pdfs"):
         cards.append({
             "kind": "register_orphan", "severity": "warn", "files": [fname],
             "title": f"표에만 있는 파일 — {fname}",
-            "detail": "report_ids.tsv에는 있는데 pdfs/에 PDF가 없습니다(삭제·개명). 다른 문서가"
-                      " 아니면 표에서 이 행을 지우세요 — 자동 삭제하지 않습니다.",
+            "detail": ("report_ids.tsv에는 있는데 PDF가 pdfs/hold/에 보류 중입니다. 보류 파일은 등록하지"
+                       " 않으므로 표에서 이 행을 지우세요(반출하면 등록 단계가 다시 등록) — 자동 삭제하지 않습니다."
+                       if fname in held else
+                       "report_ids.tsv에는 있는데 pdfs/에 PDF가 없습니다(삭제·개명). 다른 문서가"
+                       " 아니면 표에서 이 행을 지우세요 — 자동 삭제하지 않습니다."),
             "control": None,
         })
 

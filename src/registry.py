@@ -11,6 +11,12 @@ report_id는 파일명에서 유도하지 않는다(2026-09-04 결정 — 파일
   불가). 표준형 stem = `YYYY-NN[-vN][-b][_NN]` (권수 → 중복 → 파트 순서 고정) —
   verify의 연도 대조는 표준형에만 적용.
 - 캐시는 파일 mtime 기준 — 장수 프로세스(serve)가 사용자의 표 편집을 새로고침에서 본다.
+- `pdfs/hold/`(2026-09-07) = 아직 적재하지 않을 **보류 PDF**. 파이프라인·status·/admin의
+  PDF 스캔은 `pdfs/` 직하만 보므로 보류 파일은 어느 단계에도 잡히지 않고, **등록부에도 없다**
+  (원칙: 보류 파일은 등록하지 않는다 — register는 hold 경로 인자를 거부하고, 표에 남은 보류
+  행은 `orphans`·register `--check`가 "행 삭제 필요"로 표시한다; `held_names`는 그 표시용).
+  등록은 반출(hold → pdfs/) 후 register 단계에서 — 반출 순서는 웨이브 계획(WAVE_PLAN §3)
+  동안만 절차에 포함, 이후는 사용자 수동.
 """
 
 from __future__ import annotations
@@ -113,7 +119,23 @@ def unregistered(pdf_dir, path: Path = REGISTRY_PATH) -> list[tuple[str, str]]:
     return out
 
 
+HOLD_SUBDIR = "hold"
+
+
+def held_names(pdf_dir) -> set[str]:
+    """`pdfs/hold/` 직하 PDF 파일명(NFC) — 보류(미적재)분. 등록 대상이 아니다(표에 있으면 삭제 대상)."""
+    return {norm_name(p) for p in Path(pdf_dir, HOLD_SUBDIR).glob("*.pdf")}
+
+
+def is_held(pdf_path, pdf_dir) -> bool:
+    """경로가 `pdfs/hold/` 직하인가 — register가 보류 파일 등록을 거부할 때 사용."""
+    try:
+        return Path(pdf_path).resolve().parent == Path(pdf_dir, HOLD_SUBDIR).resolve()
+    except OSError:
+        return False
+
+
 def orphans(pdf_dir, path: Path = REGISTRY_PATH) -> list[str]:
-    """표에는 있는데 pdfs/에 파일이 없는 행의 파일명(사용자가 PDF를 지운 경우 — 행은 사람이 정리)."""
+    """표에는 있는데 pdfs/ 직하에 파일이 없는 행의 파일명 — 지운 파일이든 hold/로 보류한 파일이든 행은 사람이 정리."""
     present = {norm_name(p) for p in Path(pdf_dir).glob("*.pdf")}
     return sorted(f for f in load_registry(path) if f not in present)

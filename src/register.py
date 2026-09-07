@@ -211,14 +211,20 @@ def write_rows(rows: list[Row], path: Path) -> None:
 
 
 def check_table(table: dict[str, Row], pdf_dir: Path) -> dict[str, list[str]]:
-    """사람이 고칠 것 — {종류: [줄]}. 종류 순서 = 출력 순서."""
+    """사람이 고칠 것 — {종류: [줄]}. 종류 순서 = 출력 순서.
+
+    pdfs/hold/ 보류 파일은 등록 대상이 아니다(2026-09-07 원칙) — 표에 그 행이 남아 있으면
+    지운 파일과 같이 "행 삭제 필요"로 표시하되 사유를 구분한다. 등록은 반출 후 register가 다시 한다.
+    """
     present = {norm_name(p) for p in Path(pdf_dir).glob("*.pdf")}
+    held = registry.held_names(pdf_dir)
     out: dict[str, list[str]] = {"기입 필요": [], "행 삭제 필요": [], "형식 위반": [],
                                  "rid 중복": [], "미수록(register 실행 필요)": [], "검토": []}
     by_rid: dict[str, list[str]] = {}
     for f, r in sorted(table.items()):
         if f not in present:
-            out["행 삭제 필요"].append(f"{f} — pdfs/에 없음")
+            why = "pdfs/hold/ 보류 중 — 보류 파일은 등록하지 않음(반출 후 재등록)" if f in held else "pdfs/에 없음"
+            out["행 삭제 필요"].append(f"{f} — {why}")
             continue
         if r.source not in SOURCES + ("",):  # 탭이 밀려 다른 열의 값이 source에 들어온 줄
             out.setdefault("열 밀림 의심(탭 개수)", []).append(
@@ -380,6 +386,12 @@ def main() -> None:
     missing = [p for p in paths if not Path(p).is_file()]
     if missing:
         print("파일이 없습니다: " + ", ".join(missing), file=sys.stderr)
+        sys.exit(2)
+    held = [p for p in paths if registry.is_held(p, pdf_dir)]
+    if held:  # 보류 파일은 등록하지 않는다(2026-09-07) — 반출(pdfs/ 직하로 이동) 후 등록
+        print(f"보류 파일은 등록하지 않습니다({len(held)}건, {pdf_dir / registry.HOLD_SUBDIR}/): "
+              "pdfs/ 직하로 옮긴 뒤 등록하세요 — " + ", ".join(norm_name(p) for p in held[:5])
+              + (" …" if len(held) > 5 else ""), file=sys.stderr)
         sys.exit(2)
 
     hints = md_sources(Path(args.reports_dir))
