@@ -57,8 +57,11 @@ class Frontmatter:
     title: str
     abstract_empty: bool
     end_line: int  # 닫는 '---'의 줄 인덱스
-    # 검증 스텝이 기록하는 옵션 스탬프 (YYYY-MM-DD, 없으면 빈 값 = 미검증).
-    # extract가 frontmatter를 재생성하면 자연 소멸 → 자동 미검증 리셋.
+    # 검증 스탬프 3단 (YYYY-MM-DD, 없으면 빈 값). 순서 규칙: extract가 있으면 register
+    # 필수, annotate가 있으면 extract 필수. verified_register는 extract가 .md를 만들 때
+    # 기록(등록부 rid 조회 성공의 기록), 나머지 둘은 verify가 기록. extract가 frontmatter를
+    # 재생성하면 extract·annotate는 소멸(자동 미검증 리셋)하고 register는 새로 기록된다.
+    verified_register: str = ""
     verified_extract: str = ""
     verified_annotate: str = ""
     # build_index.py·build_db.py가 소비하는 메타데이터 (§5 카탈로그·§6 스키마).
@@ -85,6 +88,7 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     title = ""
     abstract_empty = True
     end_line = -1
+    verified_register = ""
     verified_extract = ""
     verified_annotate = ""
     year = ""
@@ -124,13 +128,17 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
                         break
                 abstract = "\n".join(block).strip()
             abstract_empty = abstract == ""
+        elif line.startswith("verified_register:"):
+            verified_register = line.split(":", 1)[1].strip()
         elif line.startswith("verified_extract:"):
             verified_extract = line.split(":", 1)[1].strip()
         elif line.startswith("verified_annotate:"):
             verified_annotate = line.split(":", 1)[1].strip()
     if end_line < 0:
         raise ValueError("frontmatter 닫는 '---'가 없습니다")
-    return Frontmatter(report_id, title, abstract_empty, end_line, verified_extract, verified_annotate,
+    return Frontmatter(report_id, title, abstract_empty, end_line,
+                       verified_register=verified_register, verified_extract=verified_extract,
+                       verified_annotate=verified_annotate,
                        year=year, lead_researcher=lead_researcher, institution=institution, abstract=abstract,
                        keywords_ko=keywords_ko, keywords_en=keywords_en)
 
@@ -351,34 +359,48 @@ def insert_summaries(
     return out
 
 
-# ---- 검증 스탬프 (§4 사다리 — 기록은 검증 스텝 verify.py 소관) ----
+# ---- 검증 스탬프 (§4 사다리 3단 — register는 extract, extract·annotate는 verify가 기록) ----
+
+STAMP_PREFIXES = ("verified_register:", "verified_extract:", "verified_annotate:")
 
 
-def set_verified_stamps(lines: list[str], extract_date: str, annotate_date: str = "") -> list[str]:
-    """frontmatter의 verified_* 스탬프를 주어진 값으로 재작성한 새 줄 리스트.
+def missing_stamps(fm: Frontmatter) -> list[str]:
+    """빠진 스탬프 이름(사다리 순) — build_db·build_index 게이트가 공유. 빈 리스트 = 3단 완비."""
+    return [name for name, val in (("verified_register", fm.verified_register),
+                                   ("verified_extract", fm.verified_extract),
+                                   ("verified_annotate", fm.verified_annotate)) if not val]
 
-    extract_date가 빈 값이면 스탬프 전부 제거(미검증 리셋 — annotate_date 단독 불가,
-    사다리 위반). 기존 스탬프 줄은 위치와 무관하게 걷어내고 닫는 '---' 직전에 고정
-    순서로 다시 삽입하므로 재실행에 멱등이며, frontmatter 밖은 건드리지 않는다.
-    abstract 블록 연속 줄은 2칸 들여쓰기라 startswith 판정에 걸릴 수 없다.
+
+def set_verified_stamps(lines: list[str], *, register: str = "", extract: str = "",
+                        annotate: str = "") -> list[str]:
+    """frontmatter의 verified_* 스탬프 3개를 주어진 값으로 재작성한 새 줄 리스트.
+
+    순서 규칙(사다리): extract가 있으면 register 필수, annotate가 있으면 extract 필수 —
+    위반은 ValueError. 셋 다 빈 값이면 스탬프 전부 제거. 기존 스탬프 줄은 위치와 무관하게
+    걷어내고 닫는 '---' 직전에 register → extract → annotate 고정 순서로 다시 삽입하므로
+    재실행에 멱등이며, frontmatter 밖은 건드리지 않는다. abstract 블록 연속 줄은 2칸
+    들여쓰기라 startswith 판정에 걸릴 수 없다.
     """
-    if annotate_date and not extract_date:
+    if extract and not register:
+        raise ValueError("verified_extract는 verified_register 없이 기록할 수 없음 (사다리 위반)")
+    if annotate and not extract:
         raise ValueError("verified_annotate는 verified_extract 없이 기록할 수 없음 (사다리 위반)")
     end = parse_frontmatter(lines).end_line
-    out = [ln for i, ln in enumerate(lines)
-           if not (i < end and ln.startswith(("verified_extract:", "verified_annotate:")))]
+    out = [ln for i, ln in enumerate(lines) if not (i < end and ln.startswith(STAMP_PREFIXES))]
     end = parse_frontmatter(out).end_line
     stamps = []
-    if extract_date:
-        stamps.append(f"verified_extract: {extract_date}")
-    if annotate_date:
-        stamps.append(f"verified_annotate: {annotate_date}")
+    if register:
+        stamps.append(f"verified_register: {register}")
+    if extract:
+        stamps.append(f"verified_extract: {extract}")
+    if annotate:
+        stamps.append(f"verified_annotate: {annotate}")
     return out[:end] + stamps + out[end:]
 
 
 def strip_verified_stamps(lines: list[str]) -> list[str]:
     """스탬프 줄만 제거한 사본 — '스탬프 외 무변경' 이중 가드 대조용."""
-    return set_verified_stamps(lines, "")
+    return set_verified_stamps(lines)
 
 
 # ---- 통합 로더 ----

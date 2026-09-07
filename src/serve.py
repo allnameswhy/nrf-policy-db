@@ -16,7 +16,7 @@
   도출한다(신규 PDF 레인 선택, 감지 실패 승격 여부, --force 재추출 포함 여부 등
   결정 컨트롤 포함 — 실행 버튼은 카드에 없음). [일괄 해결]은 derive_plan의 **누적
   파이프라인**(단계별 대상 파일이 하류로 누적: promote/extract{결정 파일} →
-  verify{+미검증} → annotate{+요약 잔여} → verify{+품질 대기} → build_db →
+  verify{+unverified·register} → annotate{+요약 잔여} → verify{+품질 대기} → build_db →
   build_index)을 단일 job 큐로 순차 실행한다. 단계 사이마다 collect_status를 재계산해
   **탈락 파일은 버리고 생존 파일만 다음 단계로 데려간다**(stage_targets — 로그 포맷이
   아니라 상태·스탬프 기준), 하드 스톱은 verify·promote의 exit 2(사용 오류·인증·한도 =
@@ -56,7 +56,7 @@ import registry
 from annotate import AuthError, RetryableError, UsageLimitReached, fatal_msg, setup_auth
 from build_db import file_digest
 from search import DEFAULT_MODEL, MAX_TURNS, TOP_N, perform_search
-from status import PART_SUFFIX_RE, collect_status, read_db_ledger, scan_pdfs
+from status import REGISTER_NOTE, PART_SUFFIX_RE, collect_status, is_loaded, read_db_ledger, scan_pdfs
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INDEX_HTML = REPO_ROOT / "web" / "index.html"
@@ -281,8 +281,15 @@ async def api_search(request):
 # ---- DB 관리(/admin) API ----
 
 
-# 자동 단계가 처리하는 노트(승격 대기·검증 후 변경)와 정보성 노트(플랫 구조)는 카드 제외
-AUTO_NOTES = ("verify 승격 대기", "검증 후 변경", "플랫 구조")
+# 자동 단계가 처리하는 노트(승격 대기·검증 후 변경·등록 스탬프 없음)와 정보성 노트(플랫 구조)는 카드 제외
+AUTO_NOTES = ("verify 승격 대기", "검증 후 변경", "플랫 구조", REGISTER_NOTE)
+NEEDS_VERIFY = ("unverified", "register")  # 추출 검증 스탬프 없음 — verify 단계 대상
+
+
+def needs_verify(r) -> bool:
+    """verify 단계 대상: 추출 검증 미통과(unverified·register), 또는 3단 도입 전 파일
+    (verified_register만 없음 — verify가 PDF 재스캔·LLM 없이 스탬프만 채운다)."""
+    return r.verify in NEEDS_VERIFY or REGISTER_NOTE in r.notes
 REEXTRACT_NOTE = "PDF가 .md보다 최신"
 PROMOTABLE = ("skipped_no_profile", "skipped_no_body_start")  # 감지 실패 = 승격 결정 대상
 
@@ -455,7 +462,7 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
             "extra": {"errors": [n for r in parse_fail for n in r.notes[:1]]},
         })
 
-    unverified = [r.report_id for r in st.rows if r.extracted == "완료" and r.verify == "미검증"]
+    unverified = [r.report_id for r in st.rows if r.extracted == "완료" and needs_verify(r)]
     if unverified:
         cards.append({
             "kind": "verify_needed", "severity": "warn", "files": unverified,
@@ -519,7 +526,7 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict) -> tuple[list[
     """카드 결정값(decisions) → 하류 누적 실행 계획. 반환 (stages, errors).
 
     단계별 대상 집합이 하류로 누적된다 — 이번에 추출·재추출되는 파일은 이후 전 단계가
-    필요하므로: extract{결정 파일} → verify{+미검증} → annotate{+요약 잔여} →
+    필요하므로: extract{결정 파일} → verify{+unverified·register} → annotate{+요약 잔여} →
     verify2{+품질 대기} → build_db → build_index. verify·annotate·verify2의 실제 대상은
     실행 직전 stage_targets가 상태 기준으로 다시 거른다(중도 탈락 처리).
     decisions = {"pdfs": {파일명: structured|flat|promote|skip}, "force": [파일명…]}.
@@ -582,7 +589,7 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict) -> tuple[list[
     entered = {file_base[f] for f in promotes if f in file_base} | \
               {file_base[f] for fs in groups.values() for f in fs if f in file_base}
     v1 = entered | {base_id(r.report_id) for r in st.rows
-                    if r.extracted == "완료" and r.verify == "미검증"}
+                    if r.extracted == "완료" and needs_verify(r)}
     an = v1 | {base_id(r.report_id) for r in st.rows if r.remaining > 0}
     v2 = an | {base_id(r.report_id) for r in st.rows
                if r.verify == "extract" and not r.remaining}
@@ -616,7 +623,7 @@ def stage_targets(step: str, st, bases: list[str]) -> tuple[list[str], list[str]
         if step == "verify":
             targets.append(b)  # verify가 스스로 파트 확장·스탬프 분기
             continue
-        if any(r.verify == "미검증" for r in rs):  # 추출 검증 미통과 — LLM 낭비 방지
+        if any(needs_verify(r) for r in rs):  # 추출 검증 미통과 — LLM 낭비 방지
             dropped.append(b)
             continue
         if step == "annotate":
@@ -640,7 +647,7 @@ def api_admin_status(request):  # sync def → starlette가 스레드풀에서 �
         "rows": [
             {"report_id": r.report_id, "extracted": r.extracted, "summary": r.summary,
              "remaining": r.remaining, "report_summary": r.report_summary,
-             "verify": r.verify, "db": r.db, "notes": r.notes}
+             "verify": r.verify, "db": r.db, "notes": r.notes, "loaded": is_loaded(r)}
             for r in st.rows
         ],
         "new_pdfs": st.new_pdfs,

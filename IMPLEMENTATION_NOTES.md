@@ -93,7 +93,7 @@ PDF ──[① Python]──> 계층 .md (본문 + frontmatter `abstract`)
 - 실측(10권/11파일): 유닛 392개, 크기 중앙값 1,849자·p90 5,141자. 8,000자 초과 26개는 head 75% + tail 25% 절단 입력(중략 마커 명시).
 - 구현: `src/mdio.py`의 `split_units()` — **build_db.py의 FTS 청크도 동일 함수를 재사용**하는 것을 전제로 한다(§8).
 - 단위별 개별 호출. 본문을 반환받지 않고 요약만 받아 삽입하므로 원문 오염 없음. annotate.py는 쓰기 전마다 왕복 검증(요약 블록 제거 시 원본과 바이트 일치)을 수행한다.
-- **요약을 1건이라도 새로 쓰는 파일은 `verified_annotate` 스탬프를 함께 제거**(verified_extract는 유지) — 요약이 바뀌면 자동 미감사 리셋. 스탬프가 낡은 요약을 보증하는 상태가 구조적으로 불가능하다. 재판정·기록은 verify.py D 품질 판정 소관.
+- **요약을 1건이라도 새로 쓰는 파일은 `verified_annotate` 스탬프를 함께 제거**(verified_register·verified_extract는 유지; register가 없는 3단 도입 전 파일은 순서 규칙상 extract도 함께 내려 다음 verify가 풀 검사로 복구) — 요약이 바뀌면 자동 미감사 리셋. 스탬프가 낡은 요약을 보증하는 상태가 구조적으로 불가능하다. 재판정·기록은 verify.py D 품질 판정 소관.
 
 ### 단계 ③ 보고서 요약 (상시 생성 — 2026-09 재설계, 종전 abstract 1차 + 공란 fallback 대체)
 
@@ -104,14 +104,15 @@ PDF ──[① Python]──> 계층 .md (본문 + frontmatter `abstract`)
 
 ### 검증 스텝 (src/verify.py — 파이프라인 4단계 외부 게이트, 2026-08 구현·품질 판정 통합)
 
-- 실행 시점: **extract 직후**(통과 시 `verified_extract` 기록) + **annotate 완료 후 재실행**(D 품질 판정 후 `verified_annotate` 기록). 신규 PDF 표준 절차 = pdfs/ 추가 → ① extract → verify → ② annotate → verify 재실행 → build_db.
+- 실행 시점: **extract 직후**(통과 시 `verified_extract` 기록 — 1단 `verified_register`는 extract가 .md 생성 시 이미 기록, 2026-09-07) + **annotate 완료 후 재실행**(D 품질 판정 후 `verified_annotate` 기록). 신규 PDF 표준 절차 = pdfs/ 추가 → ① extract → verify → ② annotate → verify 재실행 → build_db.
 - **상태 분기 실행(스탬프 상태 기계)** — 검사 범위를 파일별 스탬프 상태로 고른다:
 
   | 파일 상태 | 기본 동작 |
   |---|---|
-  | 스탬프 없음 | 풀 검사 A~C(PDF 재스캔) → PASS 시 `verified_extract`. 커버리지 완비면 이어서 D까지 |
-  | `verified_extract`만 | **PDF 생략(스탬프 신뢰).** A(.md 단독) + 커버리지·배치 확인 → D 품질 판정 → 전건 PASS/WARN이면 `verified_annotate` |
-  | 둘 다 | 스킵. `--reaudit`면 D 재판정(FAIL 시 `verified_annotate` 회수) |
+  | `verified_extract` 없음 | 풀 검사 A~C(PDF 재스캔) → PASS 시 `verified_extract`. 커버리지 완비면 이어서 D까지 |
+  | extract 있음 · annotate 없음 | **PDF 생략(스탬프 신뢰).** A(.md 단독) + 커버리지·배치 확인 → D 품질 판정 → 전건 PASS/WARN이면 `verified_annotate` |
+  | extract·annotate 있음 · `verified_register` 없음 | 3단 도입(2026-09-07) 전 파일 — A(.md 단독)만 돌리고 `verified_register`를 채운다(모드 register: D 생략·기존 판정 보존, LLM·PDF 0) |
+  | 셋 다 | 스킵. `--reaudit`면 D 재판정(FAIL 시 `verified_annotate` 회수) |
 
   `--full` = 스탬프 무시 A~C 전수 재검사. **트레이드오프(수용)**: 매 실행 PDF 전수 대조라는 종전 안전망은 `--full` 명시 시에만 작동 — 스탬프 철학(재추출 시 자연 소멸 = 리셋)과 일관. 커버리지(annotate 완료 여부)만은 스탬프로 유도 불가라 .md에서 즉석 계산(값싼 검사, 수동 요약 삭제 검출). `--no-llm` = D 억제(결정론 전용).
 - 검사 A~C는 결정론, D만 LLM:
@@ -119,7 +120,7 @@ PDF ──[① Python]──> 계층 .md (본문 + frontmatter `abstract`)
   - **B 손실 전수 대조(풀 검사 전용·핵심)** — PDF를 extract와 동일 함수로 재스캔해 본문 구간 **모든 줄**의 fold_g(공백+불릿·표 구두점 제거)가 .md(요약 블록 제거본)에 포함되는지 검사. 표 내부 줄은 전역 포함 → 페이지 국소 `table_covers` 순으로 판정(find_tables 행렬 단계 셀 소실 검출 — 실측 4권 21건 부류). 재스캔 표 markdown/caption의 .md 포함(.md측 훼손 검출)과 이미지 전용 구간 마커 존재도 검사. 미스율 5% 초과는 개별 소실이 아니라 버전 드리프트로 요약 보고
   - **C 목차 대조(풀 검사 전용)** — 앞부속 목차(리더런 페이지)의 장 번호 집합 ↔ .md 헤딩 표면 번호 집합 대칭 비교(신규 문법 미감지·헤딩 오탐 안전망; 로마자는 유니코드/ASCII 양형 수집 — 2025-29 실측, 아라비아는 목차 하위 항목 번호와 구분 불가라 초과 방향은 경고), 장 제목 canon 포함(경고; 참고문헌·부록은 목차 미표기 관행이라 제외)
   - **D 품질 판정(LLM, 2026-08 신설 — 유일한 비결정론 검사)** — 유닛 요약 전건을 자기 근거 본문과 1:1 대조 판정(annotate 호출 레이어 재사용, 판정 모델 Haiku 4.5 `--judge-model`). 용도(검색·발견) 기준: **핵심 주제·키워드 부재=FAIL(누락)** / 본문에 없는 사실=FAIL(할루시네이션) / 수치·주체·인과 상이=FAIL(왜곡) / 본문과 무관=FAIL(무관) / 핵심 포함·부차 편중=WARN. 압축·환언은 문제 삼지 않음(오탐 억제). **판정 입력 = 생성 입력과 동일 절단**(`--input-cap` 8,000자 — 판정자 시야 밖 주장 = 진짜 할루시네이션이 성립). 보고서 요약은 생성 때와 동일 근거(키워드·저자 초록·유닛 요약 전체) 대비 판정하며 전용 기준 2축 추가(2026-09): 판별력(고유명사 없는 범용 문구뿐 = FAIL 누락)·내용 충실성(핵심 주제·결론 대표성). 출력은 strict JSON verdict(문제 문구 인용 포함), 형식 불량 재시도 2회, 3회 실패는 ERROR(스탬프 차단). **FAIL 자동 수정 금지**(판정 LLM도 오판 가능) — 리포트에 유닛 hid·요약 줄 번호·인용 제공, 수정 경로 = 해당 요약 줄 수동 삭제 → annotate 재실행 → verify 재실행. 고장 주입 실측(2026-08): 수치 왜곡(34→340)·핵심 키워드 소거 2종 전건 검출. **판정 캘리브레이션(2026-08 실측, 프롬프트에 규칙화)**: ① 단위 환산 동일성(152만=1,520,000위안을 Haiku가 반복 오판) → 산술 동일 환산은 왜곡 아님 ② 원문 내적 모순(서술 "'26.1~5 총 6회" vs 표 첫 회의 2025.01 — 2025-32 실측)은 요약 책임이 아니므로 FAIL이 아닌 WARN(원문 모순 명시). 첫 전수 감사 실측: 386건 중 FAIL 7 — 진짜 불량 5(왜곡 3·할루시네이션 1·뭉뚱그림 1, 수정 경로로 해소; 그중 1건은 Sonnet 출력이 결정적으로 같은 오류를 반복해 Opus 5로 단건 재생성), 판정 오판 1, 원문 모순 2. 참고: 2025-29 무인기 절(c3s2s2 마·바)에 스마트공항 텍스트가 중복 배치된 원문 편집 오류 실측 — 원본 불변 원칙상 .md는 수정하지 않으며 요약만 본문 충실로 재생성. **보고서 요약 상시 생성 마이그레이션 감사 실측(2026-09)**: 403건 판정 → 진짜 불량 2(2025-16_c3s4 "배포 완료" 단정은 유닛 본문 밖 주장 — Sonnet이 재생성에서도 반복해 Opus 단건 재생성으로 해소, 2025-17_02 보고서 요약의 3대 전략 왜곡은 재생성 해소), 오판 다수(152만 위안 = 1,520,000 산술 오판이 규칙 명시에도 3회 재발, 환언·서술 압축·"N개 항목=N단계"를 누락·왜곡으로 오판) → 캘리브레이션 보강 2건(수치 왜곡 전 단위 환산 계산 의무화 + '명확성 손상' 류 명분 차단, 압축·환언·구조 환언 관용을 시스템·보고서 프롬프트에 명시). 그래도 완고한 오판 2건(152만 위안·시간 순서)은 해당 2파일만 **`--judge-model claude-sonnet-5` 일회 승격 재판정**으로 해소(전건 PASS — Haiku 오판 교차 확인). 운영 시사점: Haiku가 특정 유닛에서 반복 파탄하면 캘리브레이션 추가보다 판정 모델 일회 승격이 낫다.
-- 유일한 쓰기 = frontmatter 스탬프 줄(`mdio.set_verified_stamps` — 닫는 `---` 직전 고정 위치, 멱등, "스탬프 외 무변경" 바이트 대조 이중 가드). 회수 정책: 결정론(A~C) FAIL은 스탬프 전체 회수, D FAIL은 `verified_annotate`만 회수(추출 검증은 유효). `--no-stamp`는 검사 전용. exit 0=전건 PASS(경고 허용)/1=FAIL/2=사용 오류·한도/인증 중단(재실행 시 미판정 파일만 이어서). 로그 `logs/verify_log.json`(판정 전건 포함).
+- 유일한 쓰기 = frontmatter 스탬프 줄(`mdio.set_verified_stamps` — 닫는 `---` 직전 고정 위치, 멱등, "스탬프 외 무변경" 바이트 대조 이중 가드). 회수 정책: 결정론(A~C) FAIL은 `verified_extract`·`verified_annotate` 회수(`verified_register`는 extract 소관이라 유지), D FAIL은 `verified_annotate`만 회수(추출 검증은 유효). `--no-stamp`는 검사 전용. exit 0=전건 PASS(경고 허용)/1=FAIL/2=사용 오류·한도/인증 중단(재실행 시 미판정 파일만 이어서). 로그 `logs/verify_log.json`(판정 전건 포함).
 - **유닛별 판정 캐시(2026-09, W0 파일럿 실측 후 도입)** — 문제: 파일 단위 "전건 PASS" 게이트 + 매 실행 전 유닛 재판정 조합은 유닛 30~50개 파일에서 **재판정마다 ~2%의 무작위 FAIL**이 새로 생겨(W0 14파일: 1차 FAIL 17 → 삭제·재생성 → 2차 FAIL 14 = 재생성분 재실패 8 + 미변경 유닛 뒤집힘 5 + 보고서 요약 1; 같은 표를 두고 1차 "지표 5개"·2차 "지표 7개"처럼 판정이 자기모순) 루프가 수렴하지 않았다. 해법: `verify` D가 판정 대상마다 **판정 입력 전문(근거 본문+요약+제목·위치+모델)의 sha256**을 키로 최종 verdict(PASS/WARN/FAIL + issues)를 `logs/judge_cache.json`(`--judge-cache`, 빈 문자열이면 비활성)에 저장하고, 키가 같으면 LLM을 부르지 않고 재사용한다(리포트에 `캐시 N` 표기, 로그 judgements에 `cached`). 키에 근거 본문이 들어가므로 재추출·`--input-cap` 변경·모델 변경은 자동 무효화. `--reaudit`는 캐시를 무시하고 재판정(결과는 덮어씀), ERROR(판정불능)는 캐시하지 않음, 한도/인증 중단 시에도 그때까지의 verdict는 저장(파일마다 finally 저장 — 재실행 시 미판정 유닛만). 캐시는 파생물(logs/ git 제외) — 없으면 재판정할 뿐. **FAIL 수정 루프 도구 `src/strip_fail.py`**: 직전 verify 로그의 FAIL 유닛·보고서 요약 블록(요약 줄 + 뒤 빈 줄)을 .md에서 삭제(ERROR 제외, .md가 로그보다 최신이면 건너뜀, `--dry-run`/`--force`). 루프 = verify → strip_fail → annotate(지워진 유닛 + 그 파일 보고서 요약만 재생성) → verify(바뀐 요약만 재판정). 같은 유닛이 반복 FAIL이면 위 운영 시사점대로 그 파일만 `--judge-model claude-sonnet-5` 일회 승격.
 - 커버 판정 술어 `extract.table_covers`는 extract의 **표 마스킹 안전판**과 공유 — 표 정리에 실리지 못한 글자를 extract가 본문으로 방출하고 verify가 같은 기준으로 재확인하므로 두 도구가 정의상 어긋날 수 없다.
 - 한계(수용·문서화): 이미지 속 글자는 원천 미추출(마커로만 명시), 동일 문장이 문서 타처에 있으면 그 줄의 소실이 가려질 수 있음, pymupdf 버전 변경 시 표 인식 차이로 재현이 어긋날 수 있음(requirements 핀 전제).
@@ -161,7 +162,7 @@ source_pdf: pdfs/정책연구-2025-13-한국형 오픈액세스 정책 추진 �
 | 요소 | 규칙 | 이유 |
 |---|---|---|
 | YAML frontmatter | `report_id, title, title_en, year, lead_researcher, institution, keywords_ko, keywords_en, abstract, source_pdf` (+ **합본 파트에만** `pdf_pages` — 같은 source_pdf 내 원본 페이지 구간, + **플랫 문서에만** `structure: flat` — §3 플랫 폴백 표식, verify·status 분기 근거) | 마스터 인덱스·DB 메타데이터 소스. `abstract`(저자 초록)·`keywords_ko/en`은 보고서 요약 생성 입력 + /browse 병기(카탈로그 미수록 — §3 단계③). 결측 필드는 빈 값 + 로그(추측 금지) |
-| `verified_extract` / `verified_annotate` | 옵션 스탬프(YYYY-MM-DD) — 검증 스텝 `src/verify.py`(§3)가 통과 시 기록(닫는 `---` 직전, verify의 유일한 쓰기). 사다리: 둘 다 없음=미검증 → extract만=추출 검증 → 둘 다=요약 감사 통과. `verified_annotate` = 커버리지·배치(결정론) + **D 품질 판정(LLM — 누락·할루시네이션·왜곡·무관 검사)** 전건 통과 | 검증 여부는 아티팩트에서 유도 불가한 신규 정보라 파일 내 기록. extract가 frontmatter를 재생성하면 자연 소멸 = 자동 미검증 리셋, annotate가 요약을 새로 쓰면 `verified_annotate`만 자연 소멸 = 자동 미감사 리셋(별도 상태 파일 불필요) |
+| `verified_register` / `verified_extract` / `verified_annotate` | 스탬프 3단(YYYY-MM-DD, 2026-09-07) — `verified_register`는 extract가 .md 생성 시 기록(등록부 rid 조회 성공의 기록), 나머지 둘은 검증 스텝 `src/verify.py`(§3)가 통과 시 기록(닫는 `---` 직전에 register → extract → annotate 순, verify의 유일한 쓰기). 순서 규칙: extract가 있으면 register 필수, annotate가 있으면 extract 필수(`mdio.set_verified_stamps`가 강제). 사다리: 없음=unverified → register=추출 검증 대기 → +extract=추출 검증 → +annotate=요약 감사 통과. build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다. `verified_annotate` = 커버리지·배치(결정론) + **D 품질 판정(LLM — 누락·할루시네이션·왜곡·무관 검사)** 전건 통과 | 검증 여부는 아티팩트에서 유도 불가한 신규 정보라 파일 내 기록. extract가 frontmatter를 재생성하면 extract·annotate는 자연 소멸(= 자동 미검증 리셋)·register는 재기록, annotate가 요약을 새로 쓰면 `verified_annotate`만 자연 소멸 = 자동 미감사 리셋(별도 상태 파일 불필요) |
 | `report_id` | **등록부 `report_ids.tsv`의 값**(§3 단계① 유도 v3 — 표지 인쇄 관리번호 `YYYY-NN`, 다권본 `-vN`(`2018-49-v1`), 같은 번호·다른 문서 `-b`(`2019-31-b`), 수동 기입은 ASCII `[A-Za-z0-9-]`). 합본 파트는 `2025-17_01`처럼 extract가 접미. 파일명·슬러그 유도 없음 | 초록의 관리번호 필드는 신뢰 불가(공란·0패딩·접두어 탈락·별도 체계 실측), 파일명 표기는 제각각 → 표지 단일 기준 |
 | 헤딩 | `#`=장(L1). 하위 헤딩 패밀리를 전역 첫 등장 순서대로 `##`~`####`에 매핑(4단계 캡, 그 이하는 본문 줄). 텍스트는 원문 표면형 유지(공백 런만 1칸으로 축약). **플랫 문서는 합성 `# 구간 N (p.a-b)`만**(하위 헤딩 없음 — 페이지 범위가 인용 좌표) | 본문 구조 그대로 추종. 색인 단위(청크)는 build_db.py에서 결정(§8) |
 | `<!-- id: ... -->` | 헤딩 뒤 고유 ID. **감지 서수 경로**: `{report_id}_c{i}`, `_c{i}s{j}`, `_c{i}s{j}s{k}`… (표면 번호와 무관, 감지 순서 기준) | 재파싱해도 동일 ID. 문법 6종 혼재 코퍼스에서 표면 번호는 키로 부적합 |
@@ -194,6 +195,7 @@ source_pdf: pdfs/정책연구-2025-13-한국형 오픈액세스 정책 추진 �
 
 - `.md`에서 자동 생성. **요약 소스는 `> **보고서 요약:**` 블록 단독**(annotate 상시 생성물, 1~2문장 판별형 — 2026-09). `abstract`는 카탈로그에 싣지 않는다(비대화·앵커링 방지 — /browse 병기 열람). 블록 없으면 빈 값 + 경고(추측 금지).
 - 라우팅은 문자열 매칭이 아니라 **LLM이 이 파일을 읽고 후보 보고서를 선택**하는 방식.
+- **스탬프 3단 게이트(2026-09-07)**: `verified_register`·`verified_extract`·`verified_annotate`가 모두 있는 .md만 수록 — 수록 범위가 build_db(§6)와 같아 라우팅 자료에 DB에 없는 보고서가 나오지 않는다. 제외가 있으면 파일별 경고 + exit 1.
 
 ---
 
@@ -256,7 +258,7 @@ FROM sections WHERE sections MATCH ? ORDER BY rank LIMIT 10;
 SELECT chapter, section, summary FROM sections WHERE report_title = ?;
 ```
 
-**증분 동기화(2026-08 — 종전 통재생성 규약 대체)**: build_db가 `files` 원장과 각 .md의 sha256을 대조해 신규·변경 파일만 행 삭제 후 재삽입, 사라진 파일 행은 제거. `verified_annotate` 게이트 — 미검증 변경 파일은 싣지 않고 기존 행도 삭제(죽은 section_id 참조 차단, 시끄러운 경고 + exit 1). 동기화 기록을 .md에 두지 않는 이유·`--rebuild` 안전망은 CLAUDE.md 핵심 규약 참조. 실측(11파일): 증분 결과 = 통재생성 결과(행 내용·문서 순서 해시 일치).
+**증분 동기화(2026-08 — 종전 통재생성 규약 대체)**: build_db가 `files` 원장과 각 .md의 sha256을 대조해 신규·변경 파일만 행 삭제 후 재삽입, 사라진 파일 행은 제거. 스탬프 3단 게이트(2026-09-07 — 종전 `verified_annotate` 단독 게이트 확장): `verified_register`·`verified_extract`·`verified_annotate` 중 하나라도 없는 변경 파일은 싣지 않고 기존 행도 삭제(죽은 section_id 참조 차단, 빠진 스탬프 이름을 경고에 표시 + exit 1). 무변경 파일은 재평가하지 않는다(스탬프가 .md 바이트 안에 있어 스탬프 변화 = 해시 변화 = 변경 파일). 따라서 files 원장 해시 == 현재 .md 해시 = 세 스탬프가 찍힌 파일이 그대로 색인돼 있음 — `status.is_loaded`·/browse가 이 하나만 본다. 동기화 기록을 .md에 두지 않는 이유·`--rebuild` 안전망은 CLAUDE.md 핵심 규약 참조. 실측(11파일): 증분 결과 = 통재생성 결과(행 내용·문서 순서 해시 일치).
 
 ---
 
@@ -336,9 +338,9 @@ SELECT chapter, section, summary FROM sections WHERE report_title = ?;
 
 1. `extract.py` — PDF → 계층 `.md` (본문만). 5~10권으로 검증
 2. `annotate.py` — 절 요약 → 보고서 요약 삽입
-3. `build_db.py` — `.md` → `reports.db`. **구현 완료(2026-08)**: FTS5 trigram 406행 / 20MB, 증분 동기화(`files` 해시 원장 대조) + `verified_annotate` 게이트 + `--rebuild`. 증분 결과와 통재생성 결과 해시 일치 실측
-4. `build_index.py` — `master_index.md` 생성. **구현 완료(2026-08, 2026-09 요약 소스 교체)**: §5 카탈로그, 보고서 요약 1줄 인라인(abstract 미수록)
+3. `build_db.py` — `.md` → `reports.db`. **구현 완료(2026-08)**: FTS5 trigram 406행 / 20MB, 증분 동기화(`files` 해시 원장 대조) + 스탬프 3단 게이트(2026-09-07) + `--rebuild`. 증분 결과와 통재생성 결과 해시 일치 실측
+4. `build_index.py` — `master_index.md` 생성. **구현 완료(2026-08, 2026-09 요약 소스 교체)**: §5 카탈로그, 보고서 요약 1줄 인라인(abstract 미수록); 2026-09-07 3단 스탬프 게이트(수록 범위 = build_db)
 5. `search.py` — 검색·답변 흐름. **구현 완료(2026-08)**: 단일 ClaudeSDKClient 세션 + 인프로세스 툴 4종, RRF·창 절단·SQL·날조 출처 사후 검사는 결정론 코드, `files` 원장 해시 하드 게이트. 시나리오 검증 통과(§7 구현 단락). 잔여 실측 상수 = BODY_THRESHOLD 8,000 · WINDOW_RADIUS 1,750 · MAX_WINDOWS 3 · TOP_N 8 · bm25 가중
 6. 상수 실측·관련도 평가셋(§8) → 미결 사항 판단 ← **현재 지점**
 
-> 검증 스텝 `verify.py`(§3)는 ①·② 산출물의 게이트로 2026-08 구현 완료(D 품질 판정 통합 포함) — 신규 PDF마다 extract → verify → annotate → verify 순으로 실행한다. 두 번째 verify가 D 품질 판정까지 수행해 `verified_annotate`를 기록하며, 이때 PDF는 필요 없다.
+> 검증 스텝 `verify.py`(§3)는 ①·② 산출물의 게이트로 2026-08 구현 완료(D 품질 판정 통합 포함) — 신규 PDF마다 extract → verify → annotate → verify 순으로 실행한다. 첫 verify가 `verified_extract`를(extract가 찍은 `verified_register` 위에), 두 번째 verify가 D 품질 판정까지 수행해 `verified_annotate`를 기록하며, 이때 PDF는 필요 없다.

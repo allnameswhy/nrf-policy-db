@@ -4,14 +4,22 @@ PROJECT_NOTES §3의 "검증 스텝": frontmatter verified_extract/verified_anno
 (YYYY-MM-DD 사다리)의 유일한 기록 주체. .md 본문은 절대 수정하지 않는다 —
 쓰는 것은 frontmatter 스탬프 줄뿐(--no-stamp로 억제).
 
+스탬프 3단(2026-09-07): verified_register → verified_extract → verified_annotate.
+verified_register는 extract가 .md를 만들 때 기록(등록부 rid 조회 성공의 기록)하며
+verify는 이를 검사·회수하지 않고, 없는 파일(도입 전 생성분)에는 채워 넣기만 한다.
+build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
+
 상태 분기 (파일별 스탬프 상태 기계 — 검사 범위를 상태로 고른다):
-  스탬프 없음        풀 검사 A~C(PDF 재스캔) → PASS 시 verified_extract 기록.
-                     커버리지 완비면 이어서 D 판정 후 verified_annotate까지.
-  verified_extract만 PDF 생략(스탬프 신뢰). A(.md 단독) + 커버리지·배치 확인 후
-                     D 품질 판정 → 전건 PASS/WARN이면 verified_annotate 기록.
-  둘 다              스킵. --reaudit면 D 재판정(FAIL 시 verified_annotate 회수).
-  --full             스탬프 무시하고 A~C 전수 재검사. 매 실행 PDF 전수 대조라는
-                     종전 안전망은 이 플래그로만 작동한다(드리프트·수동 편집 의심 시).
+  verified_extract 없음  풀 검사 A~C(PDF 재스캔) → PASS 시 verified_extract 기록.
+                         커버리지 완비면 이어서 D 판정 후 verified_annotate까지.
+  extract 있음 & (register 없음 | annotate 없음 | --reaudit)
+                         PDF 생략(스탬프 신뢰). A(.md 단독) + 커버리지·배치 확인.
+                         annotate 없으면 D 품질 판정 → 전건 PASS/WARN이면 기록.
+                         annotate 있고 --reaudit 아니면 D 생략·기존 판정 보존 —
+                         register만 채우는 실행(모드 register)이 이 경우다.
+  셋 다                  스킵. --reaudit면 D 재판정(FAIL 시 verified_annotate 회수).
+  --full                 스탬프 무시하고 A~C 전수 재검사. 매 실행 PDF 전수 대조라는
+                         종전 안전망은 이 플래그로만 작동한다(드리프트·수동 편집 의심 시).
 
 검사:
   A 구조 불변식    .md 단독 — frontmatter 필수 키·report_id·year·pdf_pages(PDF
@@ -48,8 +56,9 @@ body 범위를 재현해 B를 동일하게 실행한다. A는 합성 '구간 N (
 
 스탬프 기록(검사 아님 — 최종 단계): 통과 상태에 맞는 스탬프를 이중 가드(스탬프 외
 무변경 바이트 대조 + 재파싱 값 일치)로 기록. verified_annotate = 커버리지·배치
-완비 + D 전건 통과. 결정론 FAIL은 스탬프 전체 회수, D FAIL은 verified_annotate만
-회수(추출 검증은 유효). 거짓 "검증됨"을 남기지 않는다.
+완비 + D 전건 통과. 결정론 FAIL은 verified_extract·verified_annotate 회수(verified_register는
+extract 소관이라 유지), D FAIL은 verified_annotate만 회수(추출 검증은 유효). 거짓
+"검증됨"을 남기지 않는다.
 
 한계(§8 문서화): 이미지 속 글자는 원천 미추출(마커로만 명시), 동일 문장이 문서
 타처에 있으면 그 줄의 소실이 가려질 수 있음, pymupdf 버전 변경 시 표 인식 차이로
@@ -119,13 +128,13 @@ def canon(s: str) -> str:
 @dataclasses.dataclass
 class Report:
     report_id: str
-    mode: str = ""  # full | promote | reaudit | skip
+    mode: str = ""  # full | register | promote | reaudit | skip
     fails: list = dataclasses.field(default_factory=list)  # 결정론(A~C) 불합격
     qfails: list = dataclasses.field(default_factory=list)  # D 품질 판정 불합격
     warns: list = dataclasses.field(default_factory=list)
     notes: list = dataclasses.field(default_factory=list)
     stats: dict = dataclasses.field(default_factory=dict)
-    stamped: str = ""  # "" | extract | annotate | 제거
+    stamped: str = ""  # "" | register | extract | annotate | 제거
 
 
 def fm_raw(lines: list[str], fm_end: int) -> dict[str, str]:
@@ -440,12 +449,15 @@ def annotate_complete(st) -> bool:
     return remaining == 0 and st.roundtrip_ok()
 
 
-def apply_stamp(rep: Report, md_path: Path, original: list[str], extract_val: str, annotate_val: str) -> None:
+def apply_stamp(rep: Report, md_path: Path, original: list[str],
+                register_val: str, extract_val: str, annotate_val: str) -> None:
     """스탬프를 주어진 최종 값으로 기록. 값의 결정은 호출부(main의 모드별 정책)."""
-    new = mdio.set_verified_stamps(original, extract_val, annotate_val)
-    label = "annotate" if annotate_val else ("extract" if extract_val else "제거")
+    new = mdio.set_verified_stamps(original, register=register_val, extract=extract_val,
+                                   annotate=annotate_val)
+    label = ("annotate" if annotate_val else "extract" if extract_val
+             else "register" if register_val else "제거")
     if new == original:
-        if extract_val or annotate_val:
+        if register_val or extract_val or annotate_val:
             rep.stamped = label  # 이미 원하는 상태 — 표시만
         return
     # 이중 가드: ① 스탬프 줄 외 무변경 ② 재파싱 값 일치 — 위반 시 쓰기 중단
@@ -453,7 +465,8 @@ def apply_stamp(rep: Report, md_path: Path, original: list[str], extract_val: st
         rep.fails.append("스탬프 가드 위반(스탬프 외 변경 감지) — 쓰기 중단")
         return
     fm = mdio.parse_frontmatter(new)
-    if (fm.verified_extract, fm.verified_annotate) != (extract_val, annotate_val):
+    if ((fm.verified_register, fm.verified_extract, fm.verified_annotate)
+            != (register_val, extract_val, annotate_val)):
         rep.fails.append("스탬프 가드 위반(재파싱 불일치) — 쓰기 중단")
         return
     mdio.write_md_lines(md_path, new)
@@ -843,8 +856,11 @@ def main() -> None:
         if args.full or not fm.verified_extract:
             rep.mode = "full"
             fulls.append((stem, mp, rep, lines, fm.end_line))
-        elif not fm.verified_annotate or args.reaudit:
-            rep.mode = "reaudit" if fm.verified_annotate else "promote"
+        elif not fm.verified_annotate or args.reaudit or not fm.verified_register:
+            # register 모드 = 3단 도입 전 파일에 verified_register만 채우는 실행 —
+            # annotate가 있으면 D 판정은 아래 후보 선정에서 생략(기존 판정 보존)
+            rep.mode = ("reaudit" if fm.verified_annotate and args.reaudit
+                        else "promote" if not fm.verified_annotate else "register")
             states[stem] = (rep, mp, check_md_only(rep, mp, stem, args))
         else:
             rep.mode = "skip"
@@ -961,7 +977,9 @@ def main() -> None:
         for stem, (rep, mp, st) in states.items():
             if st is None:
                 continue
-            if rep.fails:  # 결정론 불합격 — 스탬프 전체 회수 (거짓 "검증됨" 제거)
+            # verified_register는 extract 소관 — verify는 회수하지 않고, 도입 전 파일엔 채운다
+            register_val = st.fm.verified_register or today
+            if rep.fails:  # 결정론 불합격 — extract·annotate 회수 (거짓 "검증됨" 제거)
                 extract_val = annotate_val = ""
             else:
                 extract_val = today if rep.mode == "full" else st.fm.verified_extract
@@ -971,7 +989,7 @@ def main() -> None:
                     annotate_val = st.fm.verified_annotate  # 판정 미실행 — 기존 판정 보존
                 else:
                     annotate_val = ""
-            apply_stamp(rep, mp, st.original, extract_val, annotate_val)
+            apply_stamp(rep, mp, st.original, register_val, extract_val, annotate_val)
 
     # ---- 리포트 ----
     print()

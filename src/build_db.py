@@ -8,8 +8,12 @@ PROJECT_NOTES.md §6 참조.
   sha256을 대조해 신규·변경 파일만 행 삭제 후 재삽입, 사라진 파일 행은 제거.
   동기화 기록이 .md가 아니라 DB에 있으므로 DB 삭제·신규 클론 시 자연히 전체
   빌드로 수렴한다(원본은 파생물 상태를 기록하지 않는다).
-- verified_annotate 게이트: 변경 감지된 파일에 스탬프가 없으면 싣지 않고 기존
-  행도 삭제한다 — 재추출로 section_id가 바뀌었을 수 있어 죽은 참조를 차단.
+- 스탬프 3단 게이트(2026-09-07): 변경 감지된 파일에 verified_register·verified_extract·
+  verified_annotate 중 하나라도 없으면 싣지 않고 기존 행도 삭제한다 — 재추출로
+  section_id가 바뀌었을 수 있어 죽은 참조를 차단. 무변경 파일은 재평가하지 않는다
+  (스탬프가 .md 바이트 안에 있어 스탬프 변화 = 해시 변화 = 변경 파일). 따라서
+  "files 원장 해시 == 현재 .md 해시"는 곧 세 스탬프가 찍힌 파일이 그대로 색인돼
+  있다는 뜻이다(status.is_loaded·/browse가 이 하나만 본다).
   수정 경로: verify → build_db 재실행. 게이트 스킵이 있으면 exit 1.
 - --rebuild: DB 파일 삭제 후 전체 재구축(파생물 철학의 안전망).
 - fold_text(): 공백 전제거 — body_fold 색인과 검색 쿼리 fold의 대칭 규칙은 이
@@ -115,7 +119,7 @@ def main() -> None:
         seen: set[str] = set()
         updated: list[tuple[str, int]] = []
         synced: list[str] = []
-        gated: list[str] = []
+        gated: list[tuple[str, list[str]]] = []  # (filepath, 빠진 스탬프)
         removed: list[str] = []
 
         for path in sorted(reports_dir.glob("*.md")):
@@ -128,8 +132,9 @@ def main() -> None:
             state = mdio.load_report(path, min_chars=args.min_chars, max_chars=args.max_chars)
             con.execute("DELETE FROM sections WHERE filepath = ?", (fp,))
             con.execute("DELETE FROM files WHERE filepath = ?", (fp,))
-            if not state.fm.verified_annotate:
-                gated.append(fp)
+            missing = mdio.missing_stamps(state.fm)
+            if missing:
+                gated.append((fp, missing))
                 continue
             rows = report_rows(state, fp)
             con.executemany(INSERT_SQL, rows)
@@ -155,9 +160,9 @@ def main() -> None:
         print(f"  갱신: {fp} ({n}행)")
     for fp in removed:
         print(f"  제거: {fp}")
-    for fp in gated:
+    for fp, missing in gated:
         print(
-            f"경고: {fp} — verified_annotate 없음, DB에서 제외(기존 행도 삭제). "
+            f"경고: {fp} — {'·'.join(missing)} 없음, DB에서 제외(기존 행도 삭제). "
             "verify 통과 후 build_db 재실행 필요.",
             file=sys.stderr,
         )

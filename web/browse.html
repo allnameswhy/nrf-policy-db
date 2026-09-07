@@ -89,7 +89,7 @@
   <div class="head">
     <div>
       <h1>자료 현황</h1>
-      <div class="sub">왼쪽 현황판에서 보고서 행을 클릭하면 오른쪽에 카탈로그 요약과 목차가 표시됩니다.</div>
+      <div class="sub">DB에 동기화된(적재 완료) 보고서만 표시합니다. 행을 클릭하면 오른쪽에 카탈로그 요약과 목차가 표시됩니다. DB 미반영·문제 파일은 DB 관리에서 처리합니다.</div>
     </div>
     <div class="navs">
       <a class="nav" href="/admin">DB 관리</a>
@@ -149,9 +149,12 @@ async function refreshStatus() {
     $("status-body").textContent = "현황 조회 실패: " + e.message;
     return;
   }
+  // 적재 완료(status.is_loaded = DB 해시 동기화)만 — 미반영·문제 파일은 /admin 카드 소관
+  const rows = s.rows.filter((r) => r.loaded);
+  const excluded = s.rows.length - rows.length;
   const tb = $("status-rows");
   tb.textContent = "";
-  for (const r of s.rows) {
+  for (const r of rows) {
     const tr = document.createElement("tr");
     tr.dataset.reportId = r.report_id;
     const cells = [
@@ -160,7 +163,8 @@ async function refreshStatus() {
       ["num", r.summary, ""],
       ["num", String(r.remaining), r.remaining ? "cell-warn" : ""],
       ["", r.report_summary, ""],
-      ["", r.verify, r.verify === "annotate" ? "cell-ok" : (r.verify === "미검증" ? "cell-warn" : "")],
+      ["", r.verify, r.verify === "annotate" ? "cell-ok"
+        : ((r.verify === "unverified" || r.verify === "register") ? "cell-warn" : "")],
       ["", r.db, r.db === "미반영" ? "cell-err" : (r.db === "동기화" ? "cell-ok" : "")],
       ["sum", r.notes.join("; "), r.notes.length ? "cell-warn" : ""],
     ];
@@ -173,8 +177,8 @@ async function refreshStatus() {
     tr.addEventListener("click", () => selectReport(tr));
     tb.appendChild(tr);
   }
-  $("status-table").classList.remove("hidden");
-  $("status-body").textContent = "";
+  $("status-table").classList.toggle("hidden", rows.length === 0);
+  $("status-body").textContent = rows.length ? "" : "적재가 완료된 보고서가 아직 없습니다.";
   const art = $("artifacts");
   art.textContent = "";
   for (const a of s.artifacts) {
@@ -184,12 +188,19 @@ async function refreshStatus() {
     art.appendChild(d);
   }
   let done = 0, total = 0;
-  for (const r of s.rows) {
+  for (const r of rows) {
     const m = /^(\d+)\/(\d+)$/.exec(r.summary);
     if (m) { done += +m[1]; total += +m[2]; }
   }
-  $("summary").textContent =
-    `보고서 ${s.rows.length}권 · 유닛 요약 ${done}/${total} · 잔여 호출 ${s.remaining_total}건 · 비고 ${s.note_count}건`;
+  const sum = $("summary");
+  sum.textContent = `적재 완료 보고서 ${rows.length}권 · 유닛 요약 ${done}/${total}`;
+  if (excluded) {
+    sum.append(` · DB 미반영 ${excluded}건은 표시하지 않음 (`);
+    const a = document.createElement("a");
+    a.href = "/admin";
+    a.textContent = "DB 관리";
+    sum.append(a, "에서 처리)");
+  }
 }
 
 // 카탈로그 메타(제목·연도·연구책임자·보고서 요약 — master_index와 동일 소스) +

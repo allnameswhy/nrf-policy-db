@@ -21,9 +21,14 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
   flat = 구조 감지 생략·곧장 구간 청킹. 감지 실패 시 l1_attempts + 헤딩 의심 줄
   샘플(l1_suspects)을 로그·--scan에 남겨 프로파일 승격 판단 재료로 쓴다.
 - 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
-  재추출은 annotate가 삽입한 요약 블록과 frontmatter 검증 스탬프를 소실시킨다
-  (스탬프 소실 = 의도된 미검증 리셋). 합본은 파트 일부만 있어도 스킵 — 부분 실패
-  재시도는 --force뿐이며 성공 파트의 요약도 함께 소실됨에 주의. --scan은 가드 미적용.
+  재추출은 annotate가 삽입한 요약 블록과 verify가 기록한 verified_extract·
+  verified_annotate 스탬프를 소실시킨다(소실 = 의도된 미검증 리셋). 합본은 파트
+  일부만 있어도 스킵 — 부분 실패 재시도는 --force뿐이며 성공 파트의 요약도 함께
+  소실됨에 주의. --scan은 가드 미적용.
+- 검증 스탬프 1단 verified_register(2026-09-07): .md를 만드는 시점에 등록부 rid 조회가
+  이미 성공했으므로 extract가 frontmatter에 오늘 날짜로 기록한다(재추출 시 새로 기록).
+  이후 verify가 verified_extract → verified_annotate를 차례로 얹고, build_db·build_index는
+  세 스탬프가 모두 있는 파일만 싣는다.
 """
 
 from __future__ import annotations
@@ -1710,6 +1715,8 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
         lines.append("structure: flat")  # 플랫 청킹 폴백 표식 — verify·status가 이 키로 분기
     if result.n_parts > 1:
         lines.append(f'pdf_pages: "{result.part_range[0] + 1}-{result.part_range[1] + 1}"')
+    # 스탬프 1단 — rid는 등록부 조회(rid_for) 성공으로만 얻으므로 등록은 확인된 사실
+    lines.append(f"verified_register: {datetime.date.today().isoformat()}")
     lines.append("---")
     lines.append("")
     lines.extend(body)

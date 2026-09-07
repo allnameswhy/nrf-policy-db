@@ -26,7 +26,7 @@ LLM 호출(요약 생성·품질 판정·검색)은 `claude-agent-sdk`를 통해
 
 ```
 python src/extract.py pdfs/*.pdf     # 1. PDF → 계층 .md (본문만, LLM 미개입)
-python src/verify.py reports/*.md    #    검증 → 통과 시 verified_extract 스탬프
+python src/verify.py reports/*.md    #    검증 → 통과 시 verified_extract 스탬프 (verified_register는 extract가 기록)
 python src/annotate.py reports/*.md  # 2. 단위 요약 삽입 (LLM)
 python src/verify.py reports/*.md    #    요약 품질 판정 → verified_annotate 스탬프 (PDF 불필요)
 python src/build_db.py               # 3. reports.db (FTS5 색인) 증분 동기화
@@ -34,8 +34,8 @@ python src/build_index.py            # 4. master_index.md 생성
 ```
 
 - `.md`를 수정한 뒤에는 `build_db.py`를 그냥 다시 실행하면 됩니다 — DB 안의 해시 원장과 대조해 **바뀐 파일만 다시 색인**합니다. DB를 지울 필요가 없습니다. 색인이 꼬인 것 같으면 `--rebuild`로 통재생성하세요.
-- `build_db.py`는 `verified_annotate` 스탬프가 없는 파일을 색인에 싣지 않습니다. 경고가 뜨면 `verify.py`를 먼저 통과시키세요.
-- `extract.py`는 출력 `.md`가 이미 있으면 건너뜁니다. 다시 뽑으려면 `--force`가 필요하며, **이때 삽입된 요약과 검증 스탬프가 함께 사라집니다.**
+- `build_db.py`와 `build_index.py`는 검증 스탬프 3개(`verified_register`·`verified_extract`·`verified_annotate`)가 모두 있는 파일만 싣습니다. 경고가 뜨면 `verify.py`를 먼저 통과시키세요.
+- `extract.py`는 출력 `.md`가 이미 있으면 건너뜁니다. 다시 뽑으려면 `--force`가 필요하며, **이때 삽입된 요약과 verify 스탬프가 함께 사라집니다**(`verified_register`는 새로 찍힙니다).
 - 장·절 구조가 감지되지 않는 문서(타 기관 보고서·발표자료·백서 등)는 자동으로 페이지 기준 플랫 청킹으로 처리됩니다. 레인을 직접 지정하려면 `--lane {auto,structured,flat}`.
 
 ## 검색 실행

@@ -11,6 +11,8 @@
 - 유닛 1건 성공마다 즉시 파일 재작성 → 사용량 한도로 중단돼도 재실행하면 이어서 진행.
 - 요약을 1건이라도 새로 쓰는 파일은 verified_annotate 스탬프를 함께 제거한다
   (요약이 바뀌면 자동 미감사 리셋 — 재검사·기록은 verify.py D 품질 판정 소관).
+  verified_register·verified_extract는 유지. 단 verified_register가 없는 파일(3단
+  도입 전 생성분)은 순서 규칙상 extract도 함께 내린다 — 다음 verify가 풀 검사로 복구.
 """
 
 from __future__ import annotations
@@ -288,7 +290,9 @@ async def process_file(
     if will_write and fm.verified_annotate:
         # 요약이 바뀌는 파일은 미감사 상태로 리셋 — verified_annotate 제거 후
         # 줄 좌표가 1줄 당겨지므로 base 기준 파스를 전부 재유도한다.
-        base = mdio.set_verified_stamps(base, fm.verified_extract)
+        base = mdio.set_verified_stamps(
+            base, register=fm.verified_register,
+            extract=fm.verified_extract if fm.verified_register else "")
         fm = mdio.parse_frontmatter(base)
         roots = mdio.parse_heading_tree(base)
         by_hid = {h.hid: h for h in mdio.iter_headings(roots)}

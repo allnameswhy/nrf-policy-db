@@ -6,10 +6,14 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
 
 - 유닛 계산은 annotate.py와 동일한 mdio.load_report() 재사용 — 잔여 호출 수가
   annotate --scan의 expected_calls와 항상 일치한다.
-- 검증 컬럼은 frontmatter 스탬프 사다리(verified_extract/verified_annotate):
-  없음=미검증, extract만=extract, 둘 다=annotate(= verify.py D 품질 판정까지 통과).
-  스탬프 기록은 verify.py 소관. extract가 frontmatter를 재생성하면 스탬프가 소멸해
-  자동 미검증 리셋, annotate가 요약을 새로 쓰면 verified_annotate만 소멸한다.
+- 검증 컬럼은 frontmatter 스탬프 3단(verified_register → verified_extract →
+  verified_annotate)의 최상위 스탬프: 없음=unverified, register(extract가 .md 생성 시
+  기록), extract(verify 추출 검증 통과), annotate(verify 품질 판정까지 통과).
+  extract가 frontmatter를 재생성하면 extract·annotate 스탬프는 소멸하고 register는
+  새로 기록되며, annotate가 요약을 새로 쓰면 verified_annotate만 소멸한다.
+  3단 도입(2026-09-07) 전 파일은 register가 없다 — "등록 스탬프 없음" 비고(verify가 채움).
+- 적재 완료(is_loaded, /browse 표시 기준) = DB 컬럼 "동기화" 하나 — build_db가 세 스탬프를
+  모두 확인하고 실은 바이트 그대로라는 뜻이라 다른 컬럼을 다시 보지 않는다.
 - 커버리지 완비(잔여 0)인데 verified_annotate가 없는 파일은 "verify 승격 대기"
   비고로 할 일에 반영된다(verify 실행 시 D 품질 판정 후 스탬프 기록).
 - DB 컬럼은 reports.db 내 files 원장(build_db 증분 동기화 기록)과 .md sha256을
@@ -46,9 +50,20 @@ class Row:
     summary: str = "-"  # "M/N"
     remaining: int = 0
     report_summary: str = "-"  # 완료 | 대기 | - (annotate 상시 생성 — abstract는 요약 소스 아님)
-    verify: str = "미검증"  # 미검증 | extract | annotate
+    verify: str = "unverified"  # unverified | register | extract | annotate (최상위 스탬프)
     db: str = "-"  # 동기화 | 미반영 | -
     notes: list[str] = field(default_factory=list)
+
+
+# 3단 도입(2026-09-07) 전 생성 파일 — verify가 PDF 재스캔 없이 verified_register만 채운다
+REGISTER_NOTE = "등록 스탬프 없음 — verify 실행 시 verified_register 기록(PDF 재스캔 없음)"
+
+
+def is_loaded(row: Row) -> bool:
+    """적재 완료 = reports.db files 원장 해시 == 현재 .md sha256(DB 컬럼 "동기화").
+    build_db는 verified_register·extract·annotate가 모두 있는 파일만 싣으므로 이 하나로
+    파이프라인 전 단계 통과가 보장된다. /browse는 이 행만 보여준다(나머지는 /admin 카드)."""
+    return row.db == "동기화"
 
 
 def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]], list[tuple[str, str]]]:
@@ -101,13 +116,17 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
     if fm.verified_annotate:
         row.verify = "annotate"
         if not fm.verified_extract:
-            row.notes.append("스탬프 사다리 위반 — verified_annotate만 존재")
+            row.notes.append("스탬프 사다리 위반 — verified_extract 없이 verified_annotate 존재")
         if row.remaining:
             row.notes.append("검증 후 변경 — 재검증 필요")
     elif fm.verified_extract:
         row.verify = "extract"
         if units and not row.remaining:
             row.notes.append("verify 승격 대기 — D 품질 판정 후 verified_annotate 기록")
+    elif fm.verified_register:
+        row.verify = "register"
+    if fm.verified_extract and not fm.verified_register:
+        row.notes.append(REGISTER_NOTE)
 
     if fm.report_id != path.stem:
         row.notes.append(f"frontmatter report_id({fm.report_id}) ≠ 파일명")
@@ -194,15 +213,17 @@ def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
 
     done_total = sum(int(r.summary.split("/")[0]) for r in rows if "/" in r.summary)
     units_total = sum(int(r.summary.split("/")[1]) for r in rows if "/" in r.summary)
-    verify_counts = {k: sum(1 for r in rows if r.verify == k) for k in ("미검증", "extract", "annotate")}
+    verify_counts = {k: sum(1 for r in rows if r.verify == k)
+                     for k in ("unverified", "register", "extract", "annotate")}
     note_count = sum(len(r.notes) for r in rows) + len(warnings)
     print()
     print("== 합계 ==")
     print(
         f"보고서 {len(rows)} (추출 필요 {extract_needed}, 등록 필요 {register_needed}) · "
         f"유닛 {done_total}/{units_total} · "
-        f"잔여 호출 {remaining_total} · 검증: 미검증 {verify_counts['미검증']} / "
-        f"extract {verify_counts['extract']} / annotate {verify_counts['annotate']} · "
+        f"잔여 호출 {remaining_total} · 검증: unverified {verify_counts['unverified']} / "
+        f"register {verify_counts['register']} / extract {verify_counts['extract']} / "
+        f"annotate {verify_counts['annotate']} · "
         f"경고 {note_count}"
     )
 

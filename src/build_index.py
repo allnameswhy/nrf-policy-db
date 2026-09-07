@@ -11,6 +11,10 @@ PROJECT_NOTES.md §5 참조.
 단독이다. frontmatter `abstract`(저자 초록)는 카탈로그 비대화 방지를 위해 싣지
 않는다(원문은 .md frontmatter, 열람은 /browse 뷰어 병기). 블록이 없으면 abstract
 대체 없이 빈 값 + 경고(추측 금지 — annotate 실행 필요).
+
+스탬프 3단 게이트(2026-09-07): verified_register·verified_extract·verified_annotate가
+모두 있는 .md만 수록 — 수록 범위가 build_db와 같아 라우팅 자료에 DB에 없는 보고서가
+나오지 않는다. 제외가 있으면 파일별 경고 + exit 1(build_db와 동일 규약).
 """
 
 import argparse
@@ -52,20 +56,31 @@ def main() -> None:
         sys.exit(2)
 
     warnings: list[str] = []
+    gated: list[tuple[Path, list[str]]] = []  # (경로, 빠진 스탬프)
     out_lines = [
         "# 정책보고서 마스터 인덱스",
         "",
         "<!-- src/build_index.py가 reports/*.md frontmatter에서 자동 생성 — 직접 수정 금지 -->",
     ]
+    n_listed = 0
     for path in paths:
         state = mdio.load_report(path)
+        missing = mdio.missing_stamps(state.fm)
+        if missing:  # 3단 스탬프 게이트 — build_db와 동일 수록 범위
+            gated.append((path, missing))
+            continue
         out_lines.append("")
         out_lines.extend(render_entry(state, warnings))
+        n_listed += 1
 
     mdio.write_md_lines(args.out, out_lines)
-    print(f"보고서 {len(paths)}건 → {args.out}")
+    print(f"보고서 {n_listed}건 → {args.out}" + (f" (게이트 제외 {len(gated)})" if gated else ""))
     for w in warnings:
         print(f"경고: {w}", file=sys.stderr)
+    for path, missing in gated:
+        print(f"경고: {path.as_posix()} — {'·'.join(missing)} 없음, 카탈로그에서 제외. "
+              "verify 통과 후 build_index 재실행 필요.", file=sys.stderr)
+    sys.exit(1 if gated else 0)
 
 
 if __name__ == "__main__":
