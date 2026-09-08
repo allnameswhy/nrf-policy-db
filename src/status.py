@@ -37,9 +37,8 @@ from pathlib import Path
 import mdio
 import registry
 
-# .md 파일명 = {report_id}.md — 단독본(2025-02) 또는 합본 파트(2025-17_01).
-# rid 문자셋(registry.RID_RE)이 밑줄을 배제하므로 '_NN' 꼬리는 언제나 합본 파트 접미사다.
-PART_SUFFIX_RE = re.compile(r"^(.+)_(\d{2})$")
+# .md 파일명 = {report_id}.md — 합본 파트도 각자 rid(2026-09-08, `_NN` 접미 폐지). .md 스템과
+# PDF의 대응은 등록부(파트 행 포함)로만 푼다 — scan_pdfs가 파트 rid마다 경로를 매핑한다.
 MTIME_TOLERANCE = 2.0  # FAT/exFAT mtime 정밀도
 
 
@@ -67,21 +66,23 @@ def is_loaded(row: Row) -> bool:
 
 
 def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]], list[tuple[str, str]]]:
-    """({base_id: pdf 경로}, 충돌 그룹, 미등록 [(파일명, 사유)]). rid는 등록부 조회만(registry — extract와 동일).
+    """({rid: pdf 경로}(합본은 파트 rid마다), 충돌 그룹, 미등록 [(파일명, 사유)]). rid는 등록부 조회만
+    (registry — extract와 동일).
 
-    같은 base_id로 등록된 파일이 2개 이상이면(표 오기입·중복 다운로드) 매핑에는
+    같은 rid로 등록된 파일이 2개 이상이면(표 오기입·중복 다운로드) 매핑에는
     사전순 첫 파일만 남기고(extract 프리플라이트와 동일 선택) 그룹을 따로 반환한다 —
     종전 dict 컴프리헨션은 충돌을 조용히 덮어써 현황판 집계를 오염시켰다.
-    미등록(표에 없음·공란)은 매핑에서 빼고 사유와 함께 돌려준다 — "등록 필요" 행.
+    미등록(표에 없음·어느 파트든 공란)은 매핑에서 빼고 사유와 함께 돌려준다 — "등록 필요" 행.
     """
     groups: dict[str, list[Path]] = {}
     unreg: list[tuple[str, str]] = []
     for p in sorted(pdf_dir.glob("*.pdf")):
-        rid = registry.rid_for(p)
-        if rid is None:
+        parts = registry.parts_for(p)
+        if not parts:
             unreg.append((registry.norm_name(p), registry.rid_reason(p)))
             continue
-        groups.setdefault(rid, []).append(p)
+        for rid, _rng in parts:
+            groups.setdefault(rid, []).append(p)
     dups = {rid: [p.name for p in ps] for rid, ps in groups.items() if len(ps) > 1}
     return {rid: ps[0] for rid, ps in groups.items()}, dups, unreg
 
@@ -252,8 +253,7 @@ def collect_status(args) -> StatusData:
     md_mtimes: list[float] = []
     md_digests: dict[str, str] = {}
     for p in sorted(Path(args.reports_dir).glob("*.md")):
-        m = PART_SUFFIX_RE.match(p.stem)
-        base = m.group(1) if m else p.stem
+        base = p.stem  # .md 스템 = 등록부 rid(합본 파트도 각자 rid)
         covered_bases.add(base)
         md_mtimes.append(p.stat().st_mtime)
         fp = p.as_posix()

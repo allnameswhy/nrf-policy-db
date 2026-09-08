@@ -10,7 +10,9 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 - 헤딩 ID: 감지 서수 경로 {report_id}_c{i}s{j}… (PROJECT_NOTES §4)
 - report_id: **등록부 report_ids.tsv 조회만**(src/registry.py — 1단계 register.py가 표지
   관리번호로 채움, 2026-09-04). 파일명 유도·슬러그 폴백 없음 — 미등록 PDF는 프리플라이트에서
-  `skipped_unregistered`로 시끄럽게 스킵. 합본 파트 접미 '_NN'은 여기서 붙인다.
+  `skipped_unregistered`로 시끄럽게 스킵. **합본 분할도 등록부**(2026-09-08): register가
+  경량 스캔(detect_parts)으로 파트마다 행(rid, pages)을 만들고 여기서는 그 범위를 그대로
+  쓴다 — 파트도 각자 rid(`_NN` 접미 폐지), 파트 하나가 공란이면 파일 전체 미등록.
 - 진단: --scan (md 미작성, 감지 결과만 덤프). 로그: logs/extract_log.json
 - 구조(장 문법)가 잡히지 않는 문서는 **플랫 청킹 폴백**(투 레인): 문단 경계 그리디
   크기 청킹 → 합성 '# 구간 N (p.a-b)' 헤딩 + frontmatter 'structure: flat' 표식으로
@@ -23,7 +25,7 @@ PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 
 - 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
   재추출은 annotate가 삽입한 요약 블록과 verify가 기록한 verified_extract·
   verified_annotate 스탬프를 소실시킨다(소실 = 의도된 미검증 리셋). 합본은 파트
-  일부만 있어도 스킵 — 부분 실패 재시도는 --force뿐이며 성공 파트의 요약도 함께
+  일부의 .md만 있어도 스킵 — 부분 실패 재시도는 --force뿐이며 성공 파트의 요약도 함께
   소실됨에 주의. --scan은 가드 미적용.
 - 검증 스탬프 1단 verified_register(2026-09-07): .md를 만드는 시점에 등록부 rid 조회가
   이미 성공했으므로 extract가 frontmatter에 오늘 날짜로 기록한다(재추출 시 새로 기록).
@@ -47,7 +49,7 @@ from pathlib import Path
 
 import pymupdf
 
-from registry import rid_for, rid_reason
+from registry import parts_for, rid_reason
 
 # ---------------------------------------------------------------------------
 # 상수 · 정규식
@@ -232,7 +234,10 @@ class PageScan:
     dropped: bool = False   # 안내문/판권 등 통페이지 삭제 표시
 
 
-def scan_page(page, index: int) -> PageScan:
+def scan_page(page, index: int, tables: bool = True) -> PageScan:
+    """페이지 1장 스캔. tables=False = 표 인식(find_tables) 생략 — register의 합본 판별용
+    경량 스캔(0.5~1.3초/권, 2026-09-08 실측). 꼬리말·공백·이미지·리더 줄 판정은 표와 무관하므로
+    detect_parts 결과는 두 모드가 동일해야 한다(verify가 전체 스캔으로 대조)."""
     d = page.get_text("dict")
     scan = PageScan(index=index, width=page.rect.width, height=page.rect.height,
                     footer=None, footer_arabic=None)
@@ -268,16 +273,17 @@ def scan_page(page, index: int) -> PageScan:
             scan.footer_arabic = int(val)
 
     # 표
-    try:
-        tabs = page.find_tables()
-        for t in tabs.tables:
-            try:
-                rows = t.extract()
-            except Exception:
-                rows = []
-            scan.tables.append(Table(bbox=tuple(t.bbox), rows=rows))
-    except Exception:
-        pass
+    if tables:
+        try:
+            tabs = page.find_tables()
+            for t in tabs.tables:
+                try:
+                    rows = t.extract()
+                except Exception:
+                    rows = []
+                scan.tables.append(Table(bbox=tuple(t.bbox), rows=rows))
+        except Exception:
+            pass
     for tab in scan.tables:
         tab.caption, tab.markdown = clean_table(tab.rows)
 
@@ -304,8 +310,8 @@ def scan_page(page, index: int) -> PageScan:
     return scan
 
 
-def scan_document(doc) -> list[PageScan]:
-    return [scan_page(page, i) for i, page in enumerate(doc)]
+def scan_document(doc, tables: bool = True) -> list[PageScan]:
+    return [scan_page(page, i, tables=tables) for i, page in enumerate(doc)]
 
 
 def mark_footnotes(scans: list[PageScan], body_range: tuple[int, int]) -> int:
@@ -454,18 +460,17 @@ def table_covers(text: str, table_fold: str) -> bool:
 # report_id · 합본 분리
 # ---------------------------------------------------------------------------
 
-def find_existing_outputs(out_dir: Path, base_id: str) -> list[Path]:
-    """단독본({id}.md)과 합본 파트({id}_NN.md) 기존 출력 탐지.
+def find_existing_outputs(out_dir: Path, rids: list[str]) -> list[Path]:
+    """등록부 rid들(합본이면 파트마다 각자 rid)의 기존 출력 {rid}.md 탐지 — 재실행 가드."""
+    return [p for p in (Path(out_dir) / f"{rid}.md" for rid in rids) if p.exists()]
 
-    rid는 등록부 값(YYYY-NN[-vN][-b] 표준형 또는 수동 ASCII rid) — 문자셋이 밑줄을
-    배제하므로(registry.RID_RE) '{id}_NN' 글롭이 다른 보고서와 접두 충돌하는 일은 불가능하다.
-    """
-    out: list[Path] = []
-    single = out_dir / f"{base_id}.md"
-    if single.exists():
-        out.append(single)
-    out.extend(sorted(out_dir.glob(f"{base_id}_[0-9][0-9].md")))
-    return out
+
+def detect_parts(scans: list[PageScan]) -> list[tuple[int, int]]:
+    """합본 파트 경계 — register(경량 스캔, 등록부 pages 열의 출처)와 verify(전체 스캔, 대조)가
+    공유하는 **유일한** 분할 규칙. 표(find_tables) 데이터에 의존하지 않는 PageScan 필드만
+    써야 두 스캔이 일치한다(footer_arabic·blank·image_only·leader_lines·lines 수).
+    합본 병합 규칙 확장(WAVE_PLAN R2)도 여기에."""
+    return split_bundle(scans)
 
 
 def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
@@ -1730,9 +1735,13 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 # ---------------------------------------------------------------------------
 
 def process_pdf(path: str, lane: str = "auto"):
-    """PDF 1개 → PartResult 목록(합본이면 여러 개). lane: auto|structured|flat (--lane)."""
-    base_id = rid_for(path)
-    if base_id is None:  # 프리플라이트가 막으므로 방어용
+    """PDF 1개 → PartResult 목록(합본이면 여러 개). lane: auto|structured|flat (--lane).
+
+    파트 분할은 여기서 하지 않는다(2026-09-08) — 등록부의 파트 행(rid, pages)을 그대로 쓴다.
+    register가 경량 스캔으로 detect_parts를 돌려 행을 만들고, verify가 전체 스캔으로 대조한다.
+    """
+    reg_parts = parts_for(path)
+    if not reg_parts:  # 프리플라이트가 막으므로 방어용
         raise ValueError(f"미등록 PDF — {rid_reason(path)}: {Path(path).name}")
 
     doc = pymupdf.open(path)
@@ -1741,10 +1750,9 @@ def process_pdf(path: str, lane: str = "auto"):
     finally:
         doc.close()
 
-    parts = split_bundle(scans)
+    parts = [(rid, rng or (0, len(scans) - 1)) for rid, rng in reg_parts]
     results = []
-    for pi, part in enumerate(parts):
-        rid = base_id if len(parts) == 1 else f"{base_id}_{pi + 1:02d}"
+    for pi, (rid, part) in enumerate(parts):
         r = PartResult(report_id=rid, part_index=pi, n_parts=len(parts), part_range=part)
         r.stats["diag"] = {}
         diag = r.stats["diag"]
@@ -1925,13 +1933,14 @@ def main() -> None:
     by_rid: dict[str, list[str]] = {}
     dropped: dict[str, dict] = {}
     for path in paths:
-        rid = rid_for(path)
-        if rid is None:
+        parts = parts_for(path)
+        if not parts:  # 파트 하나라도 공란이면 파일 전체 미등록
             reason = rid_reason(path)
             dropped[path] = {"status": "skipped_unregistered", "reason": reason}
             print(f"[미등록] {Path(path).name}: {reason}", file=sys.stderr)
             continue
-        by_rid.setdefault(rid, []).append(path)
+        for rid, _rng in parts:
+            by_rid.setdefault(rid, []).append(path)
     for rid, group in sorted(by_rid.items()):
         if len(group) < 2:
             continue
@@ -1960,9 +1969,10 @@ def main() -> None:
             continue
 
         # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
-        base_id = rid_for(path)
+        rids = [rid for rid, _ in parts_for(path)]
+        base_id = rids[0]
         if not args.scan and not args.force:
-            existing = find_existing_outputs(Path(args.out_dir), base_id)
+            existing = find_existing_outputs(Path(args.out_dir), rids)
             if existing:
                 log_entries.append({"file": Path(path).name, "report_id": base_id,
                                     "status": "skipped_exists",

@@ -43,7 +43,7 @@ from claude_agent_sdk import (
     ToolUseBlock,
     query,
 )
-from registry import rid_for, rid_reason
+from registry import parts_for, rid_for, rid_reason
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -76,7 +76,7 @@ extract.py 상단의 PROFILES 선언형 표 — (이름, 컴파일된 정규식,
 
 ## 대상
 - PDF: {pdf_rel}
-- report_id: {rid} (합본이면 {rid}_01 등 파트 접미사)
+- report_id: {rid} (합본이면 등록부 report_ids.tsv의 파트 행마다 각자 rid — 출력 .md도 그 이름)
 - 임시 작업 디렉터리(저장소 밖): {scratch}
 {diag_txt}
 ## 절차 (순서 엄수)
@@ -128,8 +128,9 @@ def git_porcelain() -> list[str]:
     return [l for l in out.stdout.splitlines() if l.strip()]
 
 
-def guard_violations(before: list[str], after: list[str], rid: str) -> list[str]:
-    """실행 전후 git status 차이 중 허용 범위 밖 변경 — 성공 주장 강등 사유."""
+def guard_violations(before: list[str], after: list[str], allowed_md: set[str]) -> list[str]:
+    """실행 전후 git status 차이 중 허용 범위 밖 변경 — 성공 주장 강등 사유.
+    allowed_md = 이 PDF의 등록부 rid들(합본이면 파트마다)의 reports/{rid}.md."""
     new = [l for l in after if l not in before]
     bad = []
     for line in new:
@@ -138,7 +139,7 @@ def guard_violations(before: list[str], after: list[str], rid: str) -> list[str]
             continue
         if path.startswith("logs/"):
             continue
-        if st.strip() == "??" and re.fullmatch(rf"reports/{re.escape(rid)}(_\d{{2}})?\.md", path):
+        if st.strip() == "??" and path in allowed_md:
             continue
         bad.append(line)
     return bad
@@ -237,6 +238,7 @@ def main() -> None:
         print(f"[promote] 미등록 PDF — {rid_reason(str(pdf))}: {pdf.name} "
               "(python src/register.py 실행 후 재시도)", file=sys.stderr)
         sys.exit(2)
+    allowed_md = {f"reports/{r}.md" for r, _ in parts_for(str(pdf))}
 
     setup_auth(args)
     scratch = Path(tempfile.mkdtemp(prefix="promote_")).as_posix()
@@ -258,7 +260,7 @@ def main() -> None:
         sys.exit(1)
 
     after = git_porcelain()
-    bad = guard_violations(before, after, rid)
+    bad = guard_violations(before, after, allowed_md)
 
     if verdict == "success" and not bad:
         print(f"[promote] 승격 성공 — src/extract.py에 프로파일 추가, reports/{rid}*.md 생성. "

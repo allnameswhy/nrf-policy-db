@@ -56,7 +56,7 @@ import registry
 from annotate import AuthError, RetryableError, UsageLimitReached, fatal_msg, setup_auth
 from build_db import file_digest
 from search import DEFAULT_MODEL, MAX_TURNS, TOP_N, perform_search
-from status import REGISTER_NOTE, PART_SUFFIX_RE, collect_status, is_loaded, read_db_ledger, scan_pdfs
+from status import REGISTER_NOTE, collect_status, is_loaded, read_db_ledger, scan_pdfs
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INDEX_HTML = REPO_ROOT / "web" / "index.html"
@@ -72,10 +72,10 @@ STAGE_LABELS = {"register": "관리번호 등록", "verify": "추출 검증", "a
                 "verify2": "요약 품질 검증", "build_db": "DB 동기화", "build_index": "카탈로그 재생성"}
 
 
-def base_id(rid: str) -> str:
-    """합본 파트 report_id(2025-17_01) → base(2025-17). 단독본은 그대로."""
-    m = PART_SUFFIX_RE.match(rid)
-    return m.group(1) if m else rid
+def file_key(rid: str, rid_file: dict[str, str]) -> str:
+    """현황 행(.md 스템 = rid) → 묶음 키 = 원본 PDF 파일명(등록부 rid_file_map). 등록부에 없는
+    스템(원본 없음·옛 `_NN` 스템)은 스템 그대로. 합본 파트들이 한 파일로 모인다(2026-09-08)."""
+    return rid_file.get(rid, rid)
 
 
 def stage_argv(stage: dict, targets: list[str]) -> list[str]:
@@ -319,20 +319,29 @@ def read_extract_log() -> dict[str, dict]:
     return out
 
 
-def rows_by_base(st) -> dict[str, list]:
+def rows_by_file(st, rid_file: dict[str, str]) -> dict[str, list]:
+    """현황 행을 원본 PDF 파일명으로 묶는다(합본 파트 = 같은 파일). 키는 file_key."""
     grouped: dict[str, list] = {}
     for r in st.rows:
-        grouped.setdefault(base_id(r.report_id), []).append(r)
+        grouped.setdefault(file_key(r.report_id, rid_file), []).append(r)
     return grouped
 
 
-def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
+def registry_view() -> tuple[dict[str, str], list]:
+    """(rid → 파일명, 등록부 행 전체) — 요청당 1회 읽어 derive_cards/derive_plan에 넘긴다."""
+    return registry.rid_file_map(), register.read_rows(registry.REGISTRY_PATH)
+
+
+def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
+                 reg_rows: list | None = None) -> list[dict]:
     """현황 + extract 로그 → 문제 카드 목록. 카드는 표시 + 결정 컨트롤(실행 버튼 없음).
 
     control.type: lane(레인 라디오 — 항상 포함) / lane_opt(포함 체크 + 레인, 기본 포함) /
     detect(승격·플랫 수용·보류 라디오, 기본 보류) / force(--force 재추출 포함 체크, 기본 제외).
     derive_plan이 이 control들과 클라이언트 decisions를 대조해 일괄 해결 계획을 만든다.
     """
+    if rid_file is None or reg_rows is None:
+        rid_file, reg_rows = registry_view()
     cards: list[dict] = []
     name_of = {b: p.name for b, p in pdf_names.items()}
 
@@ -348,53 +357,76 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
             "control": None,
         })
 
-    # 관리번호 등록(2026-09-04): rid는 report_ids.tsv 조회만. 표에 없는 PDF는 register
-    # 단계가 표지에서 읽어 등록한 뒤 곧장 추출(lane 결정 카드), 표에 있으나 공란인 PDF는
-    # 사람이 기입할 때까지 FAIL(err 카드 — 자동 조치 없음), 표에만 있는 파일은 정리 안내.
+    # 관리번호 등록(2026-09-04, v4 2026-09-08): rid는 report_ids.tsv 조회만. 표에 없는 PDF는
+    # register 단계가 표지에서 읽어 등록한 뒤 곧장 추출(lane 결정 카드). 표에 있으나 공란인
+    # 행(번호 충돌·표지 번호 없음·합본 파트)은 **가족 카드** — 같은 번호의 행을 전부 모아
+    # 사람이 한 번에 배정(등록·추출된 행도 편집 가능, 저장 = register.set_family). 기입 전에는
+    # 그 파일이 어느 단계도 지나지 못한다. 표에만 있는 파일은 정리 안내(행 삭제 버튼).
+    manual_pending = set()
     for fname, reason in st.unregistered:
         if reason.startswith("report_ids.tsv에 없음"):
             cards.append({
                 "kind": "register", "severity": "warn", "files": [fname],
                 "title": f"관리번호 등록 대기 — {fname}",
                 "detail": "표지에 인쇄된 관리번호(정책연구 YYYY-NN)를 읽어 report_ids.tsv에"
-                          " 등록한 뒤 곧장 추출합니다(LLM 사용 없음). 표지에서 못 읽으면"
-                          " 스킵되고 [기입 필요] 카드로 돌아옵니다. 레인을 고르세요.",
+                          " 등록한 뒤 곧장 추출합니다(LLM 사용 없음 — 합본이면 파트마다 행)."
+                          " 같은 번호가 이미 있거나 표지에서 못 읽으면 공란으로 남아 [기입 필요]"
+                          " 가족 카드로 돌아옵니다. 레인을 고르세요.",
                 "control": {"type": "lane", "pdf": fname, "default": "structured"},
             })
         else:
-            cards.append({
-                "kind": "register_manual", "severity": "err", "files": [fname],
-                "title": f"관리번호 기입 필요 — {fname}",
-                "detail": reason + " — report_ids.tsv에서 이 파일 행의 report_id 열에"
-                          " 관리번호(예: 2021-09)를 적고 현황을 새로고침하세요. 기입 전에는"
-                          " 추출·검증·DB 어느 단계도 지나지 못합니다.",
-                "control": None,
-            })
+            manual_pending.add(fname)
+    for ctx in register.card_groups(reg_rows, REPO_ROOT / "pdfs", REPO_ROOT / "reports"):
+        blanks = [i["file"] for i in ctx["inputs"]]
+        base = ctx["base"]
+        cards.append({
+            "kind": "register_family", "severity": "err", "files": sorted(set(blanks)),
+            "title": f"관리번호 기입 필요 — {base or blanks[0]}",
+            "detail": ("같은 번호 " + base + "를 쓰는 행을 모두 보여줍니다. " if base else
+                       "표지에서 번호를 읽지 못한 문서입니다. ")
+                      + "빈 행마다 제안 버튼이나 입력으로 번호를 정하고 [가족 저장]을 누르세요 —"
+                        " 등록·추출된 행도 고칠 수 있으며(추출된 문서는 저장 시 .md 개명 후 DB·카탈로그"
+                        " 재동기화 필요), 기입 전에는 그 파일이 추출·검증·DB 어느 단계도 지나지 못합니다.",
+            "control": None,
+            "extra": ctx,
+        })
+        manual_pending -= set(blanks)
+    for fname in sorted(manual_pending):  # 가족 카드로 못 묶인 미등록(형식·pages 문제)
+        reason = dict(st.unregistered).get(fname, "")
+        cards.append({
+            "kind": "register_broken", "severity": "err", "files": [fname],
+            "title": f"등록부 행 정리 필요 — {fname}",
+            "detail": reason + " — 이 파일의 행을 지우고(아래 버튼 또는 register.py --drop) 다시 등록하세요.",
+            "control": None,
+        })
     held = registry.held_names(REPO_ROOT / "pdfs")
     for fname in registry.orphans(REPO_ROOT / "pdfs"):
         cards.append({
             "kind": "register_orphan", "severity": "warn", "files": [fname],
             "title": f"표에만 있는 파일 — {fname}",
             "detail": ("report_ids.tsv에는 있는데 PDF가 pdfs/hold/에 보류 중입니다. 보류 파일은 등록하지"
-                       " 않으므로 표에서 이 행을 지우세요(반출하면 등록 단계가 다시 등록) — 자동 삭제하지 않습니다."
+                       " 않으므로 이 행을 지우세요(반출하면 등록 단계가 다시 등록)."
                        if fname in held else
                        "report_ids.tsv에는 있는데 pdfs/에 PDF가 없습니다(삭제·개명). 다른 문서가"
-                       " 아니면 표에서 이 행을 지우세요 — 자동 삭제하지 않습니다."),
+                       " 아니면 이 행을 지우세요."),
             "control": None,
         })
 
+    new_by_file: dict[str, list[str]] = {}
     for b in st.new_pdfs:
         fname = name_of.get(b)
-        if not fname:
-            continue  # 이론상 불가 — new_pdfs는 pdfs/에서 파생
+        if fname:  # 없으면 이론상 불가 — new_pdfs는 pdfs/에서 파생
+            new_by_file.setdefault(fname, []).append(b)
+    for fname, rids in sorted(new_by_file.items()):
         e = xlog.get(fname)
         if e is None:
             cards.append({
-                "kind": "new_pdf", "severity": "warn", "files": [fname],
+                "kind": "new_pdf", "severity": "warn", "files": [fname] if len(rids) == 1 else rids,
                 "title": f"신규 PDF — {fname}",
                 "detail": "추출 대기 중입니다. 레인을 고르세요 — structured: 기존 정책보고서류"
                           "(장·절 문법 감지, 실패하면 감지 실패 카드로 전환), flat: 타 기관·"
-                          "발표자료·백서류(구조 없이 구간 청킹).",
+                          "발표자료·백서류(구조 없이 구간 청킹)."
+                          + (f" 합본 {len(rids)}파트({', '.join(rids)})를 한 번에 추출합니다." if len(rids) > 1 else ""),
                 "control": {"type": "lane", "pdf": fname, "default": "structured"},
             })
         elif e["status"] in PROMOTABLE:
@@ -429,13 +461,14 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
                 "extra": {"error": e["error"] or ""},
             })
 
-    for b, rs in sorted(rows_by_base(st).items()):
+    known_files = set(name_of.values())
+    for b, rs in sorted(rows_by_file(st, rid_file).items()):
         parse_fail = [r for r in rs if r.extracted == "파싱 실패"]
         stale = [r for r in rs if any(n.startswith(REEXTRACT_NOTE) for n in r.notes)]
         if not parse_fail and not stale:
             continue
         files = [r.report_id for r in rs if r.extracted != "추출 필요"]
-        if not name_of.get(b):
+        if b not in known_files:
             cards.append({
                 "kind": "manual_file", "severity": "err" if parse_fail else "warn",
                 "files": files,
@@ -458,7 +491,7 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
                       + "포함하면 --force 재추출부터 검증·요약 재생성·DB 반영까지 다시"
                         " 돌립니다. 기존 요약·검증 스탬프가 소실되고 요약 재생성에 LLM"
                         " 사용량이 듭니다 — 기본 제외.",
-            "control": {"type": "force", "pdf": name_of[b], "lane": lane, "default": False},
+            "control": {"type": "force", "pdf": b, "lane": lane, "default": False},
             "extra": {"errors": [n for r in parse_fail for n in r.notes[:1]]},
         })
 
@@ -522,16 +555,20 @@ def derive_cards(st, pdf_names: dict, xlog: dict) -> list[dict]:
     return cards
 
 
-def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict) -> tuple[list[dict], list[str]]:
+def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict, rid_file: dict | None = None,
+                reg_rows: list | None = None) -> tuple[list[dict], list[str]]:
     """카드 결정값(decisions) → 하류 누적 실행 계획. 반환 (stages, errors).
 
     단계별 대상 집합이 하류로 누적된다 — 이번에 추출·재추출되는 파일은 이후 전 단계가
     필요하므로: extract{결정 파일} → verify{+unverified·register} → annotate{+요약 잔여} →
     verify2{+품질 대기} → build_db → build_index. verify·annotate·verify2의 실제 대상은
-    실행 직전 stage_targets가 상태 기준으로 다시 거른다(중도 탈락 처리).
+    실행 직전 stage_targets가 상태 기준으로 다시 거른다(중도 탈락 처리). 대상 집합의 단위는
+    **원본 PDF 파일명**(file_key — 합본 파트가 한 단위, 2026-09-08; 등록부에 없는 스템은 스템).
     decisions = {"pdfs": {파일명: structured|flat|promote|skip}, "force": [파일명…]}.
     """
-    cards = derive_cards(st, pdf_names, xlog)
+    if rid_file is None or reg_rows is None:
+        rid_file, reg_rows = registry_view()
+    cards = derive_cards(st, pdf_names, xlog, rid_file, reg_rows)
     ctls = {c["control"]["pdf"]: c["control"] for c in cards if c.get("control")}
     reg_files = {c["control"]["pdf"] for c in cards if c["kind"] == "register"}
     pdf_dec = decisions.get("pdfs") or {}
@@ -584,14 +621,12 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict) -> tuple[list[
         stages.append({"step": "extract", "label": label, "lane": lane, "force": force,
                        "pdfs": sorted(fs), "files": sorted(fs)})
 
-    file_base = {p.name: b for b, p in pdf_names.items()}
-    # 미등록 파일(register 대상)은 아직 base가 없다 — run_job_queue가 등록 직후 하류 단계에 보탠다
-    entered = {file_base[f] for f in promotes if f in file_base} | \
-              {file_base[f] for fs in groups.values() for f in fs if f in file_base}
-    v1 = entered | {base_id(r.report_id) for r in st.rows
+    # 단위 = PDF 파일명. 미등록 파일(register 대상)은 run_job_queue가 등록 직후 하류에 보탠다
+    entered = set(promotes) | {f for fs in groups.values() for f in fs}
+    v1 = entered | {file_key(r.report_id, rid_file) for r in st.rows
                     if r.extracted == "완료" and needs_verify(r)}
-    an = v1 | {base_id(r.report_id) for r in st.rows if r.remaining > 0}
-    v2 = an | {base_id(r.report_id) for r in st.rows
+    an = v1 | {file_key(r.report_id, rid_file) for r in st.rows if r.remaining > 0}
+    v2 = an | {file_key(r.report_id, rid_file) for r in st.rows
                if r.verify == "extract" and not r.remaining}
     for step, bases in (("verify", v1), ("annotate", an), ("verify2", v2)):
         if bases or regs:  # register가 있으면 등록 직후 보탤 자리(빈 단계는 실행 시 "대상 없음" 생략)
@@ -605,14 +640,15 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict) -> tuple[list[
     return stages, []
 
 
-def stage_targets(step: str, st, bases: list[str]) -> tuple[list[str], list[str]]:
-    """단계 실행 직전, 계획된 base들 중 생존분의 CLI 대상과 탈락분을 가른다.
+def stage_targets(step: str, st, bases: list[str], rid_file: dict[str, str]) -> tuple[list[str], list[str]]:
+    """단계 실행 직전, 계획된 파일 키들 중 생존분의 CLI 대상과 탈락분을 가른다.
 
     판정은 로그 포맷이 아니라 현황(상태·스탬프) 기준 — 이전 단계에서 탈락한 파일은
     여기서 걸러져 하류로 내려가지 않는다(예: 추출 실패 → .md 없음, 검증 실패 → 스탬프
     없음, 요약 미완 → remaining>0). 대상 없음(할 일 없음)은 탈락이 아니다.
+    CLI에는 .md 스템(rid)을 정확히 전달한다 — 합본 파트도 각자 스템.
     """
-    grouped = rows_by_base(st)
+    grouped = rows_by_file(st, rid_file)
     targets: list[str] = []
     dropped: list[str] = []
     for b in bases:
@@ -621,7 +657,7 @@ def stage_targets(step: str, st, bases: list[str]) -> tuple[list[str], list[str]
             dropped.append(b)
             continue
         if step == "verify":
-            targets.append(b)  # verify가 스스로 파트 확장·스탬프 분기
+            targets += [r.report_id for r in rs]  # verify가 스탬프 분기
             continue
         if any(needs_verify(r) for r in rs):  # 추출 검증 미통과 — LLM 낭비 방지
             dropped.append(b)
@@ -641,7 +677,8 @@ def api_admin_status(request):  # sync def → starlette가 스레드풀에서 �
     st = collect_status(status_args())
     ok, msg = check_freshness()
     request.app.state.freshness = (ok, msg)  # 현황판 새로고침 = 캐시 갱신 시점
-    cards = derive_cards(st, scan_pdfs(Path("pdfs"))[0], read_extract_log())
+    rid_file, reg_rows = registry_view()
+    cards = derive_cards(st, scan_pdfs(Path("pdfs"))[0], read_extract_log(), rid_file, reg_rows)
     return JSONResponse({
         "cards": cards,
         "rows": [
@@ -705,7 +742,7 @@ async def run_job_queue(state, job: dict) -> None:
             targets: list[str] = []
             if stg["step"] in ("verify", "annotate", "verify2"):
                 st = await asyncio.to_thread(collect_status, status_args())
-                targets, dropped = stage_targets(stg["step"], st, stg["bases"])
+                targets, dropped = stage_targets(stg["step"], st, stg["bases"], registry.rid_file_map())
                 stg["dropped"] = dropped
                 if dropped:
                     job["lines"].append(f"[serve] 이전 단계 미통과로 제외 {len(dropped)}건: "
@@ -730,13 +767,12 @@ async def run_job_queue(state, job: dict) -> None:
             code = await _stream_subprocess(state, job, argv)
             stg["code"] = code
             if stg["step"] == "register":
-                # 방금 등록된 rid를 하류 단계(verify·annotate·verify2)의 대상에 보탠다 —
-                # 계획 시점엔 base가 없었던 파일. 못 채운 파일은 rid None → 자연 탈락.
-                new_bases = sorted({r for r in (registry.rid_for(REPO_ROOT / "pdfs" / f)
-                                                for f in targets) if r})
+                # 방금 등록된 파일을 하류 단계(verify·annotate·verify2)의 대상에 보탠다(단위 =
+                # 파일명). 파트 하나라도 못 채운 파일은 rid None → 자연 탈락(가족 카드로).
+                new_keys = sorted(f for f in targets if registry.rid_for(REPO_ROOT / "pdfs" / f))
                 for later in job["stages"][i + 1:]:
-                    if "bases" in later and new_bases:
-                        later["bases"] = sorted(set(later["bases"]) | set(new_bases))
+                    if "bases" in later and new_keys:
+                        later["bases"] = sorted(set(later["bases"]) | set(new_keys))
                         later["files"] = later["bases"]
             # exit 2의 의미가 CLI마다 다르다: verify·promote는 사용 오류·인증·한도(공통
             # 장애)지만 extract·annotate는 "일부 파일 실패"를 포함 — 후자는 세우지 않고
@@ -771,7 +807,8 @@ async def api_admin_resolve(request):
 
     def compute():
         st = collect_status(status_args())
-        return derive_plan(st, scan_pdfs(Path("pdfs"))[0], read_extract_log(), decisions)
+        rid_file, reg_rows = registry_view()
+        return derive_plan(st, scan_pdfs(Path("pdfs"))[0], read_extract_log(), decisions, rid_file, reg_rows)
 
     stages, errors = await asyncio.to_thread(compute)
     if errors:
@@ -847,38 +884,82 @@ async def api_admin_job_ack(request):
     return JSONResponse({"ok": True})
 
 
-async def api_admin_register_set(request):
-    """/admin '관리번호 기입 필요' 카드의 입력칸 → report_ids.tsv 기입(2026-09-04).
+async def api_admin_register_family_set(request):
+    """/admin 가족 카드 [가족 저장] → report_ids.tsv 기입(v4, 2026-09-08). 본문 {changes: [{file, pages, rid}]}.
 
     표를 손으로 고치면 탭이 밀리는 실측이 있어 유일한 기입 경로를 이 API와 CLI --set으로
-    모은다. 검증·쓰기는 register.set_rid(형식·중복 검사, source=manual) 공유. job 실행 중에는
+    모은다. 검증·쓰기는 register.set_family 공유 — 여러 행을 원자적으로 검증하고, 추출된 문서의
+    rid가 바뀌면 reports/{old}.md 개명(헤딩 ID·판정 캐시 치환)까지 한다. job 실행 중에는
     register 단계가 같은 파일을 쓸 수 있으므로 409.
     """
     try:
         payload = await request.json()
     except Exception:
         return JSONResponse({"error": "JSON 본문이 필요합니다."}, status_code=400)
-    file = str(payload.get("file") or "").strip()
-    rid = str(payload.get("rid") or "").strip()
-    if not file:
-        return JSONResponse({"error": "file이 필요합니다."}, status_code=400)
+    raw = payload.get("changes")
+    if not isinstance(raw, list) or not raw:
+        return JSONResponse({"error": "changes(행 목록)가 필요합니다."}, status_code=400)
+    changes = []
+    for c in raw:
+        if not isinstance(c, dict) or not str(c.get("file") or "").strip():
+            return JSONResponse({"error": "각 항목에 file이 필요합니다."}, status_code=400)
+        changes.append((str(c["file"]).strip(), str(c.get("pages") or "").strip(),
+                        str(c.get("rid") or "").strip()))
     state = request.app.state
     if state.job and state.job["running"]:
         return JSONResponse({"error": "작업 진행 중에는 기입할 수 없습니다 — 완료 후 다시 시도하세요."},
                             status_code=409)
+    if state.active_searches > 0:
+        return JSONResponse({"error": "질의가 진행 중입니다 — 완료 후 기입하세요."}, status_code=409)
 
     def work():
-        table = {r.file: r for r in register.read_rows(registry.REGISTRY_PATH)}
-        err, warn, final = register.set_rid(table, file, rid)
+        rows = register.read_rows(registry.REGISTRY_PATH)
+        err, warns, renamed = register.set_family(rows, changes, REPO_ROOT / "reports", REPO_ROOT / "logs")
         if err:
-            return err, warn, final
-        register.write_rows(list(table.values()), registry.REGISTRY_PATH)
-        return None, warn, final
+            return err, warns, renamed
+        register.write_rows(rows, registry.REGISTRY_PATH)
+        return None, warns, renamed
 
-    err, warn, final = await asyncio.to_thread(work)
+    err, warns, renamed = await asyncio.to_thread(work)
     if err:
         return JSONResponse({"error": err}, status_code=400)
-    return JSONResponse({"ok": True, "file": file, "rid": final, "warning": warn})
+    if renamed:  # .md가 바뀌었다 — DB 동기화 전까지 검색 차단(freshness 캐시 갱신)
+        try:
+            state.freshness = await asyncio.to_thread(check_freshness)
+        except Exception:
+            pass
+    return JSONResponse({"ok": True, "applied": [{"file": f, "pages": p, "rid": r} for f, p, r in changes],
+                         "renamed": renamed, "warning": " · ".join(warns) if warns else None})
+
+
+async def api_admin_register_drop(request):
+    """/admin '표에만 있는 파일'·'행 정리 필요' 카드의 [행 삭제] → 그 파일의 등록부 행 전부 삭제."""
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse({"error": "JSON 본문이 필요합니다."}, status_code=400)
+    file = str(payload.get("file") or "").strip()
+    if not file:
+        return JSONResponse({"error": "file이 필요합니다."}, status_code=400)
+    state = request.app.state
+    if state.job and state.job["running"]:
+        return JSONResponse({"error": "작업 진행 중에는 표를 고칠 수 없습니다 — 완료 후 다시 시도하세요."},
+                            status_code=409)
+
+    def work():
+        rows = register.read_rows(registry.REGISTRY_PATH)
+        exact = [r for r in rows if r.file == registry.norm_name(file)]
+        if not exact:
+            return "표에 없는 파일", []
+        for r in exact:
+            rows.remove(r)
+        register.write_rows(rows, registry.REGISTRY_PATH)
+        return None, [r.report_id for r in exact]
+
+    err, removed = await asyncio.to_thread(work)
+    if err:
+        return JSONResponse({"error": err}, status_code=400)
+    return JSONResponse({"ok": True, "file": file, "removed": removed})
 
 
 async def api_admin_cancel(request):
@@ -1028,7 +1109,8 @@ def main() -> None:
             Route("/api/admin/resolve", api_admin_resolve, methods=["POST"]),
             Route("/api/admin/job", api_admin_job),
             Route("/api/admin/cancel", api_admin_cancel, methods=["POST"]),
-            Route("/api/admin/register_set", api_admin_register_set, methods=["POST"]),
+            Route("/api/admin/register_family_set", api_admin_register_family_set, methods=["POST"]),
+            Route("/api/admin/register_drop", api_admin_register_drop, methods=["POST"]),
             Route("/api/admin/job/ack", api_admin_job_ack, methods=["POST"]),
             Route("/api/admin/reports", api_admin_reports),
             Route("/api/admin/toc", api_admin_toc),

@@ -97,15 +97,15 @@ from extract import (
     mark_footnotes,
     page_table_fold,
     profile_value,
+    detect_parts,
     scan_document,
-    split_bundle,
     table_covers,
 )
-from registry import STEM_RE, rid_for, rid_reason
+from registry import STEM_RE, parts_for, rid_for, rid_reason
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-NRF_STEM_RE = STEM_RE  # 표준형 stem YYYY-NN[-vN][-b][_NN](registry) — year 대조는 이 형식에서만
+NRF_STEM_RE = STEM_RE  # 표준형 stem YYYY-NN[-b][-vN](registry) — year 대조는 이 형식에서만
 FLAT_HEADING_RE = re.compile(r"^구간 \d+ \(p\.\d+(?:-\d+)?\)$")  # extract 플랫 폴백의 합성 헤딩 제목
 FM_KEY_RE = re.compile(r"^([a-z_]+):(.*)$")
 RAW_BULLET_RE = re.compile(r"^\s*[□○ㅇ❍◉▸▪‣∙•Ÿ](\s|$)")
@@ -895,16 +895,24 @@ def main() -> None:
             scans = scan_document(doc)
         finally:
             doc.close()
-        parts = split_bundle(scans)
-        expected = {base: parts[0]} if len(parts) == 1 else \
-                   {f"{base}_{i + 1:02d}": pt for i, pt in enumerate(parts)}
+        # 파트 범위는 등록부(register의 경량 스캔)가 정한다 — 여기서는 전체 스캔으로 같은 규칙
+        # (detect_parts)을 재현해 등록부와 대조하는 것이 안전망(2026-09-08).
+        reg = parts_for(pdf_path)
+        n = len(scans)
+        expected = {rid: (rng or (0, n - 1)) for rid, rng in reg}
+        detected = detect_parts(scans)
+        if [rng for rng in expected.values()] != detected:
+            fmt = lambda rs: ", ".join(f"{a + 1}-{b + 1}" for a, b in rs)  # noqa: E731
+            for _stem, _mp, rep in members:
+                rep.fails.append(f"등록부 파트 범위 ≠ PDF 재스캔 분할 — 재등록 필요 "
+                                 f"(등록부 {fmt(expected.values())}, 재스캔 {fmt(detected)})")
+            continue
         for stem, mp, rep in sorted(members):
             if stem not in expected:
                 rep.fails.append(
-                    f"합본 분할 불일치 — PDF는 {len(parts)}파트({sorted(expected)}), "
-                    f".md는 {stem} (재추출 필요)")
+                    f"등록부 파트 목록({sorted(expected)})에 없는 .md {stem} — 재등록 또는 .md 삭제")
                 continue
-            states[stem] = (rep, mp, check_full(rep, mp, scans, expected[stem], len(parts), stem, args))
+            states[stem] = (rep, mp, check_full(rep, mp, scans, expected[stem], len(expected), stem, args))
 
     # ---- D 품질 판정 대상 선정 ----
     cands: list[str] = []

@@ -71,6 +71,30 @@
     font: inherit; font-size: 13.5px; padding: 5px 10px; min-width: 300px;
     border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text);
   }
+  .box .rid-input.small { min-width: 180px; font-size: 12.5px; padding: 3px 8px; }
+  .box .fam-scroll { overflow-x: auto; margin-top: 8px; }
+  .box .fam-table {
+    border-collapse: collapse; font-size: 12.5px; min-width: 960px; color: var(--text); background: var(--panel);
+  }
+  .box .fam-table th, .box .fam-table td {
+    border: 1px solid var(--border); padding: 4px 6px; vertical-align: top; text-align: left; line-height: 1.45;
+  }
+  .box .fam-table th { background: var(--bg); font-weight: 600; white-space: nowrap; }
+  .box .fam-table td.mono {
+    font-family: Consolas, "D2Coding", monospace; font-size: 11.5px; word-break: break-all; max-width: 260px;
+  }
+  .box .fam-table td.note-cell { max-width: 320px; font-size: 11.5px; opacity: .9; }
+  .box .fam-table tr.locked td { opacity: .85; }
+  .box .fam-table .badge {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 8px;
+    background: var(--info-bg); border: 1px solid var(--info-border); color: var(--info-text); white-space: nowrap;
+  }
+  .box .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .box .chip {
+    background: var(--accent-weak); color: var(--accent); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1px 8px; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  }
+  .box .fam-table .hint { margin-top: 3px; font-size: 11.5px; }
   .box .mono-block {
     font-family: Consolas, "D2Coding", monospace; font-size: 12px; line-height: 1.5;
     white-space: pre-wrap; word-break: break-all; color: var(--text);
@@ -190,6 +214,13 @@ async function refreshStatus() {
       txt(` — ${s.freshness.message} 아래 조치를 해결하면 차단이 풀립니다.`),
     ]));
   }
+  if (pendingFlash) {  // 카드 재렌더에 안 사라지는 결과 알림(가족 저장·행 삭제) — 8초 뒤 자동 소멸
+    const f = pendingFlash;
+    pendingFlash = null;
+    const b = box(f.cls, [txt(f.text)]);
+    bn.appendChild(b);
+    setTimeout(() => { if (b.parentNode) b.remove(); }, 8000);
+  }
   renderCards(s.cards);
   renderSummary(s);
   updatePreview();
@@ -235,48 +266,147 @@ function checkbox(label, checked) {
   return l;
 }
 
-// 관리번호 기입 필요 카드의 입력칸 — 표(report_ids.tsv)를 손으로 고치지 않게 서버가 대신 기록.
-// 저장 성공 시 현황을 다시 읽어 카드가 '추출 대기'로 바뀐다(값 검증은 서버 register.set_rid).
-function registerInput(file) {
-  const w = el("div", "actions");
-  const inp = document.createElement("input");
-  inp.type = "text";
-  inp.placeholder = "예: 2022-04 · 같은 번호의 다른 문서면 2022-04-b · 번호 모르면 2021-00(자동 -vN) · 연도도 모르면 0000-00";
-  inp.className = "rid-input";
-  inp.setAttribute("aria-label", "관리번호");
-  const save = document.createElement("button");
-  save.className = "mini";
-  save.textContent = "저장";
+let pendingFlash = null;
+function flash(text, cls) { pendingFlash = { text, cls: cls || "ok" }; }
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  return [res, await res.json()];
+}
+
+// 가족 카드(관리번호 기입 필요) — 같은 번호(YYYY-NN)의 등록부 행을 한 표로. 모든 행에 rid 입력칸
+// (현재 값 미리 채움 — 등록·추출된 행도 고칠 수 있다), 공란 행에는 표지·가족에서 나온 제안 버튼과
+// 글 힌트. [가족 저장] = 바뀐 행만 POST /api/admin/register_family_set — 검증·기록·추출된 문서의
+// .md 개명은 서버 register.set_family. 표 파일(report_ids.tsv)은 사람이 직접 만지지 않는다.
+const RID_PLACEHOLDER = "예: 2019-31 · 다른 보고서 2019-31-b · 별권·부록 2019-31-v1 · 번호 모르면 2021-00";
+function familyForm(ex) {
+  const w = el("div", "fam");
+  const table = document.createElement("table");
+  table.className = "fam-table";
+  const hr = table.createTHead().insertRow();
+  for (const h of ["파일", "쪽 범위", "rid (입력)", "표지 번호", "권 신호", "표지 단서", "표지 제목", "등록일", "추출", "비고"]) {
+    hr.appendChild(el("th", "", h));
+  }
+  const tb = table.createTBody();
+  const meta = new Map((ex.inputs || []).map((i) => [i.file + " " + i.pages, i]));
+  const inputs = [];
+  for (const r of ex.rows || []) {
+    const tr = tb.insertRow();
+    if (r.extracted) tr.className = "locked";
+    const cells = [r.file, r.pages || "전체", null, r.cover_no || "", (r.vols || []).map((v) => `제${v}권`).join(", "),
+                   (r.cues || []).join("·"), r.cover_title || "", r.registered || "", null, r.note || ""];
+    cells.forEach((c, i) => {
+      const td = tr.insertCell();
+      if (i === 2) {
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.className = "rid-input small";
+        inp.value = r.rid || "";
+        inp.placeholder = RID_PLACEHOLDER;
+        inp.setAttribute("aria-label", "관리번호 " + r.file);
+        td.appendChild(inp);
+        inputs.push({ file: r.file, pages: r.pages || "", orig: r.rid || "", extracted: !!r.extracted, inp });
+        const m = meta.get(r.file + " " + (r.pages || ""));
+        if (m) {
+          if (m.suggestions && m.suggestions.length) {
+            const chips = el("div", "chips");
+            for (const s of m.suggestions) {
+              const b = el("button", "chip", `${s.rid} · ${s.label}`);
+              b.type = "button";
+              b.title = s.why || "";
+              b.addEventListener("click", () => { inp.value = s.rid; inp.focus(); });
+              chips.appendChild(b);
+            }
+            td.appendChild(chips);
+          }
+          if (m.hints && m.hints.length) {
+            const h = el("div", "hint");
+            for (const x of m.hints) h.appendChild(el("div", "", "힌트: " + x));
+            td.appendChild(h);
+          }
+        } else if (r.extracted) {
+          td.appendChild(el("div", "hint", `변경 시 reports/${r.rid}.md 개명(요약·스탬프 유지)`));
+        }
+      } else if (i === 8) {
+        if (r.extracted) td.appendChild(el("span", "badge", "추출됨"));
+      } else {
+        td.textContent = c;
+        if (i === 0) td.className = "mono";
+        if (i === 9) td.className = "note-cell";
+      }
+    });
+  }
+  const scroll = el("div", "fam-scroll");
+  scroll.appendChild(table);
+  w.appendChild(scroll);
+  const actions = el("div", "actions");
+  const save = el("button", "mini", "가족 저장");
   const msg = el("span", "note");
-  async function submit() {
-    const rid = inp.value.trim();
-    if (!rid) { msg.textContent = "번호를 입력하세요."; return; }
-    save.disabled = true; inp.disabled = true;
+  save.addEventListener("click", async () => {
+    const changed = inputs.filter((i) => i.inp.value.trim() !== i.orig);
+    if (!changed.length) { msg.textContent = "바뀐 행이 없습니다."; return; }
+    const renames = changed.filter((i) => i.extracted);
+    if (renames.length && !confirm(
+      `추출된 문서 ${renames.length}건의 rid가 바뀝니다:\n` +
+      renames.map((i) => `reports/${i.orig}.md → ${i.inp.value.trim() || "(공란)"}.md`).join("\n") +
+      "\n\n.md 파일명과 헤딩 ID가 개명되고(요약·검증 스탬프 유지), DB·카탈로그는 일괄 해결로 다시 동기화해야 합니다. 계속할까요?")) return;
+    save.disabled = true;
     msg.textContent = "저장 중…";
     let res, j;
     try {
-      res = await fetch("/api/admin/register_set", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file, rid }),
+      [res, j] = await postJson("/api/admin/register_family_set", {
+        changes: changed.map((i) => ({ file: i.file, pages: i.pages, rid: i.inp.value.trim() })),
       });
-      j = await res.json();
     } catch (e) {
       msg.textContent = "서버 연결 실패: " + e.message;
-      save.disabled = false; inp.disabled = false;
+      save.disabled = false;
       return;
     }
     if (!res.ok) {
       msg.textContent = "✗ " + (j.error || `HTTP ${res.status}`);
-      save.disabled = false; inp.disabled = false;
+      save.disabled = false;
       return;
     }
-    msg.textContent = "✓ 기록됨" + (j.warning ? " — " + j.warning : "");
+    let text = "✓ 기록됨 — " + j.applied.map((a) => `${a.rid || "(공란)"}: ${a.file}${a.pages ? " #" + a.pages : ""}`).join(", ");
+    if (j.renamed && j.renamed.length) {
+      text += " · .md 개명 " + j.renamed.map(([o, n]) => `${o} → ${n}`).join(", ") + " (DB·카탈로그 재동기화는 일괄 해결로)";
+    }
+    if (j.warning) text += " — " + j.warning;
+    flash(text, "ok");
     await refreshStatus();
-  }
-  save.addEventListener("click", submit);
-  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
-  w.append(inp, save, msg);
+  });
+  actions.append(save, msg);
+  w.appendChild(actions);
+  return w;
+}
+
+// 표에만 있는 파일·행 정리 필요 카드의 [행 삭제] — 그 파일의 등록부 행 전부 삭제(서버 register_drop).
+function dropButton(file) {
+  const w = el("div", "actions");
+  const b = el("button", "mini danger", "행 삭제");
+  const msg = el("span", "note");
+  b.addEventListener("click", async () => {
+    if (!confirm(`report_ids.tsv에서 '${file}'의 행을 지웁니다. 계속할까요?`)) return;
+    b.disabled = true;
+    let res, j;
+    try {
+      [res, j] = await postJson("/api/admin/register_drop", { file });
+    } catch (e) {
+      msg.textContent = "서버 연결 실패: " + e.message;
+      b.disabled = false;
+      return;
+    }
+    if (!res.ok) {
+      msg.textContent = "✗ " + (j.error || `HTTP ${res.status}`);
+      b.disabled = false;
+      return;
+    }
+    flash(`✓ 행 삭제 — ${file}` + ((j.removed || []).filter(Boolean).length ? ` (${j.removed.filter(Boolean).join(", ")})` : ""), "ok");
+    await refreshStatus();
+  });
+  w.append(b, msg);
   return w;
 }
 
@@ -310,7 +440,8 @@ function renderCards(cards) {
         b.appendChild(el("div", "hint", "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장)."));
       }
     }
-    if (c.kind === "register_manual") b.appendChild(registerInput(c.files[0]));
+    if (c.kind === "register_family") b.appendChild(familyForm(ex));
+    if (c.kind === "register_orphan" || c.kind === "register_broken") b.appendChild(dropButton(c.files[0]));
     if (ex.error) b.appendChild(el("div", "mono-block", ex.error));
     if (ex.errors && ex.errors.length) b.appendChild(el("div", "mono-block", ex.errors.join("\n")));
     if (ex.items && ex.items.length) {
@@ -432,7 +563,7 @@ function setBusy(b) {
   busy = b;
   $("resolve").disabled = b;
   $("refresh").disabled = b;
-  for (const i of document.querySelectorAll("#cards input")) i.disabled = b;
+  for (const i of document.querySelectorAll("#cards input, #cards button")) i.disabled = b;
   $("cancel").classList.toggle("hidden", !b);
   $("pipe-status").textContent = b ? "실행 중…" : "대기 중";
 }
