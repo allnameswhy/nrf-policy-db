@@ -29,6 +29,7 @@ python src/extract.py pdfs/*.pdf     # 1. PDF → 계층 .md (본문만, LLM 미
 python src/verify.py reports/*.md    #    검증 → 통과 시 verified_extract 스탬프 (verified_register는 extract가 기록)
 python src/annotate.py reports/*.md  # 2. 단위 요약 삽입 (LLM)
 python src/verify.py reports/*.md    #    요약 품질 판정 → verified_annotate 스탬프 (PDF 불필요)
+#                                    #    FAIL이면 annotate → verify 반복(annotate가 판정 캐시의 FAIL 유닛만 재생성 — /admin 일괄 해결은 자동, 2026-09-09)
 python src/build_db.py               # 3. reports.db (FTS5 색인) 증분 동기화
 python src/build_index.py            # 4. master_index.md 생성
 ```

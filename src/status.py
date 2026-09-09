@@ -4,8 +4,13 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
 파생 계산한다(별도 상태 파일 없음). 보고서별 추출/요약/보고서요약/검증 현황과
 잔여 LLM 호출 수, 파생물 신선도를 표로 출력한다.
 
-- 유닛 계산은 annotate.py와 동일한 mdio.load_report() 재사용 — 잔여 호출 수가
-  annotate --scan의 expected_calls와 항상 일치한다.
+- 유닛 계산은 annotate.py와 동일한 mdio.load_report() 재사용, 잔여 호출은 judgecache.plan
+  단일 산식 — annotate --scan의 expected_calls와 항상 일치한다. 판정 캐시(logs/judge_cache.json,
+  verify 파생물 — 상태 저장이 아니라 읽기만)에서 "현재 요약 텍스트에 대한 FAIL"인 유닛은
+  재생성 대기로 잔여에 포함("품질 FAIL 재생성 대기" 비고 — annotate가 자동 재생성), 승급
+  재생성 후에도 FAIL인 유닛은 수동 검토 항목(Row.manual: hid·줄·사유 — /admin 카드의
+  [사람이 확인함] 대상). 사람 확인 요약(frontmatter summary_reviewed, .md 원본의 사람 결정)은
+  둘 다에서 제외되며 비고 없음(Row.reviewed 수만).
 - 검증 컬럼은 frontmatter 스탬프 3단(verified_register → verified_extract →
   verified_annotate)의 최상위 스탬프: 없음=unverified, register(extract가 .md 생성 시
   기록), extract(verify 추출 검증 통과), annotate(verify 품질 판정까지 통과).
@@ -14,8 +19,8 @@ pdfs/ · reports/ · reports.db · master_index.md의 존재·내용·mtime에�
   3단 도입(2026-09-07) 전 파일은 register가 없다 — "등록 스탬프 없음" 비고(verify가 채움).
 - 적재 완료(is_loaded, /browse 표시 기준) = DB 컬럼 "동기화" 하나 — build_db가 세 스탬프를
   모두 확인하고 실은 바이트 그대로라는 뜻이라 다른 컬럼을 다시 보지 않는다.
-- 커버리지 완비(잔여 0)인데 verified_annotate가 없는 파일은 "verify 승격 대기"
-  비고로 할 일에 반영된다(verify 실행 시 D 품질 판정 후 스탬프 기록).
+- 커버리지 완비(잔여 0)이고 수동 검토가 없는데 verified_annotate가 없는 파일은
+  "verify 승격 대기" 비고로 할 일에 반영된다(verify 실행 시 D 품질 판정 후 스탬프 기록).
 - DB 컬럼은 reports.db 내 files 원장(build_db 증분 동기화 기록)과 .md sha256을
   대조해 파일별 동기화/미반영을 표시한다 — mtime 추정이 아니라 내용 기준.
 - PDF↔.md 신선도 비교는 mtime 기반 best-effort — Windows 복사는 LastWriteTime을
@@ -34,6 +39,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import judgecache
 import mdio
 import registry
 
@@ -52,10 +58,16 @@ class Row:
     verify: str = "unverified"  # unverified | register | extract | annotate (최상위 스탬프)
     db: str = "-"  # 동기화 | 미반영 | -
     notes: list[str] = field(default_factory=list)
+    regen: int = 0  # 품질 FAIL 재생성 대기 hid 수(remaining에 포함 — annotate가 자동 재생성)
+    manual: list[dict] = field(default_factory=list)  # 수동 검토 항목 {hid, line, issues}
+    reviewed: int = 0  # 사람 확인 요약 수(요약 있음)
 
 
 # 3단 도입(2026-09-07) 전 생성 파일 — verify가 PDF 재스캔 없이 verified_register만 채운다
 REGISTER_NOTE = "등록 스탬프 없음 — verify 실행 시 verified_register 기록(PDF 재스캔 없음)"
+# 판정 캐시 핸드오프(2026-09-09): 재생성 대기는 자동 단계(annotate)가 처리, 수동 검토는 사람 몫
+REGEN_NOTE = "품질 FAIL 재생성 대기"
+MANUAL_NOTE = "품질 FAIL 수동 검토 필요"
 
 
 def is_loaded(row: Row) -> bool:
@@ -87,7 +99,9 @@ def scan_pdfs(pdf_dir: Path) -> tuple[dict[str, Path], dict[str, list[str]], lis
     return {rid: ps[0] for rid, ps in groups.items()}, dups, unreg
 
 
-def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
+def build_md_row(path: Path, base_id: str, pdf: Path | None, args, bucket: dict | None = None) -> Row:
+    """bucket = 판정 캐시의 이 파일 버킷(없으면 {}) — 재생성 대기·수동 검토 판정용."""
+    bucket = bucket or {}
     row = Row(report_id=path.stem)
     try:
         st = mdio.load_report(path, min_chars=args.min_chars, max_chars=args.max_chars)
@@ -101,13 +115,24 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
 
     fm, units, existing = st.fm, st.units, st.existing
     done = sum(1 for u in units if u.hid in existing)
-    new = len(units) - done
-    # 잔여 호출 산식 = annotate.run_scan()의 expected_calls와 동일
-    # (신규 유닛이 있으면 보고서 요약 재생성이 따라오므로 +1 — 입력 일관성 규칙)
-    row.remaining = new + (
-        1 if units and (mdio.REPORT_KEY not in existing or new) else 0
-    )
+    # 잔여 호출 산식 = judgecache.plan (annotate --scan · verify와 단일 소스) —
+    # 요약 없음 + 판정 FAIL 재생성 대기(+ 유닛이 바뀌면 보고서 요약 재생성 1)
+    plan = judgecache.plan_for(st, bucket)
+    row.remaining = plan.calls
+    row.regen = len(plan.regen)
+    row.reviewed = plan.reviewed_kept
     row.summary = f"{done}/{len(units)}"
+    if row.regen:
+        row.notes.append(f"{REGEN_NOTE} {row.regen}건 — annotate가 자동 재생성")
+    manual = judgecache.manual_set(bucket, existing, units, fm.summary_reviewed)
+    if manual:
+        lmap = mdio.summary_line_map(st.original)
+        for hid in sorted(manual):
+            ent = bucket.get(hid) or {}
+            row.manual.append({"hid": hid, "line": lmap.get(hid, 0),
+                               "issues": ent.get("issues") or [],
+                               "fail_streak": ent.get("fail_streak", 0)})
+        row.notes.append(f"{MANUAL_NOTE} — {' '.join(sorted(manual))} (승급 재생성 후에도 FAIL)")
 
     if mdio.REPORT_KEY in existing:
         row.report_summary = "완료"
@@ -122,7 +147,7 @@ def build_md_row(path: Path, base_id: str, pdf: Path | None, args) -> Row:
             row.notes.append("검증 후 변경 — 재검증 필요")
     elif fm.verified_extract:
         row.verify = "extract"
-        if units and not row.remaining:
+        if units and not row.remaining and not row.manual:
             row.notes.append("verify 승격 대기 — D 품질 판정 후 verified_annotate 기록")
     elif fm.verified_register:
         row.verify = "register"
@@ -217,12 +242,17 @@ def render(rows: list[Row], warnings: list[str], artifact_lines: list[str],
     verify_counts = {k: sum(1 for r in rows if r.verify == k)
                      for k in ("unverified", "register", "extract", "annotate")}
     note_count = sum(len(r.notes) for r in rows) + len(warnings)
+    regen_total = sum(r.regen for r in rows)
+    manual_total = sum(len(r.manual) for r in rows)
+    reviewed_total = sum(r.reviewed for r in rows)
+    extra = "".join(f" · {label} {n}" for label, n in
+                    (("FAIL 재생성", regen_total), ("수동 검토", manual_total), ("사람 확인", reviewed_total)) if n)
     print()
     print("== 합계 ==")
     print(
         f"보고서 {len(rows)} (추출 필요 {extract_needed}, 등록 필요 {register_needed}) · "
         f"유닛 {done_total}/{units_total} · "
-        f"잔여 호출 {remaining_total} · 검증: unverified {verify_counts['unverified']} / "
+        f"잔여 호출 {remaining_total}{extra} · 검증: unverified {verify_counts['unverified']} / "
         f"register {verify_counts['register']} / extract {verify_counts['extract']} / "
         f"annotate {verify_counts['annotate']} · "
         f"경고 {note_count}"
@@ -247,6 +277,7 @@ def collect_status(args) -> StatusData:
     pdfs, dup_ids, unreg = scan_pdfs(Path(args.pdf_dir))
     db_path = Path(args.db)
     ledger = read_db_ledger(db_path)
+    cache = judgecache.load(getattr(args, "judge_cache", judgecache.DEFAULT_PATH))
 
     rows: list[Row] = []
     covered_bases: set[str] = set()
@@ -258,7 +289,7 @@ def collect_status(args) -> StatusData:
         md_mtimes.append(p.stat().st_mtime)
         fp = p.as_posix()
         md_digests[fp] = hashlib.sha256(p.read_bytes()).hexdigest()
-        row = build_md_row(p, base, pdfs.get(base), args)
+        row = build_md_row(p, base, pdfs.get(base), args, cache.get(base))
         if ledger is not None:
             row.db = "동기화" if ledger.get(fp) == md_digests[fp] else "미반영"
         rows.append(row)
@@ -295,6 +326,8 @@ def main() -> None:
     parser.add_argument("--index", default="master_index.md", help="마스터 인덱스 경로 (기본: master_index.md)")
     parser.add_argument("--min-chars", type=int, default=200, help="유닛 최소 크기 (annotate와 동일해야 함)")
     parser.add_argument("--max-chars", type=int, default=4000, help="유닛 최대 크기 (annotate와 동일해야 함)")
+    parser.add_argument("--judge-cache", default=judgecache.DEFAULT_PATH,
+                        help=f"verify 판정 캐시 경로 — FAIL 재생성 대기·수동 검토 판정 (기본: {judgecache.DEFAULT_PATH})")
     args = parser.parse_args()
 
     pdf_dir = Path(args.pdf_dir)

@@ -21,6 +21,7 @@ SUMMARY_RE = re.compile(r"^> \*\*(?:보고서 )?요약:\*\* ")
 UNIT_SUMMARY_PREFIX = "> **요약:** "
 REPORT_SUMMARY_PREFIX = "> **보고서 요약:** "
 REPORT_KEY = "__report__"  # find/insert_summaries dict에서 보고서 요약의 키
+REVIEWED_PREFIX = "summary_reviewed:"  # 사람 확인 요약 표식(frontmatter 한 줄, 2026-09-09)
 
 
 def is_excluded_chapter(text: str) -> bool:
@@ -64,6 +65,10 @@ class Frontmatter:
     verified_register: str = ""
     verified_extract: str = ""
     verified_annotate: str = ""
+    # 사람 확인 요약(2026-09-09): `summary_reviewed: hid …` — 사람이 확인한 유닛(·보고서 요약
+    # 키 __report__). verify는 판정 생략(PASS, human), annotate는 요약이 있는 한 다시 쓰지 않음.
+    # 요약 줄이 지워지면 annotate가 재생성하며 목록에서 뺀다. 재추출 시 frontmatter와 함께 소멸.
+    summary_reviewed: tuple[str, ...] = ()
     # build_index.py·build_db.py가 소비하는 메타데이터 (§5 카탈로그·§6 스키마).
     year: str = ""
     lead_researcher: str = ""
@@ -91,6 +96,7 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
     verified_register = ""
     verified_extract = ""
     verified_annotate = ""
+    summary_reviewed: tuple[str, ...] = ()
     year = ""
     lead_researcher = ""
     institution = ""
@@ -134,11 +140,13 @@ def parse_frontmatter(lines: list[str]) -> Frontmatter:
             verified_extract = line.split(":", 1)[1].strip()
         elif line.startswith("verified_annotate:"):
             verified_annotate = line.split(":", 1)[1].strip()
+        elif line.startswith(REVIEWED_PREFIX):
+            summary_reviewed = tuple(line.split(":", 1)[1].split())
     if end_line < 0:
         raise ValueError("frontmatter 닫는 '---'가 없습니다")
     return Frontmatter(report_id, title, abstract_empty, end_line,
                        verified_register=verified_register, verified_extract=verified_extract,
-                       verified_annotate=verified_annotate,
+                       verified_annotate=verified_annotate, summary_reviewed=summary_reviewed,
                        year=year, lead_researcher=lead_researcher, institution=institution, abstract=abstract,
                        keywords_ko=keywords_ko, keywords_en=keywords_en)
 
@@ -401,6 +409,58 @@ def set_verified_stamps(lines: list[str], *, register: str = "", extract: str = 
 def strip_verified_stamps(lines: list[str]) -> list[str]:
     """스탬프 줄만 제거한 사본 — '스탬프 외 무변경' 이중 가드 대조용."""
     return set_verified_stamps(lines)
+
+
+# ---- 사람 확인 요약 표식 (2026-09-09 — 사람 결정, 스탬프와 같은 성격의 frontmatter 한 줄) ----
+
+
+def set_summary_reviewed(lines: list[str], hids) -> list[str]:
+    """frontmatter의 `summary_reviewed: hid …` 줄을 주어진 집합으로 재작성한 새 줄 리스트.
+
+    빈 집합이면 줄 제거. 기존 줄은 위치와 무관하게 걷어내고 스탬프 줄 블록(verified_*)
+    앞 — 스탬프가 없으면 닫는 '---' 직전 — 에 정렬해 한 줄로 삽입하므로 재실행에 멱등.
+    set_verified_stamps는 verified_ 접두 줄만 걷어내므로 두 함수는 서로를 보존한다.
+    """
+    end = parse_frontmatter(lines).end_line
+    out = [ln for i, ln in enumerate(lines) if not (i < end and ln.startswith(REVIEWED_PREFIX))]
+    hids = sorted(set(hids))
+    if not hids:
+        return out
+    pos = parse_frontmatter(out).end_line
+    while pos > 0 and out[pos - 1].startswith(STAMP_PREFIXES):
+        pos -= 1
+    return out[:pos] + [f"{REVIEWED_PREFIX} {' '.join(hids)}"] + out[pos:]
+
+
+def summary_line_map(lines: list[str]) -> dict[str, int]:
+    """{hid: 요약 줄 번호(1-기준)} — 인자 줄 리스트의 좌표계(보통 원본). 리포트·카드의 위치 표시용."""
+    roots = parse_heading_tree(lines)
+    fm = parse_frontmatter(lines)
+    out: dict[str, int] = {}
+    for h in iter_headings(roots):
+        for j in range(h.line + 1, min(h.line + 3, len(lines))):
+            if lines[j].startswith(UNIT_SUMMARY_PREFIX):
+                out[h.hid] = j + 1
+                break
+            if lines[j] != "":
+                break
+    first_heading = min((h.line for h in roots), default=len(lines))
+    for j in range(fm.end_line + 1, first_heading):
+        if lines[j].startswith(REPORT_SUMMARY_PREFIX):
+            out[REPORT_KEY] = j + 1
+            break
+    return out
+
+
+def accept_summary(md_path: str | Path, hid: str) -> list[str]:
+    """사람 확인 기록(/admin 버튼·verify --accept 공용) — hid의 요약이 있어야 한다(없으면
+    ValueError: annotate가 새로 만들 자리). 반환 = 기록 후 확인 목록."""
+    st = load_report(md_path)
+    if hid not in st.existing:
+        raise ValueError(f"{hid}: 요약 줄이 없음 — annotate가 새로 만듭니다")
+    reviewed = set(st.fm.summary_reviewed) | {hid}
+    write_md_lines(md_path, set_summary_reviewed(st.original, reviewed))
+    return sorted(reviewed)
 
 
 # ---- 통합 로더 ----

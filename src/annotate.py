@@ -13,6 +13,13 @@
   (요약이 바뀌면 자동 미감사 리셋 — 재검사·기록은 verify.py D 품질 판정 소관).
   verified_register·verified_extract는 유지. 단 verified_register가 없는 파일(3단
   도입 전 생성분)은 순서 규칙상 extract도 함께 내린다 — 다음 verify가 풀 검사로 복구.
+- 판정 캐시 핸드오프(src/judgecache.py, 2026-09-09): verify가 "현재 요약 텍스트에 대한
+  FAIL"로 남긴 유닛(·보고서 요약)은 요약이 없는 것처럼 다시 쓴다(옛 요약은 새 요약이 올
+  때까지 파일에 남음 — 재생성 실패 시 파일 불변). 중재가 요약 오류로 본 유닛은 캐시의
+  regen_model(Opus)로 재생성하고 소거. 재생성 결과가 이전과 동일하면 streak +1(다음
+  verify의 캐시 적중 FAIL 게이트가 중재로 수렴). 잔여 호출 산식 = judgecache.plan.
+- 사람 확인(frontmatter `summary_reviewed: hid …`): 요약이 있는 한 다시 쓰지 않는다
+  (--force여도). 요약 줄이 지워졌으면 결측으로 다시 만들고 목록에서 뺀다.
 """
 
 from __future__ import annotations
@@ -28,6 +35,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import judgecache
 import mdio
 from claude_agent_sdk import (
     AssistantMessage,
@@ -245,19 +253,25 @@ class FileEntry:
     units_failed: int = 0
     units_truncated: int = 0
     report_summary_generated: bool = False
+    units_regen: int = 0  # 판정 FAIL 재생성분(units_new에 포함)
+    escalated_regen: int = 0  # 그중 승급 모델(regen_model)로 재생성
+    reviewed_kept: int = 0  # 사람 확인 요약(요약 있음) — 재생성 제외
+    cache_updated: bool = False  # 판정 캐시 되쓰기 발생(호출자가 저장)
     calls: int = 0
     total_cost_usd: float = 0.0
     errors: list[str] = field(default_factory=list)
 
 
 async def call_with_retry(
-    prompt: str, args, entry: FileEntry, retries: int = 2, max_len: int = 400
+    prompt: str, args, entry: FileEntry, retries: int = 2, max_len: int = 400,
+    model: str | None = None,
 ) -> str:
+    """model = 유닛별 모델(판정 캐시 regen_model 승급) — 기본 args.model."""
     delays = RETRY_DELAYS
     last: RetryableError | None = None
     for attempt in range(retries + 1):
         try:
-            raw, usage = await call_llm(prompt, model=args.model, timeout=args.timeout)
+            raw, usage = await call_llm(prompt, model=model or args.model, timeout=args.timeout)
             entry.calls += 1
             entry.total_cost_usd += usage.get("cost") or 0.0
             return postprocess(raw, max_len)
@@ -270,8 +284,12 @@ async def call_with_retry(
 
 
 async def process_file(
-    path: str, args, sema: asyncio.Semaphore, abort: asyncio.Event, entry: FileEntry
+    path: str, args, sema: asyncio.Semaphore, abort: asyncio.Event, entry: FileEntry,
+    bucket: dict | None = None,
 ) -> None:
+    """파일 1개. bucket = 판정 캐시의 이 파일 버킷(없으면 {}) — FAIL 재생성 대상·재생성 모델을
+    읽고, 재생성 결과(regen_model 소거·동일 텍스트 streak)를 되쓴다(dirty면 호출자가 저장)."""
+    bucket = bucket if bucket is not None else {}
     st = mdio.load_report(path, min_chars=args.min_chars, max_chars=args.max_chars)
     entry.report_id = st.fm.report_id
 
@@ -281,28 +299,42 @@ async def process_file(
         entry.errors.append("기존 요약 배치가 규약과 불일치 — 파일을 건드리지 않고 건너뜀")
         return
 
-    base, fm, by_hid = st.base, st.fm, st.by_hid
-    existing = {} if args.force else st.existing
-    units = st.units
-    will_write = any(u.hid not in existing for u in units) or (
-        mdio.REPORT_KEY not in existing and bool(units)
-    )
-    if will_write and fm.verified_annotate:
-        # 요약이 바뀌는 파일은 미감사 상태로 리셋 — verified_annotate 제거 후
-        # 줄 좌표가 1줄 당겨지므로 base 기준 파스를 전부 재유도한다.
-        base = mdio.set_verified_stamps(
-            base, register=fm.verified_register,
-            extract=fm.verified_extract if fm.verified_register else "")
+    base, fm, by_hid, units = st.base, st.fm, st.by_hid, st.units
+    reviewed = {h for h in fm.summary_reviewed if h in st.existing}  # 요약 있는 사람 확인만 유효
+    stale_reviewed = set(fm.summary_reviewed) - reviewed  # 요약이 지워진 확인 hid — 결측으로 재생성
+    if args.force:  # 사람 확인 요약은 --force에도 보존
+        existing = {h: t for h, t in st.existing.items() if h in reviewed}
+    else:
+        existing = st.existing
+    regen = judgecache.regen_set(bucket, existing, units, reviewed)
+    plan = judgecache.plan(units, existing, regen, reviewed)
+    will_write = plan.calls > 0
+    entry.reviewed_kept = plan.reviewed_kept
+
+    if will_write and (fm.verified_annotate or stale_reviewed):
+        # frontmatter 조정(1회): 요약이 바뀌는 파일은 verified_annotate 리셋(자동 미감사), 요약이
+        # 지워진 확인 hid는 목록에서 제거 → 줄 좌표가 바뀌므로 base 기준 파스를 전부 재유도한다.
+        if fm.verified_annotate:
+            base = mdio.set_verified_stamps(
+                base, register=fm.verified_register,
+                extract=fm.verified_extract if fm.verified_register else "")
+            print(f"[stamp] {fm.report_id}: 요약 갱신 예정 — verified_annotate 리셋", file=sys.stderr)
+        if stale_reviewed:
+            base = mdio.set_summary_reviewed(base, reviewed)
+            print(f"[reviewed] {fm.report_id}: 요약이 지워진 확인 hid 제거 — "
+                  f"{' '.join(sorted(stale_reviewed))}", file=sys.stderr)
         fm = mdio.parse_frontmatter(base)
         roots = mdio.parse_heading_tree(base)
         by_hid = {h.hid: h for h in mdio.iter_headings(roots)}
         units = mdio.split_units(roots, base, min_chars=args.min_chars, max_chars=args.max_chars)
-        print(f"[stamp] {fm.report_id}: 요약 갱신 예정 — verified_annotate 리셋", file=sys.stderr)
+        regen = judgecache.regen_set(bucket, existing, units, reviewed)
+        plan = judgecache.plan(units, existing, regen, reviewed)
     entry.units_total = len(units)
-    todo = [u for u in units if u.hid not in existing]
+    todo_ids = set(plan.units_todo)
+    todo = [u for u in units if u.hid in todo_ids]
     entry.units_skipped_existing = len(units) - len(todo)
 
-    summaries = dict(existing)
+    summaries = dict(existing)  # FAIL 요약은 새 요약이 올 때까지 파일에 남는다(재생성 실패 시 불변)
     write_lock = asyncio.Lock()
 
     def write_now() -> None:
@@ -311,14 +343,42 @@ async def process_file(
             raise RuntimeError("왕복 검증 실패 — 쓰기 중단")
         mdio.write_md_lines(path, candidate)
 
+    def model_for(hid: str) -> str:
+        return (bucket.get(hid) or {}).get("regen_model") or args.model
+
+    def note_regen(hid: str, summary: str) -> None:
+        """재생성 결과를 캐시에 되쓴다 — 동일 텍스트면 streak +1, 승급 모델을 썼으면 regen_model 소거."""
+        ent = bucket.get(hid)
+        if not ent:
+            return
+        if hid in regen:
+            entry.units_regen += 1
+            entry.cache_updated = True
+            if ent.get("summary_sha") == judgecache.summary_sha(summary):
+                ent["fail_streak"] = int(ent.get("fail_streak") or 0) + 1
+                print(f"[fail-regen] {fm.report_id} {hid}: 재생성 결과가 이전과 동일 — "
+                      f"streak {ent['fail_streak']}", file=sys.stderr)
+        if ent.get("regen_model"):
+            ent.pop("regen_model", None)
+            entry.escalated_regen += 1
+            entry.cache_updated = True
+
+    def regen_line(hid: str, model: str) -> None:
+        if hid in regen:
+            streak = (bucket.get(hid) or {}).get("fail_streak", 0)
+            where = "보고서 요약" if hid == mdio.REPORT_KEY else hid
+            print(f"[fail-regen] {fm.report_id} {where} (streak {streak}, model {model})", file=sys.stderr)
+
     async def do_unit(u: mdio.Unit) -> None:
         if abort.is_set():
             return
         text, truncated = truncate_input(mdio.unit_text(u, base), args.input_cap)
         if truncated:
             entry.units_truncated += 1
+        model = model_for(u.hid)
+        regen_line(u.hid, model)
         try:
-            summary = await call_with_retry(build_unit_prompt(fm, u, text), args, entry)
+            summary = await call_with_retry(build_unit_prompt(fm, u, text), args, entry, model=model)
         except (UsageLimitReached, AuthError) as e:
             if not abort.is_set():
                 abort.set()
@@ -332,9 +392,11 @@ async def process_file(
         async with write_lock:
             summaries[u.hid] = summary
             entry.units_new += 1
+            note_regen(u.hid, summary)
             write_now()
         print(
-            f"[ok] {fm.report_id} {u.hid} ({u.kind}, {u.char_count:,}자 → {len(summary)}자)",
+            f"[ok] {fm.report_id} {u.hid} ({u.kind}, {u.char_count:,}자 → {len(summary)}자)"
+            + (" [재생성]" if u.hid in regen else ""),
             file=sys.stderr,
         )
 
@@ -348,19 +410,25 @@ async def process_file(
         entry.status = "aborted"
         return
 
-    # 보고서 요약 (§3 단계③): 전 유닛 요약 완료 시 상시 생성. 유닛 요약이 새로
-    # 쓰인 파일은 기존 보고서 요약도 낡은 입력 기반이므로 덮어 재생성(입력 일관성).
+    # 보고서 요약 (§3 단계③): 전 유닛 요약 완료 시 상시 생성. 유닛 요약이 새로 쓰인 파일은
+    # 기존 보고서 요약도 낡은 입력 기반이므로 덮어 재생성(입력 일관성). FAIL 재생성 대상이면
+    # 유닛이 그대로여도 재생성. 사람 확인 보고서 요약은 유지.
     all_done = all(u.hid in summaries for u in units)
-    if all_done and units and (mdio.REPORT_KEY not in summaries or entry.units_new > 0):
+    report_todo = mdio.REPORT_KEY not in reviewed and (
+        mdio.REPORT_KEY not in summaries or entry.units_new > 0 or mdio.REPORT_KEY in regen)
+    if all_done and units and report_todo:
         pairs = [(" > ".join(u.heading_path), summaries[u.hid]) for u in units]
+        model = model_for(mdio.REPORT_KEY)
+        regen_line(mdio.REPORT_KEY, model)
         try:
             async with sema:
                 summary = await call_with_retry(
                     build_report_prompt(fm, pairs), args, entry,
-                    max_len=REPORT_SUMMARY_MAX_LEN,
+                    max_len=REPORT_SUMMARY_MAX_LEN, model=model,
                 )
             async with write_lock:
                 summaries[mdio.REPORT_KEY] = summary
+                note_regen(mdio.REPORT_KEY, summary)
                 write_now()
             entry.report_summary_generated = True
             print(f"[ok] {fm.report_id} 보고서 요약 삽입", file=sys.stderr)
@@ -380,25 +448,25 @@ async def process_file(
 
 
 def run_scan(paths: list[str], args) -> tuple[int, list[dict]]:
-    """dry-run: 유닛 목록·예상 호출 수 출력. LLM 미호출·무수정."""
+    """dry-run: 유닛 목록·예상 호출 수 출력(judgecache.plan — FAIL 재생성·사람 확인 반영). LLM 미호출·무수정."""
     reports = []
-    tot_units = tot_calls = tot_over = 0
+    tot_units = tot_calls = tot_over = tot_regen = tot_reviewed = 0
     tot_uncovered = tot_excluded = 0
+    cache = judgecache.load(args.judge_cache)
     for p in paths:
         st = mdio.load_report(p, min_chars=args.min_chars, max_chars=args.max_chars)
         fm, units, existing, stats = st.fm, st.units, st.existing, st.stats
-        new = [u for u in units if u.hid not in existing]
+        plan = judgecache.plan_for(st, cache.get(Path(p).stem))
         over = sum(1 for u in units if u.char_count > args.input_cap)
-        expected = len(new) + (
-            1 if units and (mdio.REPORT_KEY not in existing or new) else 0
-        )
         reports.append(
             {
                 "report_id": fm.report_id,
                 "abstract_empty": fm.abstract_empty,
                 "totals": {
                     "units": len(units),
-                    "expected_calls": expected,
+                    "expected_calls": plan.calls,
+                    "fail_regen": len(plan.regen),
+                    "reviewed": plan.reviewed_kept,
                     "over_input_cap": over,
                     "uncovered_chars": stats["uncovered_chars"],
                     "excluded_chapter_chars": stats["excluded_chapter_chars"],
@@ -411,19 +479,24 @@ def run_scan(paths: list[str], args) -> tuple[int, list[dict]]:
                         "chars": u.char_count,
                         "truncated_expected": u.char_count > args.input_cap,
                         "has_existing": u.hid in existing,
+                        "fail_regen": u.hid in plan.regen,
+                        "reviewed": u.hid in fm.summary_reviewed and u.hid in existing,
                     }
                     for u in units
                 ],
             }
         )
         tot_units += len(units)
-        tot_calls += expected
+        tot_calls += plan.calls
+        tot_regen += len(plan.regen)
+        tot_reviewed += plan.reviewed_kept
         tot_over += over
         tot_uncovered += stats["uncovered_chars"]
         tot_excluded += stats["excluded_chapter_chars"]
     print(json.dumps(reports, ensure_ascii=False, indent=1))
     print(
         f"[scan] 파일 {len(paths)}개: 유닛 {tot_units} / 예상 호출 {tot_calls} / "
+        f"FAIL 재생성 {tot_regen} / 사람 확인 {tot_reviewed} / "
         f"입력 상한 초과 {tot_over} / 미커버 {tot_uncovered:,}자 / "
         f"제외 장 {tot_excluded:,}자",
         file=sys.stderr,
@@ -459,23 +532,33 @@ async def run_annotate(paths: list[str], args) -> tuple[int, list[FileEntry]]:
     sema = asyncio.Semaphore(args.concurrency)
     abort = asyncio.Event()
     entries: list[FileEntry] = []
+    cache = judgecache.load(args.judge_cache)  # 파생물 — 없으면 재생성 대상 없음(현행 동작)
     for p in paths:
         entry = FileEntry(file=p)
         entries.append(entry)
         if abort.is_set():
             entry.status = "aborted"
             continue
+        stem = Path(p).stem
+        bucket = cache.get(stem) or {}
         try:
-            await process_file(p, args, sema, abort, entry)
+            await process_file(p, args, sema, abort, entry, bucket)
         except Exception as e:  # 파일 단위 오류는 다음 파일 진행
             entry.status = "error"
             entry.errors.append(f"{type(e).__name__}: {e}")
             print(f"[error] {p}: {e}", file=sys.stderr)
+        finally:
+            if entry.cache_updated and args.judge_cache:  # 파일별 저장 — 한도 중단에도 되쓴 분 보존
+                cache[stem] = bucket
+                judgecache.save(args.judge_cache, cache)
     ok = all(e.status == "ok" for e in entries)
     new = sum(e.units_new for e in entries)
+    regen = sum(e.units_regen for e in entries)
     cost = sum(e.total_cost_usd for e in entries)
     print(
-        f"[done] 파일 {len(entries)}개: 신규 요약 {new}건, 호출 {sum(e.calls for e in entries)}회, "
+        f"[done] 파일 {len(entries)}개: 신규 요약 {new}건"
+        + (f"(FAIL 재생성 {regen}건 포함)" if regen else "")
+        + f", 호출 {sum(e.calls for e in entries)}회, "
         f"비용 ${cost:.4f}" + ("" if ok else " — 일부 실패/중단, 재실행하면 이어서 진행"),
         file=sys.stderr,
     )
@@ -550,6 +633,9 @@ def main() -> None:
     parser.add_argument("--concurrency", type=int, default=3, help="동시 LLM 호출 수 (기본: 3)")
     parser.add_argument("--timeout", type=float, default=180, help="호출당 타임아웃 초 (기본: 180)")
     parser.add_argument("--log", default="logs/annotate_log.json", help="로그 경로 (기본: logs/annotate_log.json)")
+    parser.add_argument("--judge-cache", default=judgecache.DEFAULT_PATH,
+                        help=f"verify 판정 캐시 경로 — FAIL 재생성 대상·모델을 읽는다 (기본: {judgecache.DEFAULT_PATH};"
+                             " 빈 문자열이면 재생성 없음)")
     parser.add_argument(
         "--token-file",
         default=str(REPO_ROOT / ".claude_oauth_token"),

@@ -74,11 +74,11 @@ python src/verify.py <rid1> <rid2> ...
 python src/annotate.py reports/<rid1>.md reports/<rid2>.md ... --scan
 # 4) 요약 생성(LLM). 한도로 끊기면 같은 명령 재실행(증분 재개 — 요약 없는 유닛만)
 python src/annotate.py reports/<rid1>.md reports/<rid2>.md ...
-# 5) 품질 판정(LLM) → verified_annotate. FAIL이 있으면 strip_fail(FAIL 요약 블록 삭제) → 4) → 5) 반복
-#    판정 캐시(2026-09, W0 실측 후 도입)로 바뀐 요약만 재판정. 같은 유닛이 3회 연속 FAIL이면 그 파일만
-#    --judge-model claude-sonnet-5 일회 승격 재판정(IMPLEMENTATION_NOTES §3 운영 시사점)
+# 5) 품질 판정(LLM) → verified_annotate. FAIL이 있으면 4) → 5) 반복 — annotate가 판정 캐시의 FAIL 유닛만
+#    다시 쓰고 verify가 바뀐 요약만 재판정(2026-09-09, strip_fail 폐지; /admin 일괄 해결은 최대 3바퀴 자동).
+#    같은 유닛이 3회 연속 FAIL이면 verify가 Opus 중재로 판정/요약 오류를 가려 Sonnet 재판정 또는 Opus
+#    재생성을 자동 승급, 그래도 FAIL이면 /admin 수동 검토 카드([사람이 확인함] 또는 verify --accept RID:HID)
 python src/verify.py <rid1> <rid2> ...
-python src/strip_fail.py <rid1> <rid2> ...      # FAIL 있을 때만; 이어서 4) → 5)
 # 6) DB 증분 동기화 + 카탈로그 (세 스탬프 중 하나라도 없는 .md는 둘 다 제외하고 exit 1 — 5)로 돌아감)
 python src/build_db.py
 python src/build_index.py
@@ -547,7 +547,7 @@ run("src/verify.py", *RIDS)                                # 기대: 전건 PASS
 run("src/annotate.py", *MDS, "--scan")                    # expected_calls 합 = W0 요약 호출 수 → §8 기록
 run("src/annotate.py", *MDS)                               # 한도로 끊기면 같은 줄 재실행
 run("src/verify.py", *RIDS)                                # D 판정 → verified_annotate
-run("src/strip_fail.py", *RIDS)                            # FAIL 있으면 → annotate → verify 반복(캐시로 바뀐 요약만 재판정)
+# FAIL 있으면 annotate → verify 반복(annotate가 캐시의 FAIL 유닛만 재생성, 2026-09-09 — strip_fail 폐지)
 run("src/build_db.py"); run("src/build_index.py")
 run("src/status.py")
 ```
@@ -622,7 +622,7 @@ W0 관찰 항목(§8에 기록): 요약 실제 호출 수·소요 시간·한도
 - 결론: 파일 단위 전건 PASS 게이트 + 매 실행 전 유닛 재판정 조합은 유닛 40~50개 파일에서 **재판정마다 ~2%의 무작위 FAIL**이 새로 생겨 수렴하지 않는다. 루프를 더 돌리면 LLM 비용만 늘고, §3의 "반복 FAIL 파일 제외" 규칙을 적용하면 이미 생성한 요약(8권·약 250유닛)을 버리게 된다. 후보: ① verify가 유닛별 PASS 판정을 캐시(요약 텍스트 해시 기준)해 미변경 PASS 유닛은 재판정하지 않음 + FAIL 유닛만 재생성 ② 판정 기준 완화(수치 세부 불일치·구분 생략은 WARN, FAIL은 명백한 할루시네이션·무관·핵심 누락만) ③ 파일 게이트를 "FAIL 유닛은 요약 없이 색인(summary='')"으로 바꿔 웨이브 완주 우선.
 - **→ ① 채택·구현(같은 세션)**: verify D 유닛별 판정 캐시(`logs/judge_cache.json`, 키 = 판정 입력 전문+모델의 sha256, `--reaudit`는 무시, ERROR 미캐시, 한도 중단 중에도 완료분 저장) + FAIL 요약 블록 삭제 도구 `src/strip_fail.py`(규약은 CLAUDE.md·IMPLEMENTATION_NOTES §3). 2차 판정 결과 282건을 캐시로 이식해 회귀 확인(호출 0·동일 결과) 후 루프: **루프1** strip 14 → 재생성 21호출 → 재판정 21호출(캐시 236) → FAIL 2 / **루프2** strip 2 → 4호출 → 4호출 → FAIL 1(`2022-04_01_c4s11`, 3회 연속·매번 다른 사유) / 본문 확인 결과 **2단 조판 페이지가 줄 단위로 뒤섞여 추출된 구간**(두 단의 줄이 번갈아 나옴, 표 셀 줄 `11. 최근3년이내에…`가 하위 헤딩으로 오탐)이라 어떤 요약도 근거가 불안정 → 선례(IMPLEMENTATION_NOTES §3)대로 **Opus 5 단건 재생성**(`annotate reports/2022-04_01.md --model claude-opus-5`, 2호출) → 재판정 2호출 → **14/14 PASS**. 루프 총비용 요약 27호출·판정 27호출(캐시 없이 파일 단위 재판정이었다면 판정 ≈600호출). 다단 조판 인터리브는 추출 품질 과제로 기록만(해당 유닛 1개, 요약 통과 — R 후보 아님).
 
-**현재 상태(다음 세션 인계)** — **W0 완료.** reports/ .md 25개(기존 11 + W0 14) 전부 `verified_annotate`, reports.db 25파일·762행(406 + 356 = 유닛 342 + 부록·참고문헌 14) 해시 동기화, master_index.md 25건 최신, 검색 게이트 정상. W0 산출물·판정 캐시 코드는 커밋 완료(`3fffaa1`), rid v3는 `cc15cb4`. `logs/judge_cache.json`은 git 제외 파생물(없으면 재판정할 뿐). **2026-09-07 보류 폴더 도입** — `pdfs/` 직하는 적재 완료 23권뿐, 미적재 255권은 `pdfs/hold/`이고 등록부에도 없다(23행 — §0·§8 HOLD 행); 이 세션 미커밋(사용자 커밋): `report_ids.tsv`(보류 255행 삭제)·`src/registry.py`·`src/register.py`·`src/serve.py`(보류 파일 등록 거부·행 삭제 표시)·`WAVE_PLAN.md`·`CLAUDE.md`·`IMPLEMENTATION_NOTES.md`. 다음 = R 정비 라운드(R1·R2 채택분 + R4 결정) → W1(12권, 멤버를 §3 -1)로 반출 → 0) register 등록부터 시작). 사용자 지시로 W0 이후는 보고 후 대기. **2026-09-07 스탬프 3단 도입**(`verified_register` — extract가 기록, build_db·build_index 3단 게이트, `status.is_loaded` = DB 동기화 하나): 기존 25 .md에 `verify`(register 모드, LLM·PDF 0)로 스탬프를 채우고 DB 25파일 재색인(master_index.md 바이트 동일, 사용자 커밋). §3 절차·§6 스크립트의 명령은 그대로 유효(첫 verify가 register 위에 extract를 얹는다). (별건: verify⇄annotate 승격 루프 재설계 계획은 `~/.claude/plans/verify-d-1-misty-corbato.md`에 저장, 사용자 호출 시 승인 후 구현.)
+**현재 상태(다음 세션 인계)** — **W0 완료.** reports/ .md 25개(기존 11 + W0 14) 전부 `verified_annotate`, reports.db 25파일·762행(406 + 356 = 유닛 342 + 부록·참고문헌 14) 해시 동기화, master_index.md 25건 최신, 검색 게이트 정상. W0 산출물·판정 캐시 코드는 커밋 완료(`3fffaa1`), rid v3는 `cc15cb4`. `logs/judge_cache.json`은 git 제외 파생물(없으면 재판정할 뿐). **2026-09-07 보류 폴더 도입** — `pdfs/` 직하는 적재 완료 23권뿐, 미적재 255권은 `pdfs/hold/`이고 등록부에도 없다(23행 — §0·§8 HOLD 행); 이 세션 미커밋(사용자 커밋): `report_ids.tsv`(보류 255행 삭제)·`src/registry.py`·`src/register.py`·`src/serve.py`(보류 파일 등록 거부·행 삭제 표시)·`WAVE_PLAN.md`·`CLAUDE.md`·`IMPLEMENTATION_NOTES.md`. 다음 = R 정비 라운드(R1·R2 채택분 + R4 결정) → W1(12권, 멤버를 §3 -1)로 반출 → 0) register 등록부터 시작). 사용자 지시로 W0 이후는 보고 후 대기. **2026-09-07 스탬프 3단 도입**(`verified_register` — extract가 기록, build_db·build_index 3단 게이트, `status.is_loaded` = DB 동기화 하나): 기존 25 .md에 `verify`(register 모드, LLM·PDF 0)로 스탬프를 채우고 DB 25파일 재색인(master_index.md 바이트 동일, 사용자 커밋). §3 절차·§6 스크립트의 명령은 그대로 유효(첫 verify가 register 위에 extract를 얹는다). **2026-09-09 FAIL 재생성 루프·승급·사람 확인 도입**(계획 `~/.claude/plans/recursive-kindling-glacier.md` — 앞의 verify-d-1 계획을 대체): `src/judgecache.py` 신규(verify⇄annotate 캐시 핸드오프, 캐시 키 모델 무관, 잔여 호출 단일 산식), `src/strip_fail.py` 삭제, verify 승급 상태 기계(3회 FAIL → Opus 중재 → Sonnet 재판정/Opus 재생성 → manual, `--accept`), /admin 일괄 해결 최대 3바퀴 자동 루프 + 요약 품질 수동 검토 카드 [사람이 확인함](frontmatter `summary_reviewed`). 오프라인 하네스 전건 통과, 25권 회귀 무변경(verify 25 skip·호출 0·캐시 바이트 동일, scan 예상 호출 0, status 합계 불변). 사용자 커밋 대기. §3 5)·§6 명령 갱신.
 
 ## 9. 제외 목록 (이번 구축 대상 아님)
 

@@ -607,7 +607,7 @@ def next_unknown(rows: list[Row], base: str, own: tuple[str, str]) -> str:
 
 def rename_reports(pairs: list[tuple[str, str]], reports_dir: Path, cache_path: Path) -> None:
     """추출된 문서의 rid 변경 = reports/{old}.md → {new}.md 개명 + `report_id:` 줄·`<!-- id: {old}_c`
-    접두·연도·판정 캐시 버킷 치환(요약 블록·스탬프·source_pdf 불변, LLM 0). 맞바꿈이 안전하도록
+    접두·`summary_reviewed` hid 접두·연도·판정 캐시 버킷 치환(요약 블록·스탬프·source_pdf 불변, LLM 0). 맞바꿈이 안전하도록
     임시 이름 2단계. W0 슬러그 치환(2026-09-04)과 같은 로직."""
     reports_dir = Path(reports_dir)
     tmp: dict[str, Path] = {}
@@ -627,6 +627,9 @@ def rename_reports(pairs: list[tuple[str, str]], reports_dir: Path, cache_path: 
             raise RuntimeError(f"{old}: report_id 줄이 1개가 아님")
         text = text.replace(f"report_id: {old}\n", f"report_id: {new}\n", 1)
         text = text.replace(f"<!-- id: {old}_c", f"<!-- id: {new}_c")
+        # 사람 확인 요약 표식(frontmatter summary_reviewed)의 hid 접두도 헤딩 ID와 같은 규칙으로
+        text = re.sub(r"^(summary_reviewed:.*)$",
+                      lambda m: m.group(1).replace(f"{old}_c", f"{new}_c"), text, count=1, flags=re.M)
         if STEM_RE.match(old) and STEM_RE.match(new) and old[:4] != new[:4]:
             yr = "" if new.startswith("0000") else new[:4]
             text = re.sub(r"^year:.*$", f"year: {yr}".rstrip(), text, count=1, flags=re.M)

@@ -37,14 +37,29 @@ build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
                    핵심 주제·키워드 부재=FAIL(누락) / 본문에 없는 사실=FAIL(할루시
                    네이션) / 수치·주체·인과 상이=FAIL(왜곡) / 본문과 무관=FAIL(무관)
                    / 핵심 포함·부차 편중=WARN. 판정 입력은 annotate 생성 입력과
-                   동일 절단(--input-cap). FAIL은 자동 수정하지 않고 리포트만 —
-                   수정 경로: 요약 줄 삭제(src/strip_fail.py) → annotate → verify.
+                   동일 절단(--input-cap). FAIL은 파일을 고치지 않고 판정 캐시에
+                   "현재 요약 텍스트에 대한 FAIL"로 남긴다 — 다음 annotate가 그 유닛만
+                   다시 쓰고(src/judgecache.py 핸드오프, 2026-09-09) verify가 바뀐
+                   요약만 재판정한다. 수정 루프 = verify → annotate → verify(/admin
+                   일괄 해결은 최대 3바퀴 자동).
                    판정 캐시(--judge-cache, 기본 logs/judge_cache.json, 2026-09):
-                   유닛별 최종 verdict를 판정 입력 전문(근거 본문+요약+제목+모델)의
-                   sha256과 함께 저장하고 입력이 같으면 LLM 없이 재사용한다 —
-                   파일 단위 전건 재판정은 실행마다 ~2% 무작위 FAIL이 새로 생겨
-                   수렴하지 않았다(W0 실측). --reaudit는 캐시를 무시하고 재판정,
-                   ERROR(판정불능)는 캐시하지 않는다.
+                   유닛별 최종 verdict를 판정 입력 전문(근거 본문+요약+제목·위치)의
+                   sha256(모델 무관 — 승급 판정을 이후 실행이 재사용)과 함께 저장하고
+                   입력이 같으면 LLM 없이 재사용한다 — 파일 단위 전건 재판정은
+                   실행마다 ~2% 무작위 FAIL이 새로 생겨 수렴하지 않았다(W0 실측).
+                   --reaudit는 캐시를 무시하고 재판정(Sonnet 승급 판정도 Haiku로
+                   덮임), ERROR(판정불능)는 캐시하지 않는다.
+                   승급 상태 기계(--escalate-after, 기본 3): 서로 다른 요약으로 3회
+                   연속 FAIL이면 Opus 중재 1회(--arbiter-model)로 판정 오류/요약
+                   오류만 분류 → 판정 오류면 그 유닛만 Sonnet 재판정
+                   (--escalate-judge-model, 통과 시 종료) / 요약 오류(또는 Sonnet도
+                   FAIL)면 캐시에 regen_model을 남겨 다음 annotate가 그 유닛만
+                   Opus로 재생성(--escalate-gen-model). 그래도 FAIL이면 manual(수동
+                   검토, LLM 호출 없음 — /admin 카드). 캐시 적중 FAIL에도 게이트가
+                   돌아 동일 텍스트 재생성 등이 수렴한다.
+                   사람 확인(frontmatter `summary_reviewed: hid …`, /admin 버튼 또는
+                   --accept RID:HID): 그 유닛은 판정을 생략하고 PASS(판정자 human)로
+                   캐시에 정착한다(수동 표식·streak 소거).
 
 플랫 문서(frontmatter 'structure: flat' — extract 플랫 폴백 산출물): 풀 검사에서
 find_body_start/detect_structure 재현 대신 extract와 공유하는 find_body_start_flat로
@@ -74,7 +89,6 @@ import argparse
 import asyncio
 import dataclasses
 import datetime
-import hashlib
 import json
 import os
 import re
@@ -83,6 +97,7 @@ from pathlib import Path
 
 import pymupdf
 
+import judgecache
 import mdio
 from extract import (
     CAPTION_RE,
@@ -441,12 +456,10 @@ def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) 
 # ---------------------------------------------------------------------------
 
 def annotate_complete(st) -> bool:
-    """status.py·annotate --scan과 동일 산식: 잔여 호출 0 + 요약 배치 규약 일치."""
-    done = sum(1 for u in st.units if u.hid in st.existing)
-    new = len(st.units) - done
-    remaining = new + (
-        1 if st.units and (mdio.REPORT_KEY not in st.existing or new) else 0)
-    return remaining == 0 and st.roundtrip_ok()
+    """커버리지 완비(요약 없는 유닛·보고서 요약 없음 = 0, judgecache.plan 산식) + 요약 배치
+    규약 일치. FAIL 재생성 대기는 여기서 세지 않는다 — 그 파일도 판정 대상이 되어 캐시 적중
+    FAIL(호출 0)로 승급 상태 기계가 돈다."""
+    return judgecache.plan(st.units, st.existing).calls == 0 and st.roundtrip_ok()
 
 
 def apply_stamp(rep: Report, md_path: Path, original: list[str],
@@ -474,10 +487,10 @@ def apply_stamp(rep: Report, md_path: Path, original: list[str],
 
 
 # ---------------------------------------------------------------------------
-# D. 품질 판정 (LLM — annotate.py의 호출 레이어 재사용)
+# D. 품질 판정 (LLM — annotate.py의 호출 레이어 재사용) + 승급 상태 기계 (2026-09-09)
 # ---------------------------------------------------------------------------
 
-JUDGE_SYSTEM_PROMPT = (
+JUDGE_CRITERIA = (
     "너는 정책연구보고서 검색 시스템의 요약 감사자다. 요약의 용도는 검색·발견 — "
     "사용자가 요약만 보고 해당 절을 찾아갈 수 있어야 한다. 절 본문과 요약이 주어지면 "
     "다음 기준으로 판정한다. FAIL: 누락(본문의 핵심 주제·키워드가 요약에 없음) / "
@@ -492,43 +505,32 @@ JUDGE_SYSTEM_PROMPT = (
     "한정하고, 문체·표기·명확성 선호는 판정 대상이 아니다. "
     "본문 안에서 서술문과 표 등 표기가 서로 모순될 때 요약이 그중 "
     "한쪽을 그대로 따랐다면 FAIL이 아니라 WARN으로 하고 note에 원문 모순임을 밝힌다. "
+)
+JUDGE_SYSTEM_PROMPT = JUDGE_CRITERIA + (
     "출력은 JSON 한 줄만, 다른 텍스트 금지: "
     '{"verdict":"PASS|WARN|FAIL","issues":[{"type":"누락|할루시네이션|왜곡|무관",'
     '"claim":"요약 속 문제 문구","note":"짧은 근거"}]} PASS면 issues는 빈 배열.'
 )
+# 중재자(승급 상태 기계): 판정이 아니라 책임 분류만 — 판정자 기준을 그대로 제시한다.
+ARBITER_SYSTEM_PROMPT = (
+    "너는 정책연구보고서 요약 감사의 중재자다. 판정자(다른 모델)가 아래 [판정자 기준]으로 "
+    "요약을 판정하는데, 같은 절의 요약이 서로 다른 재생성에서도 연속으로 FAIL을 받았다. "
+    "네 일은 다시 판정하는 것이 아니라 책임을 가리는 것이다 — 근거 본문·현재 요약·판정자의 "
+    "FAIL 사유 이력을 보고 둘 중 하나로 분류하라. "
+    "judge(판정 오류): 기준상 FAIL이 아닌데 판정자가 잘못 봤다 — 예: 관용 규칙(단위 환산·환언·"
+    "구조 압축·원문 모순의 한쪽 채택)을 어기고 문제 삼음, 본문에 있는 내용을 없다고 함, "
+    "문체·명확성 선호를 결함으로 봄, 이력의 사유가 매번 달라 일관성이 없음. "
+    "summary(요약 오류): 요약이 실제로 기준을 어겼다(산술적으로 다른 수치, 본문에 없는 사실, "
+    "핵심 주제 부재, 무관). 근거 본문 자체가 뒤섞여(다단 조판 인터리브 등) 어떤 요약도 근거가 "
+    "불안정한 경우도 summary로 분류하고 note에 그 사실을 적어라. "
+    "[판정자 기준] " + JUDGE_CRITERIA +
+    "출력은 JSON 한 줄만, 다른 텍스트 금지: "
+    '{"fault":"judge|summary","note":"짧은 근거"}'
+)
 
-VERDICTS = ("PASS", "WARN", "FAIL")
-JUDGE_CACHE_DEFAULT = "logs/judge_cache.json"
-
-
-def judge_key(prompt: str, model: str) -> str:
-    """판정 캐시 키 — 판정 입력 전문(근거 본문·요약·제목·위치)과 모델의 sha256."""
-    return hashlib.sha256(f"{model}\n{prompt}".encode("utf-8")).hexdigest()
-
-
-def load_judge_cache(path: str) -> dict:
-    """{stem: {hid: {key, verdict, issues, model, judged_at}}}. 없거나 손상이면 빈 dict."""
-    if not path:
-        return {}
-    p = Path(path)
-    if not p.is_file():
-        return {}
-    try:
-        obj = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return obj if isinstance(obj, dict) else {}
-
-
-def save_judge_cache(path: str, cache: dict) -> None:
-    """원자적 저장(tmp → replace) — 한도 중단 중에도 부분 진행도가 깨지지 않게."""
-    if not path:
-        return
-    p = Path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(p.suffix + ".tmp")
-    tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
-    os.replace(tmp, p)
+VERDICTS = judgecache.VERDICTS
+JUDGE_CACHE_DEFAULT = judgecache.DEFAULT_PATH
+HUMAN_MODEL = "human"  # 사람 확인 요약의 판정자 표기
 
 
 def _annotate():
@@ -557,8 +559,32 @@ def parse_verdict(raw: str) -> dict:
     return {"verdict": v, "issues": issues}
 
 
-def build_judge_unit_prompt(an, fm, unit, base: list[str], summary: str, cap: int) -> str:
-    """판정 입력 = 생성 입력과 동일 절단 — 판정자 시야 밖 주장 = 진짜 할루시네이션."""
+def parse_arbiter(raw: str) -> dict:
+    """중재 응답 {"fault":"judge|summary","note"} 추출. 형식 불량은 ValueError → 재시도 대상."""
+    s = raw.strip()
+    i, j = s.find("{"), s.rfind("}")
+    if i < 0 or j <= i:
+        raise ValueError(f"중재 JSON 없음: {s[:80]!r}")
+    try:
+        obj = json.loads(s[i : j + 1])
+    except json.JSONDecodeError as e:
+        raise ValueError(f"중재 JSON 파싱 실패: {e}")
+    f = obj.get("fault")
+    if f not in ("judge", "summary"):
+        raise ValueError(f"fault 값 불량: {f!r}")
+    return {"fault": f, "note": str(obj.get("note") or "")[:200]}
+
+
+@dataclasses.dataclass
+class JudgeTarget:
+    hid: str
+    prompt: str  # 판정 프롬프트 전문 = 캐시 키 원문
+    summary: str  # 검사 대상 요약 텍스트 = summary_sha 원문
+    evidence: str  # 근거 블록(판정과 동일 절단) — 중재 프롬프트 재사용
+
+
+def unit_evidence(an, fm, unit, base: list[str], cap: int) -> str:
+    """유닛 근거 = 생성 입력과 동일 절단 — 판정자 시야 밖 주장 = 진짜 할루시네이션."""
     text, _ = an.truncate_input(mdio.unit_text(unit, base), cap)
     path = " > ".join(unit.heading_path)
     note = (
@@ -566,14 +592,16 @@ def build_judge_unit_prompt(an, fm, unit, base: list[str], summary: str, cap: in
         if unit.kind == "intro"
         else ""
     )
-    return (
-        f"보고서: {fm.title}\n위치: {path}{note}\n\n[절 본문]\n{text}\n\n"
-        f"[검사 대상 요약]\n{summary}\n\n위 요약을 판정 기준에 따라 JSON으로 판정하라."
-    )
+    return f"보고서: {fm.title}\n위치: {path}{note}\n\n[절 본문]\n{text}"
 
 
-def build_judge_report_prompt(fm, pairs: list[tuple[str, str]], summary: str) -> str:
-    """보고서 요약은 생성 때와 동일 근거(키워드·저자 초록·유닛 요약 전체)로 판정한다."""
+def build_judge_unit_prompt(an, fm, unit, base: list[str], summary: str, cap: int) -> str:
+    return (f"{unit_evidence(an, fm, unit, base, cap)}\n\n"
+            f"[검사 대상 요약]\n{summary}\n\n위 요약을 판정 기준에 따라 JSON으로 판정하라.")
+
+
+def report_evidence(fm, pairs: list[tuple[str, str]]) -> str:
+    """보고서 요약 근거 = 생성 때와 동일(키워드·저자 초록·유닛 요약 전체)."""
     listing = "\n".join(f"- {p}: {s}" for p, s in pairs)
     parts = [f"보고서 제목: {fm.title}"]
     if fm.keywords_ko or fm.keywords_en:
@@ -582,7 +610,11 @@ def build_judge_report_prompt(fm, pairs: list[tuple[str, str]], summary: str) ->
     if not fm.abstract_empty:
         parts.append(f"[저자 초록 — 근거 입력]\n{fm.abstract}")
     parts.append(f"[절별 요약 전체 — 근거 입력]\n{listing}")
-    parts.append(
+    return "\n\n".join(parts)
+
+
+def build_judge_report_prompt(fm, pairs: list[tuple[str, str]], summary: str) -> str:
+    return report_evidence(fm, pairs) + "\n\n" + (
         f"[검사 대상 보고서 요약]\n{summary}\n\n"
         "위 보고서 요약을 판정 기준에 따라 JSON으로 판정하라. 보고서 요약 전용 추가 기준 2축: "
         "① 판별력 — 이 요약만 보고 수백 권 카탈로그에서 이 보고서를 다른 보고서와 구별·발견할 수 "
@@ -593,16 +625,31 @@ def build_judge_report_prompt(fm, pairs: list[tuple[str, str]], summary: str) ->
         "미열거는 누락이 아니다. 누락 FAIL은 핵심 주제 자체가 빠졌거나 범용 문구뿐이라 판별이 "
         "불가한 경우로 한정하라."
     )
-    return "\n\n".join(parts)
 
 
-async def judge_call(an, prompt: str, args, jstats: dict) -> dict:
-    """판정 1건 (재시도 포함). 3회 실패 시 ERROR verdict — 스탬프를 막되 실행은 계속."""
+def build_arbiter_prompt(t: JudgeTarget, fail_history: list) -> str:
+    """중재 입력 = 판정과 동일 근거 + 현재 요약 + FAIL 사유 이력(오래된 순)."""
+    rows = []
+    for i, issues in enumerate(fail_history):
+        desc = "; ".join(
+            f"[{x.get('type', '?')}] {str(x.get('claim', ''))[:80]} — {str(x.get('note', ''))[:120]}"
+            for x in (issues or [])[:3]) or "(사유 없음)"
+        rows.append(f"- {i + 1}회차: {desc}")
+    hist = "\n".join(rows) if rows else "- (이력 없음)"
+    where = "보고서 요약" if t.hid == mdio.REPORT_KEY else "절 요약"
+    return (f"{t.evidence}\n\n[현재 {where}]\n{t.summary}\n\n"
+            f"[판정자의 FAIL 사유 이력 — 연속 {len(fail_history)}회, 오래된 순]\n{hist}\n\n"
+            "판정 오류(judge)인지 요약 오류(summary)인지 JSON 한 줄로 분류하라.")
+
+
+async def judge_call(an, prompt: str, args, jstats: dict, model: str | None = None) -> dict:
+    """판정 1건 (재시도 포함). 3회 실패 시 ERROR verdict — 스탬프를 막되 실행은 계속.
+    model 인자는 승급 재판정용(기본 --judge-model)."""
     last: Exception | None = None
     for attempt in range(3):
         try:
             raw, usage = await an.call_llm(
-                prompt, model=args.judge_model, timeout=args.llm_timeout,
+                prompt, model=model or args.judge_model, timeout=args.llm_timeout,
                 system_prompt=JUDGE_SYSTEM_PROMPT,
             )
         except an.RetryableError as e:
@@ -620,85 +667,161 @@ async def judge_call(an, prompt: str, args, jstats: dict) -> dict:
     return {"verdict": "ERROR", "issues": [{"type": "판정불능", "claim": "", "note": str(last)[:120]}]}
 
 
-def build_judge_targets(an, st, args) -> list[tuple[str, str]]:
-    """파일 1개의 판정 대상 (hid, 프롬프트) — 유닛 전건 + (있으면) 보고서 요약."""
-    targets: list[tuple[str, str]] = [
-        (u.hid, build_judge_unit_prompt(an, st.fm, u, st.base, st.existing[u.hid], args.input_cap))
-        for u in st.units
-    ]
-    if mdio.REPORT_KEY in st.existing:
+async def arbiter_call(an, prompt: str, args, jstats: dict) -> dict | None:
+    """중재 1건 (judge_call과 같은 재시도 골격). 3회 실패 → None = 이번 실행 승급 없음."""
+    last: Exception | None = None
+    for attempt in range(3):
+        try:
+            raw, usage = await an.call_llm(
+                prompt, model=args.arbiter_model, timeout=args.llm_timeout,
+                system_prompt=ARBITER_SYSTEM_PROMPT,
+            )
+        except an.RetryableError as e:
+            jstats["calls"] += 1
+            last = e
+        else:
+            jstats["calls"] += 1
+            jstats["cost"] += usage.get("cost") or 0.0
+            try:
+                out = parse_arbiter(raw)
+            except ValueError as e:
+                last = e
+            else:
+                jstats["arbiter"] += 1
+                return out
+        if attempt < 2:
+            await asyncio.sleep(an.RETRY_DELAYS[min(attempt, len(an.RETRY_DELAYS) - 1)])
+    print(f"[중재] 판정불능: {str(last)[:120]}", file=sys.stderr)
+    return None
+
+
+def build_judge_targets(an, st, args) -> tuple[list[JudgeTarget], dict[str, str]]:
+    """파일 1개의 판정 대상 — 유닛 전건 + (있으면) 보고서 요약. 사람 확인 hid(요약 있음)는
+    대상에서 빼고 {hid: 요약}으로 따로 돌려준다(판정 생략·PASS human 정착)."""
+    reviewed = {h: st.existing[h] for h in st.fm.summary_reviewed if h in st.existing}
+    targets: list[JudgeTarget] = []
+    for u in st.units:
+        if u.hid in reviewed:
+            continue
+        ev = unit_evidence(an, st.fm, u, st.base, args.input_cap)
+        summ = st.existing[u.hid]
+        targets.append(JudgeTarget(
+            u.hid, f"{ev}\n\n[검사 대상 요약]\n{summ}\n\n위 요약을 판정 기준에 따라 JSON으로 판정하라.",
+            summ, ev))
+    if mdio.REPORT_KEY in st.existing and mdio.REPORT_KEY not in reviewed:
         pairs = [(" > ".join(u.heading_path), st.existing[u.hid]) for u in st.units]
-        targets.append(
-            (mdio.REPORT_KEY, build_judge_report_prompt(st.fm, pairs, st.existing[mdio.REPORT_KEY]))
-        )
-    return targets
+        summ = st.existing[mdio.REPORT_KEY]
+        targets.append(JudgeTarget(
+            mdio.REPORT_KEY, build_judge_report_prompt(st.fm, pairs, summ), summ,
+            report_evidence(st.fm, pairs)))
+    return targets, reviewed
 
 
-def cache_hits(targets: list[tuple[str, str]], bucket: dict, model: str) -> dict[str, dict]:
-    """캐시에 같은 키(입력 전문+모델)의 최종 verdict가 있는 대상 → {hid: verdict dict}."""
+def cache_hits(targets: list[JudgeTarget], bucket: dict, model: str) -> dict[str, dict]:
+    """캐시에 같은 입력 전문의 최종 verdict가 있는 대상 → {hid: verdict dict}.
+    옛 형식 키(모델 포함) 적중은 새 키로 바꿔 쓴다."""
     hits: dict[str, dict] = {}
-    for hid, prompt in targets:
-        ent = bucket.get(hid)
-        if ent and ent.get("key") == judge_key(prompt, model) and ent.get("verdict") in VERDICTS:
-            hits[hid] = {"verdict": ent["verdict"], "issues": ent.get("issues") or [], "cached": True}
+    for t in targets:
+        ent = bucket.get(t.hid)
+        if judgecache.is_hit(ent, t.prompt, model):
+            ent["key"] = judgecache.judge_key(t.prompt)
+            hits[t.hid] = {"verdict": ent["verdict"], "issues": ent.get("issues") or [], "cached": True}
     return hits
 
 
-async def judge_file(an, targets: list[tuple[str, str]], args, jstats: dict,
-                     bucket: dict, hits: dict[str, dict]) -> dict[str, dict]:
-    """파일 1개 판정 — 캐시 적중은 재사용, 나머지만 호출하고 결과를 bucket에 즉시 기록.
-
-    한도/인증 예외는 전파(전체 실행 중단)하되 그때까지의 verdict는 bucket에 남는다
-    (호출자가 finally에서 저장) — 재실행 시 미판정 유닛만 이어서 판정한다.
+async def judge_file(an, targets: list[JudgeTarget], args, jstats: dict, bucket: dict,
+                     hits: dict[str, dict], reviewed: dict[str, str] | None = None) -> dict[str, dict]:
+    """파일 1개 판정 — 캐시 적중은 재사용, 나머지만 호출하고 결과를 bucket에 즉시 정착(settle).
+    FAIL은 캐시 적중이든 새 판정이든 승급 상태 기계를 거친다(docstring D). 사람 확인 hid는
+    판정 없이 PASS(human)로 정착. 한도/인증 예외는 전파(전체 실행 중단)하되 그때까지의
+    verdict는 bucket에 남는다(호출자가 finally에서 저장).
     """
     sema = asyncio.Semaphore(args.concurrency)
     fatal: list[Exception] = []
     results: dict[str, dict] = dict(hits)
     jstats["cached"] += len(hits)
     now = datetime.datetime.now().isoformat(timespec="seconds")
+    for hid, summ in (reviewed or {}).items():
+        judgecache.settle(bucket, hid, key="", sha=judgecache.summary_sha(summ), verdict="PASS",
+                          issues=[], model=HUMAN_MODEL, now=now)
+        results[hid] = {"verdict": "PASS", "issues": [], "cached": False, "model": HUMAN_MODEL,
+                        "reviewed": True}
+        jstats["reviewed"] += 1
 
-    async def one(hid: str, prompt: str) -> None:
+    async def escalate(t: JudgeTarget, v: dict, ent: dict) -> None:
+        streak = int(ent.get("fail_streak") or 0)
+        if not args.escalate_after or streak < args.escalate_after:
+            return
+        esc = ent.get("escalated", "")
+        if esc == "summary":
+            v["escalated"] = esc
+            if ent.get("regen_model"):
+                v["pending_regen"] = ent["regen_model"]
+            else:  # 승급 재생성 후에도 FAIL — 사람 몫
+                if not ent.get("manual"):
+                    jstats["manual"] += 1
+                ent["manual"] = True
+                v["manual"] = True
+            return
+        fault = "summary" if esc == "judge" else ""  # 판정 방향 소진 → 중재 생략
+        if not fault:
+            arb = await arbiter_call(an, build_arbiter_prompt(t, ent.get("fail_history") or []), args, jstats)
+            if arb is None:
+                v["note"] = "중재 판정불능 — 다음 실행 재시도"
+                return
+            ent["arbiter"] = dict(arb, model=args.arbiter_model, at=now)
+            v["arbiter"] = arb
+            fault = arb["fault"]
+            if fault == "judge":
+                v2 = await judge_call(an, t.prompt, args, jstats, model=args.escalate_judge_model)
+                jstats["escalated_judge"] += 1
+                if v2["verdict"] not in VERDICTS:
+                    v["note"] = "승격 재판정 판정불능 — 다음 실행 재시도"
+                    return
+                ent = judgecache.settle(bucket, t.hid, key=judgecache.judge_key(t.prompt),
+                                        sha=judgecache.summary_sha(t.summary), verdict=v2["verdict"],
+                                        issues=v2["issues"], model=args.escalate_judge_model, now=now)
+                v.update(verdict=v2["verdict"], issues=v2["issues"], cached=False,
+                         model=args.escalate_judge_model, escalated="judge",
+                         fail_streak=ent.get("fail_streak", 0))
+                if v2["verdict"] != "FAIL":
+                    return  # 판정 오류 확정 — 승급 판정이 캐시에 남아 이후 실행이 재사용
+                ent["escalated"] = "judge"
+                fault = "summary"
+        ent["escalated"] = "summary"
+        ent["regen_model"] = args.escalate_gen_model
+        jstats["regen_flagged"] += 1
+        v["escalated"] = "summary"
+        v["regen_model"] = args.escalate_gen_model
+
+    async def one(t: JudgeTarget) -> None:
         async with sema:
             if fatal:
                 return
             try:
-                v = await judge_call(an, prompt, args, jstats)
+                if t.hid in hits:
+                    ent = bucket.get(t.hid) or {}
+                else:
+                    v0 = await judge_call(an, t.prompt, args, jstats)
+                    results[t.hid] = dict(v0, cached=False)
+                    if v0["verdict"] not in VERDICTS:
+                        return  # ERROR(판정불능)는 캐시하지 않음 — 재실행 시 재시도
+                    ent = judgecache.settle(bucket, t.hid, key=judgecache.judge_key(t.prompt),
+                                            sha=judgecache.summary_sha(t.summary), verdict=v0["verdict"],
+                                            issues=v0["issues"], model=args.judge_model, now=now)
+                v = results[t.hid]
+                v["model"] = ent.get("model")
+                v["fail_streak"] = int(ent.get("fail_streak") or 0)
+                if v["verdict"] == "FAIL":
+                    await escalate(t, v, ent)
             except (an.UsageLimitReached, an.AuthError) as e:
                 if not fatal:
                     fatal.append(e)
-                return
-            results[hid] = dict(v, cached=False)
-            if v["verdict"] in VERDICTS:  # ERROR(판정불능)는 캐시하지 않음 — 재실행 시 재시도
-                bucket[hid] = {
-                    "key": judge_key(prompt, args.judge_model), "verdict": v["verdict"],
-                    "issues": v["issues"], "model": args.judge_model, "judged_at": now,
-                }
 
-    await asyncio.gather(*(one(h, p) for h, p in targets if h not in hits))
+    await asyncio.gather(*(one(t) for t in targets))
     if fatal:
         raise fatal[0]
     return results
-
-
-def summary_line_map(st) -> dict[str, int]:
-    """{hid: 원본 파일의 요약 줄 번호(1-기준)} — FAIL 리포트의 수동 삭제 편의."""
-    lines = st.original
-    roots = mdio.parse_heading_tree(lines)
-    fm = mdio.parse_frontmatter(lines)
-    out: dict[str, int] = {}
-    for h in mdio.iter_headings(roots):
-        for j in range(h.line + 1, min(h.line + 3, len(lines))):
-            if lines[j].startswith(mdio.UNIT_SUMMARY_PREFIX):
-                out[h.hid] = j + 1
-                break
-            if lines[j] != "":
-                break
-    first_heading = min((h.line for h in roots), default=len(lines))
-    for j in range(fm.end_line + 1, first_heading):
-        if lines[j].startswith(mdio.REPORT_SUMMARY_PREFIX):
-            out[mdio.REPORT_KEY] = j + 1
-            break
-    return out
 
 
 def _verdict_desc(hid: str, v: dict, lmap: dict[str, int]) -> str:
@@ -706,13 +829,27 @@ def _verdict_desc(hid: str, v: dict, lmap: dict[str, int]) -> str:
     line = lmap.get(hid)
     loc = f"(줄 {line})" if line else ""
     head = f"D {v['verdict']} {where} {loc}".rstrip()
-    if not v["issues"]:
-        return head
+    if int(v.get("fail_streak") or 0) > 1:
+        head += f" (연속 {v['fail_streak']}회)"
+    if v.get("escalated") == "judge":
+        head += f" [승격 재판정 {v.get('model')}]"
     parts = "; ".join(
         f"[{i.get('type', '?')}] {str(i.get('claim', ''))[:60]} — {str(i.get('note', ''))[:80]}"
-        for i in v["issues"][:3]
+        for i in (v.get("issues") or [])[:3]
     )
-    return f"{head}: {parts}"
+    out = f"{head}: {parts}" if parts else head
+    tails = []
+    if v.get("arbiter"):
+        tails.append(f"중재 {v['arbiter']['fault']}: {v['arbiter'].get('note', '')[:80]}")
+    if v.get("regen_model"):
+        tails.append(f"→ 다음 annotate에서 {v['regen_model']} 재생성")
+    if v.get("pending_regen"):
+        tails.append(f"{v['pending_regen']} 재생성 대기")
+    if v.get("manual"):
+        tails.append("수동 검토 필요 — /admin 카드에서 요약을 고치고 [사람이 확인함]")
+    if v.get("note"):
+        tails.append(v["note"])
+    return out + ("  ⇒ " + " / ".join(tails) if tails else "")
 
 
 # ---------------------------------------------------------------------------
@@ -810,6 +947,17 @@ def main() -> None:
     parser.add_argument("--log", default="logs/verify_log.json", help="결과 로그 경로")
     parser.add_argument("--judge-cache", default=JUDGE_CACHE_DEFAULT,
                         help=f"유닛별 판정 캐시 경로 (기본: {JUDGE_CACHE_DEFAULT}; 빈 문자열이면 비활성)")
+    parser.add_argument("--escalate-after", type=int, default=3,
+                        help="서로 다른 요약으로 N회 연속 FAIL이면 승급 상태 기계 진입 (기본 3, 0=비활성)")
+    parser.add_argument("--arbiter-model", default="claude-opus-5",
+                        help="중재 모델 — 판정 오류/요약 오류 분류 (기본: claude-opus-5)")
+    parser.add_argument("--escalate-judge-model", default="claude-sonnet-5",
+                        help="판정 오류 시 그 유닛만 재판정할 모델 (기본: claude-sonnet-5)")
+    parser.add_argument("--escalate-gen-model", default="claude-opus-5",
+                        help="요약 오류 시 다음 annotate가 그 유닛만 재생성할 모델 (기본: claude-opus-5)")
+    parser.add_argument("--accept", action="append", default=[], metavar="RID:HID",
+                        help="사람 확인 기록 — 그 유닛의 현재 요약을 frontmatter summary_reviewed에 적고"
+                             " 판정 없이 통과(반복 가능, 요약이 없으면 exit 2). 이어서 정상 검사 진행")
     parser.add_argument("--misses-cap", type=int, default=20, help="소실 개별 표시 상한 (기본 20)")
     parser.add_argument("--min-chars", type=int, default=200, help="유닛 최소 크기 (annotate와 동일해야 함)")
     parser.add_argument("--max-chars", type=int, default=4000, help="유닛 최대 크기 (annotate와 동일해야 함)")
@@ -838,6 +986,23 @@ def main() -> None:
     if not all_md:
         print("검사할 .md가 없습니다", file=sys.stderr)
         sys.exit(2)
+
+    # ---- 사람 확인 기록 (--accept RID:HID — 검사 전 frontmatter 기록, /admin 버튼과 같은 함수) ----
+    for spec in args.accept:
+        rid, _, hid = spec.partition(":")
+        mp = all_md.get(rid) or (reports_dir / f"{rid}.md")
+        if not hid or not Path(mp).is_file():
+            print(f"--accept 형식은 RID:HID 이며 .md가 있어야 합니다: {spec}", file=sys.stderr)
+            sys.exit(2)
+        if args.no_stamp:
+            print(f"--no-stamp: --accept 미기록 ({spec})", file=sys.stderr)
+            continue
+        try:
+            got = mdio.accept_summary(mp, hid)
+        except ValueError as e:
+            print(f"--accept 거부 — {e}", file=sys.stderr)
+            sys.exit(2)
+        print(f"[확인] {rid}: {hid} 사람 확인 기록 (summary_reviewed: {' '.join(got)})", file=sys.stderr)
 
     # ---- 상태 분기 (스탬프 상태 기계 — 검사 범위를 상태로 고른다) ----
     reports: list[Report] = []
@@ -935,36 +1100,38 @@ def main() -> None:
         cands.append(stem)
 
     judged: dict[str, dict] = {}  # stem → {hid: verdict dict}
-    jstats = {"calls": 0, "cost": 0.0, "cached": 0}
+    jstats = {"calls": 0, "cost": 0.0, "cached": 0, "reviewed": 0, "arbiter": 0,
+              "escalated_judge": 0, "regen_flagged": 0, "manual": 0}
     aborted = False
     if cands:
         an = _annotate()
         os.environ.setdefault("CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK", "1")
         an.setup_auth(args)
-        cache = load_judge_cache(args.judge_cache)
+        cache = judgecache.load(args.judge_cache)
         for stem in cands:
             rep, mp, st = states[stem]
             if aborted:
                 rep.notes.append("D 판정 미수행(한도/인증 중단) — 재실행하면 이어서 진행")
                 continue
-            targets = build_judge_targets(an, st, args)
+            targets, reviewed = build_judge_targets(an, st, args)
             bucket = cache.setdefault(stem, {})
             hits = {} if args.reaudit else cache_hits(targets, bucket, args.judge_model)
             print(f"[판정] {stem}: {len(targets)}건 — 캐시 재사용 {len(hits)}, 호출 "
-                  f"{len(targets) - len(hits)} ({args.judge_model})", file=sys.stderr)
+                  f"{len(targets) - len(hits)} ({args.judge_model})"
+                  + (f", 사람 확인 {len(reviewed)}" if reviewed else ""), file=sys.stderr)
             try:
-                judged[stem] = asyncio.run(judge_file(an, targets, args, jstats, bucket, hits))
+                judged[stem] = asyncio.run(judge_file(an, targets, args, jstats, bucket, hits, reviewed))
             except (an.UsageLimitReached, an.AuthError) as e:
                 aborted = True
                 print(an.fatal_msg(e), file=sys.stderr)
                 rep.notes.append("D 판정 중단 — 재실행하면 이어서 진행")
             finally:
-                save_judge_cache(args.judge_cache, cache)
+                judgecache.save(args.judge_cache, cache)
 
     # ---- 판정 결과 반영 ----
     for stem, verdicts in judged.items():
         rep, mp, st = states[stem]
-        lmap = summary_line_map(st)
+        lmap = mdio.summary_line_map(st.original)
         counts = {"PASS": 0, "WARN": 0, "FAIL": 0, "ERROR": 0}
         for hid, v in sorted(verdicts.items()):
             counts[v["verdict"]] += 1
@@ -974,6 +1141,7 @@ def main() -> None:
                 rep.warns.append(_verdict_desc(hid, v, lmap))
         rep.stats["judge"] = counts
         rep.stats["judge_cached"] = sum(1 for v in verdicts.values() if v.get("cached"))
+        rep.stats["judge_reviewed"] = sum(1 for v in verdicts.values() if v.get("reviewed"))
 
     # ---- 스탬프 기록 (검사 아님 — 최종 단계) ----
     today = datetime.date.today().isoformat()
@@ -1011,7 +1179,9 @@ def main() -> None:
         jd = rep.stats.get("judge")
         if jd:
             cov += f"  [판정 PASS {jd['PASS']} / WARN {jd['WARN']} / FAIL {jd['FAIL'] + jd['ERROR']}"
-            cov += f" · 캐시 {rep.stats['judge_cached']}]" if rep.stats.get("judge_cached") else "]"
+            cov += f" · 캐시 {rep.stats['judge_cached']}" if rep.stats.get("judge_cached") else ""
+            cov += f" · 사람 확인 {rep.stats['judge_reviewed']}" if rep.stats.get("judge_reviewed") else ""
+            cov += "]"
         print(f"{rep.report_id}: {status} [{rep.mode}]{tag}{cov}")
         for f_ in rep.fails + rep.qfails:
             print(f"  x {f_}")
@@ -1024,8 +1194,11 @@ def main() -> None:
     print()
     print(f"== 합계 == PASS {len(reports) - n_fail} / FAIL {n_fail} / 경고 {n_warn}")
     if jstats["calls"] or jstats["cached"]:
+        extra = [f"{label} {jstats[k]}" for k, label in
+                 (("reviewed", "사람 확인"), ("arbiter", "중재"), ("escalated_judge", "승격 재판정"),
+                  ("regen_flagged", "재생성 예약"), ("manual", "수동 검토")) if jstats.get(k)]
         print(f"[판정 합계] 호출 {jstats['calls']}회, 비용 ${jstats['cost']:.4f}, "
-              f"캐시 재사용 {jstats['cached']}건")
+              f"캐시 재사용 {jstats['cached']}건" + (", " + ", ".join(extra) if extra else ""))
     if aborted:
         print("[중단] 한도/인증으로 D 판정이 중단됨 — 재실행하면 미기록 파일만 이어서 판정", file=sys.stderr)
 
@@ -1036,7 +1209,10 @@ def main() -> None:
         "mode": "verify",
         "no_stamp": args.no_stamp,
         "flags": {"full": args.full, "reaudit": args.reaudit, "no_llm": args.no_llm,
-                  "judge_model": args.judge_model, "judge_cache": args.judge_cache},
+                  "judge_model": args.judge_model, "judge_cache": args.judge_cache,
+                  "escalate_after": args.escalate_after, "arbiter_model": args.arbiter_model,
+                  "escalate_judge_model": args.escalate_judge_model,
+                  "escalate_gen_model": args.escalate_gen_model, "accept": args.accept},
         "judge_totals": jstats,
         "judgements": {stem: verdicts for stem, verdicts in judged.items()},
         "files": [dataclasses.asdict(r) for r in reports],

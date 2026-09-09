@@ -410,6 +410,52 @@ function dropButton(file) {
   return w;
 }
 
+// 요약 품질 수동 검토 카드 — 유닛별 위치·FAIL 사유 + [사람이 확인함](서버 summary_accept →
+// frontmatter summary_reviewed 기록; 다음 일괄 해결에서 판정 없이 통과, annotate는 다시 쓰지 않음).
+function manualList(items) {
+  const w = el("div", "hint");
+  for (const m of items) {
+    const row = el("div", "");
+    const where = m.hid === "__report__" ? "보고서 요약" : m.hid;
+    const issues = (m.issues || []).slice(0, 3)
+      .map((i) => `[${i.type || "?"}] ${String(i.claim || "").slice(0, 60)} — ${String(i.note || "").slice(0, 80)}`)
+      .join("; ");
+    row.appendChild(txt(`· ${where}` + (m.line ? ` (줄 ${m.line})` : "")
+      + (m.fail_streak ? ` · 연속 FAIL ${m.fail_streak}회` : "") + (issues ? `: ${issues}` : "")));
+    row.appendChild(acceptButton(m.rid, m.hid));
+    w.appendChild(row);
+  }
+  return w;
+}
+
+function acceptButton(rid, hid) {
+  const w = el("span", "actions");
+  const b = el("button", "mini", "사람이 확인함");
+  const msg = el("span", "note");
+  b.addEventListener("click", async () => {
+    if (!confirm(`${rid} ${hid}: 이 유닛의 현재 요약을 사람이 확인한 것으로 기록합니다.\n` +
+                 "판정 없이 통과되며 annotate가 다시 쓰지 않습니다. 계속할까요?")) return;
+    b.disabled = true;
+    let res, j;
+    try {
+      [res, j] = await postJson("/api/admin/summary_accept", { rid, hid });
+    } catch (e) {
+      msg.textContent = "서버 연결 실패: " + e.message;
+      b.disabled = false;
+      return;
+    }
+    if (!res.ok) {
+      msg.textContent = "✗ " + (j.error || `HTTP ${res.status}`);
+      b.disabled = false;
+      return;
+    }
+    flash(`✓ 사람 확인 기록 — ${rid} ${hid}`, "ok");
+    await refreshStatus();
+  });
+  w.append(b, msg);
+  return w;
+}
+
 let ctlSeq = 0;
 function renderCards(cards) {
   const host = $("cards");
@@ -442,6 +488,7 @@ function renderCards(cards) {
     }
     if (c.kind === "register_family") b.appendChild(familyForm(ex));
     if (c.kind === "register_orphan" || c.kind === "register_broken") b.appendChild(dropButton(c.files[0]));
+    if (c.kind === "summary_manual") b.appendChild(manualList(ex.manual || []));
     if (ex.error) b.appendChild(el("div", "mono-block", ex.error));
     if (ex.errors && ex.errors.length) b.appendChild(el("div", "mono-block", ex.errors.join("\n")));
     if (ex.items && ex.items.length) {
@@ -592,7 +639,8 @@ function renderStages(j) {
   host.textContent = "";
   j.stages.forEach((s, i) => {
     let cls = "idle", mark = "· 대기";
-    if (s.code === 0) { cls = "ok"; mark = "✓ 통과"; }
+    if (s.superseded) { cls = "idle"; mark = "↻ 재생성으로 이어짐"; }
+    else if (s.code === 0) { cls = "ok"; mark = "✓ 통과"; }
     else if (s.code !== null) { cls = "fail"; mark = `✗ exit ${s.code}`; }
     else if (s.skipped) { cls = "idle"; mark = "— 생략"; }
     else if (j.running && i === j.current) { cls = "run"; mark = "▶ 실행 중"; }

@@ -50,13 +50,14 @@ from starlette.applications import Starlette
 from starlette.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.routing import Route
 
+import judgecache
 import mdio
 import register
 import registry
 from annotate import AuthError, RetryableError, UsageLimitReached, fatal_msg, setup_auth
 from build_db import file_digest
 from search import DEFAULT_MODEL, MAX_TURNS, TOP_N, perform_search
-from status import REGISTER_NOTE, collect_status, is_loaded, read_db_ledger, scan_pdfs
+from status import MANUAL_NOTE, REGEN_NOTE, REGISTER_NOTE, collect_status, is_loaded, read_db_ledger, scan_pdfs
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INDEX_HTML = REPO_ROOT / "web" / "index.html"
@@ -70,6 +71,9 @@ SUBPROC_LINE_LIMIT = 1 << 20  # readline 상한 — 기본 64KB로는 긴 진단
 # → build_db → build_index. verify2도 CLI는 verify.py — 스탬프 분기가 검사 범위를 고른다.
 STAGE_LABELS = {"register": "관리번호 등록", "verify": "추출 검증", "annotate": "요약 생성",
                 "verify2": "요약 품질 검증", "build_db": "DB 동기화", "build_index": "카탈로그 재생성"}
+# 품질 FAIL 루프(2026-09-09): verify2가 exit 1이고 재생성 대기(판정 캐시 핸드오프)가 있으면
+# run_job_queue가 같은 job 안에 annotate → verify2를 끼워 넣는다. 한 job당 최대 바퀴 수.
+FAIL_REGEN_LOOPS_MAX = 3
 
 
 def file_key(rid: str, rid_file: dict[str, str]) -> str:
@@ -119,7 +123,8 @@ def make_args(base: argparse.Namespace) -> argparse.Namespace:
 def status_args() -> argparse.Namespace:
     """status.collect_status가 읽는 필드 — 파이프라인 기본값과 동일(min/max는 annotate 기준)."""
     return argparse.Namespace(pdf_dir="pdfs", reports_dir="reports", db="reports.db",
-                              index="master_index.md", min_chars=200, max_chars=4000)
+                              index="master_index.md", min_chars=200, max_chars=4000,
+                              judge_cache=judgecache.DEFAULT_PATH)
 
 
 def check_freshness() -> tuple[bool, str]:
@@ -282,7 +287,7 @@ async def api_search(request):
 
 
 # 자동 단계가 처리하는 노트(승격 대기·검증 후 변경·등록 스탬프 없음)와 정보성 노트(플랫 구조)는 카드 제외
-AUTO_NOTES = ("verify 승격 대기", "검증 후 변경", "플랫 구조", REGISTER_NOTE)
+AUTO_NOTES = ("verify 승격 대기", "검증 후 변경", "플랫 구조", REGISTER_NOTE, REGEN_NOTE)
 NEEDS_VERIFY = ("unverified", "register")  # 추출 검증 스탬프 없음 — verify 단계 대상
 
 
@@ -510,12 +515,14 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
             "kind": "summarize_needed", "severity": "warn",
             "files": [r.report_id for r in need],
             "title": f"요약 생성 필요 — {len(need)}개 파일"
-                     f" (잔여 호출 {sum(r.remaining for r in need)}건)",
-            "detail": "요약 없는 유닛만 증분 생성합니다 — LLM 사용량이 듭니다"
-                      " (일괄 해결에 자동 포함).",
+                     f" (잔여 호출 {sum(r.remaining for r in need)}건"
+                     + (f", 품질 FAIL 재생성 {sum(r.regen for r in need)}건" if any(r.regen for r in need) else "")
+                     + ")",
+            "detail": "요약이 없거나 품질 FAIL 판정을 받은 유닛만 증분 (재)생성합니다 — LLM 사용량이"
+                      " 듭니다 (일괄 해결에 자동 포함).",
             "control": None,
         })
-    quality = [r.report_id for r in st.rows if r.verify == "extract" and not r.remaining]
+    quality = [r.report_id for r in st.rows if r.verify == "extract" and not r.remaining and not r.manual]
     if quality:
         cards.append({
             "kind": "quality_wait", "severity": "warn", "files": quality,
@@ -542,8 +549,21 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
             "detail": idx_text.split(": ", 1)[-1] + " (일괄 해결에 자동 포함).",
             "control": None,
         })
+    for r in st.rows:  # 승급 재생성 후에도 FAIL — 사람이 요약을 고치고 [사람이 확인함]
+        if r.extracted != "완료" or not r.manual:
+            continue
+        cards.append({
+            "kind": "summary_manual", "severity": "err", "files": [r.report_id],
+            "title": f"요약 품질 수동 검토 — {r.report_id} ({len(r.manual)}건)",
+            "detail": f"승급 재생성 후에도 FAIL — reports/{r.report_id}.md의 해당 줄 요약을 직접 고친 뒤"
+                      "(또는 그대로 두고) [사람이 확인함]을 누르면 다음 일괄 해결에서 판정 없이 통과하고"
+                      " annotate가 다시 쓰지 않습니다. 요약 줄을 지우면 다음 annotate가 새로 만듭니다."
+                      " 확인 전까지 이 파일은 DB·카탈로그에서 제외됩니다.",
+            "control": None,
+            "extra": {"manual": [dict(m, rid=r.report_id) for m in r.manual]},
+        })
     manual = [f"{r.report_id}: {n}" for r in st.rows if r.extracted == "완료"
-              for n in r.notes if not n.startswith(AUTO_NOTES + (REEXTRACT_NOTE,))]
+              for n in r.notes if not n.startswith(AUTO_NOTES + (REEXTRACT_NOTE, MANUAL_NOTE))]
     if manual:
         cards.append({
             "kind": "manual", "severity": "info", "files": [],
@@ -627,7 +647,7 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict, rid_file: dict
                     if r.extracted == "완료" and needs_verify(r)}
     an = v1 | {file_key(r.report_id, rid_file) for r in st.rows if r.remaining > 0}
     v2 = an | {file_key(r.report_id, rid_file) for r in st.rows
-               if r.verify == "extract" and not r.remaining}
+               if r.verify == "extract" and not r.remaining and not r.manual}  # 수동 검토는 카드로
     for step, bases in (("verify", v1), ("annotate", an), ("verify2", v2)):
         if bases or regs:  # register가 있으면 등록 직후 보탤 자리(빈 단계는 실행 시 "대상 없음" 생략)
             stages.append({"step": step, "label": STAGE_LABELS[step],
@@ -669,7 +689,7 @@ def stage_targets(step: str, st, bases: list[str], rid_file: dict[str, str]) -> 
         if any(r.remaining > 0 for r in rs):
             dropped.append(b)
             continue
-        targets += [r.report_id for r in rs if r.verify == "extract"]
+        targets += [r.report_id for r in rs if r.verify == "extract" and not r.manual]  # 수동 검토는 카드로
     return targets, dropped
 
 
@@ -731,10 +751,15 @@ async def run_job_queue(state, job: dict) -> None:
     stage_targets가 생존 파일만 데려간다. 예외 = verify·promote의 exit 2(사용 오류·
     인증·한도)는 전 파일 공통 장애라 하드 스톱. 취소(cancel)는 현재 단계 종료 후
     잔여 단계를 건너뛴다.
+    품질 FAIL 루프(2026-09-09): verify2(요약 품질 검증)가 exit 1이고 그 대상 파일에
+    재생성 대기(verify가 판정 캐시에 남긴 "현재 요약에 대한 FAIL")가 있으면, 바로 뒤에
+    annotate(FAIL 유닛만 재생성) → verify2(바뀐 요약만 재판정)를 끼워 넣는다 — 한 job당
+    FAIL_REGEN_LOOPS_MAX 바퀴. 실패한 verify2는 superseded로 표시해 최종 판정에서 뺀다.
+    수동 검토 파일(승급 후에도 FAIL)은 재생성 대기가 없어 루프를 만들지 않는다.
     """
-    n = len(job["stages"])
     try:
         for i, stg in enumerate(job["stages"]):
+            n = len(job["stages"])  # 품질 FAIL 루프가 단계를 끼워 넣으므로 매번 재계산
             if job["cancel"] or job["code"] == 2:
                 stg["skipped"] = True
                 continue
@@ -781,10 +806,29 @@ async def run_job_queue(state, job: dict) -> None:
                 job["code"] = 2
                 job["lines"].append("[serve] 종료 코드 2(사용 오류·인증·사용량 한도) — "
                                     "공통 장애로 보고 남은 단계를 중단합니다.")
+            elif code == 1 and stg["step"] == "verify2" and not job["cancel"]:
+                loop = int(stg.get("loop") or 0)
+                if loop < FAIL_REGEN_LOOPS_MAX:
+                    st = await asyncio.to_thread(collect_status, status_args())
+                    grouped = rows_by_file(st, registry.rid_file_map())
+                    pending = sorted(b for b in stg["bases"]
+                                     if any(r.regen > 0 for r in grouped.get(b, [])))
+                    if pending:
+                        k = loop + 1
+                        n_regen = sum(r.regen for b in pending for r in grouped.get(b, []))
+                        job["lines"].append(f"[serve] 품질 FAIL {k}회차 — 재생성 대기 {n_regen}건, "
+                                            "요약 재생성 → 재검증을 이어서 실행")
+                        stg["superseded"] = True
+                        job["stages"][i + 1:i + 1] = [
+                            {"step": "annotate", "label": f"요약 재생성 — 품질 FAIL {k}회차",
+                             "bases": pending, "files": pending, "code": None, "skipped": False, "dropped": []},
+                            {"step": "verify2", "label": f"요약 품질 재검증 — {k}회차", "loop": k,
+                             "bases": pending, "files": pending, "code": None, "skipped": False, "dropped": []},
+                        ]
     finally:
         if job["code"] != 2:
             flawed = (job["cancel"]
-                      or any(s["code"] not in (0, None) for s in job["stages"])
+                      or any(s["code"] not in (0, None) for s in job["stages"] if not s.get("superseded"))
                       or any(s["dropped"] for s in job["stages"]))
             job["code"] = 1 if flawed else 0
         job["running"] = False
@@ -867,7 +911,8 @@ async def api_admin_job(request):
         "current": job["current"],
         "stages": [
             {"step": s["step"], "label": s["label"], "files": s["files"],
-             "dropped": s["dropped"], "code": s["code"], "skipped": s["skipped"]}
+             "dropped": s["dropped"], "code": s["code"], "skipped": s["skipped"],
+             "superseded": bool(s.get("superseded"))}
             for s in job["stages"]
         ],
         "total": len(job["lines"]),
@@ -960,6 +1005,32 @@ async def api_admin_register_drop(request):
     if err:
         return JSONResponse({"error": err}, status_code=400)
     return JSONResponse({"ok": True, "file": file, "removed": removed})
+
+
+async def api_admin_summary_accept(request):
+    """/admin 수동 검토 카드의 [사람이 확인함] → 그 유닛의 현재 요약을 frontmatter
+    `summary_reviewed`에 기록(mdio.accept_summary — verify --accept와 같은 함수). 다음 일괄
+    해결에서 verify가 그 유닛 판정을 생략(PASS, human)하고 annotate는 다시 쓰지 않는다."""
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse({"error": "JSON 본문이 필요합니다."}, status_code=400)
+    rid = str(payload.get("rid") or "").strip()
+    hid = str(payload.get("hid") or "").strip()
+    if not rid or not hid or any(ch in rid for ch in "/\\") or rid.startswith("."):
+        return JSONResponse({"error": "rid와 hid가 필요합니다."}, status_code=400)
+    state = request.app.state
+    if state.job and state.job["running"]:
+        return JSONResponse({"error": "작업 진행 중에는 기록할 수 없습니다 — 완료 후 다시 시도하세요."},
+                            status_code=409)
+    md = REPO_ROOT / "reports" / f"{rid}.md"
+    if not md.is_file():
+        return JSONResponse({"error": f".md 없음: reports/{rid}.md"}, status_code=400)
+    try:
+        reviewed = await asyncio.to_thread(mdio.accept_summary, md, hid)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    return JSONResponse({"ok": True, "rid": rid, "hid": hid, "reviewed": reviewed})
 
 
 async def api_admin_cancel(request):
@@ -1111,6 +1182,7 @@ def main() -> None:
             Route("/api/admin/cancel", api_admin_cancel, methods=["POST"]),
             Route("/api/admin/register_family_set", api_admin_register_family_set, methods=["POST"]),
             Route("/api/admin/register_drop", api_admin_register_drop, methods=["POST"]),
+            Route("/api/admin/summary_accept", api_admin_summary_accept, methods=["POST"]),
             Route("/api/admin/job/ack", api_admin_job_ack, methods=["POST"]),
             Route("/api/admin/reports", api_admin_reports),
             Route("/api/admin/toc", api_admin_toc),
