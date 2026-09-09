@@ -100,6 +100,7 @@ import pymupdf
 import judgecache
 import mdio
 from extract import (
+    BARE_MD_RE,
     CAPTION_RE,
     PROFILES,
     TEMPLATE_FOLD,
@@ -110,11 +111,14 @@ from extract import (
     fold_g,
     mark_colophon_pages,
     mark_footnotes,
+    md_chapter_values,
     page_table_fold,
     profile_value,
     detect_parts,
+    relaxed_profile_pats,
     scan_document,
     table_covers,
+    toc_chapter_titles,
 )
 from registry import STEM_RE, parts_for, rid_for, rid_reason
 
@@ -130,7 +134,6 @@ CANON_RE = re.compile(r"[^0-9A-Za-z가-힣]")
 REQUIRED_KEYS = ("report_id", "title", "title_en", "year", "lead_researcher",
                  "institution", "keywords_ko", "keywords_en", "abstract", "source_pdf")
 # 목차 줄은 두줄형 표기가 한 줄로 합쳐져 있어 완화 패턴으로 장 번호를 수집한다
-RELAXED_PROFILE = {"jang_split": "jang", "bare_digit_split": "arabic"}
 PROFILE_PAT = {name: pat for name, pat, _ in PROFILES}
 DRIFT_MISS_RATIO = 0.05  # 미스율이 이보다 크면 개별 소실이 아니라 버전 드리프트로 요약
 
@@ -349,19 +352,6 @@ def check_image_markers(rep: Report, scans, part, body_start, md_line_set: set) 
 # C. 목차 대조 (신규 문법 미감지·헤딩 오탐 안전망)
 # ---------------------------------------------------------------------------
 
-BARE_MD_RE = re.compile(r"^(\d{1,2})\s+\S")  # bare_digit .md 헤딩 텍스트("1 제목")용
-
-
-def _relaxed_pats(profile: str) -> list[tuple[str, re.Pattern]]:
-    """목차 줄용 완화 패턴 목록. 로마자는 유니코드/ASCII 표기가 본문과 어긋나는
-    실측(2025-29: 목차 Ⅰ. vs 본문 II.)이 있어 두 형태 모두 수집한다."""
-    r = RELAXED_PROFILE.get(profile, profile)
-    if r in ("roman_unicode", "roman_ascii"):
-        return [("roman_unicode", PROFILE_PAT["roman_unicode"]),
-                ("roman_ascii", PROFILE_PAT["roman_ascii"])]
-    return [(r, PROFILE_PAT[r])]
-
-
 def _title_variants(text: str) -> list[str]:
     """장 제목의 canon 변형들 — 원문 그대로 + 선두 번호 토큰 제거형.
 
@@ -401,34 +391,15 @@ def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) 
     if profile is None:
         rep.notes.append("프로파일 미확정 — 목차 번호 대조 생략")
         return
-    # (b) 번호 방향: .md 헤딩 표면 번호 집합 ↔ 목차 번호 집합 대칭 비교
-    pats = _relaxed_pats(profile)
-    toc_values: set[int] = set()
-    for s in toc_scans:
-        for ln in s.lines:
-            t = ln.text.strip()
-            if CAPTION_RE.match(t):
-                continue  # 표·그림 목차 항목
-            for name, pat in pats:
-                m = pat.match(t)
-                if m:
-                    try:
-                        toc_values.add(profile_value(name, m))
-                    except (ValueError, IndexError):
-                        pass
-                    break
-    md_pats = pats + ([("bare", BARE_MD_RE)] if profile == "bare_digit_split" else [])
-    md_num: dict[int, object] = {}  # 표면 번호 → 헤딩 (번호 달린 참고문헌 장도 포함)
-    for h in depth1:
-        for name, pat in md_pats:
-            m = pat.match(h.text)
-            if m:
-                try:
-                    v = int(m.group(1)) if name == "bare" else profile_value(name, m)
-                except (ValueError, IndexError):
-                    continue
-                md_num.setdefault(v, h)
-                break
+    # (b) 번호 방향: .md 헤딩 번호 집합 ↔ 목차 번호 집합 대칭 비교. 목차 수집·표면 번호 해석·R4 장 번호
+    #     오타 승격(직전 장과 같은 번호·다른 제목·목차에 다음 번호 → 다음 서수)은 extract와 같은 함수
+    #     (toc_chapter_values·md_chapter_values)를 써서 두 쪽이 어긋나지 않는다.
+    toc = toc_chapter_titles(scans, part, body_start, profile)
+    toc_values = set(toc)
+    md_num: dict[int, object] = {}  # 유효 번호 → 헤딩 (번호 달린 참고문헌 장도 포함)
+    for h, v in zip(depth1, md_chapter_values([h.text for h in depth1], profile, toc)):
+        if v is not None:
+            md_num.setdefault(v, h)
     rep.stats["toc_values"] = sorted(toc_values)
     rep.stats["md_chapter_values"] = sorted(md_num)
     if not toc_values:
@@ -444,7 +415,7 @@ def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) 
         rep.fails.append(f"목차에서 확인 안 되는 장 번호 {missing} — 헤딩 오탐 의심")
     if over:
         msg = f"목차에만 있는 장 번호 {over} — extract가 못 본 장(문법 미감지) 의심"
-        if _relaxed_pats(profile)[0][0] == "arabic":
+        if relaxed_profile_pats(profile)[0][0] == "arabic":
             # 아라비아 목차는 하위 항목 번호("1. …")와 장 번호가 구분 불가 — 육안 확인 유도
             rep.warns.append(msg + " (하위 항목 번호 혼입 가능 — --scan 육안 확인)")
         else:

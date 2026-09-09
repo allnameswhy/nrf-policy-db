@@ -83,6 +83,9 @@ PROFILES = [
     ("jang", re.compile(r"^제\s*(\d{1,2})\s*장[.\s]+\S"), False),
     ("roman_unicode", re.compile(r"^([Ⅰ-Ⅻ])\.\s*\S"), False),
     ("roman_ascii", re.compile(r"^([IVX]{1,4})\.?\s+\S"), False),
+    # 로마자 혼용(WAVE_PLAN R1, 2026-09-09 — 정찰 8권): 한 문서에 ASCII "I."와 유니코드 "Ⅱ."가 섞여 위 두
+    # 프로파일이 장을 1개만 잡는 판형. 순수 로마 문서는 앞 프로파일이 먼저 채택되므로 무영향.
+    ("roman_mixed", re.compile(r"^([IVXⅠ-Ⅻ]{1,4})\.?\s+\S"), False),
     ("arabic", re.compile(r"^(\d{1,2})\.(?!\s*\d)\s+\S"), False),
     ("bare_digit_split", re.compile(r"^(\d{1,2})$"), True),
 ]
@@ -311,7 +314,63 @@ def scan_page(page, index: int, tables: bool = True) -> PageScan:
 
 
 def scan_document(doc, tables: bool = True) -> list[PageScan]:
-    return [scan_page(page, i, tables=tables) for i, page in enumerate(doc)]
+    scans = [scan_page(page, i, tables=tables) for i, page in enumerate(doc)]
+    strip_running_heads(scans)
+    return scans
+
+
+# 러닝헤드(장제목/보고서 제목 + 쪽 번호) — 맨 위/맨 아래 줄. 번호가 뒤(A) 또는 앞(B).
+RUN_HEAD_A = re.compile(r"^(?P<t>\S.*?\S)\s*(?:[·･‧_|\-–—]\s*)?(?P<n>\d{1,3})$")
+RUN_HEAD_B = re.compile(r"^(?P<n>\d{1,3})\s*(?:[·･‧_|\-–—]\s*)?(?P<t>[^\s.)\]}>]\S*.*)$")
+RUN_HEAD_MAX_LEN = 80
+RUN_HEAD_BAND = 0.15        # 페이지 높이 대비 맨 위/맨 아래 띠
+RUN_HEAD_MIN_PAGES = 3      # 같은 위치·같은 쪽 번호 오프셋이 이만큼 이상이어야 러닝헤드로 인정
+
+
+def strip_running_heads(scans: list[PageScan]) -> int:
+    """러닝헤드 제거(WAVE_PLAN R5, 2026-09-09): 쪽 번호가 `- N -`가 아니라 머리말·꼬리말의 제목 줄에 붙은 판형
+    (2019-17 `Ⅱ. 책임있는 연구수행  37`, 2024-11 `제2장 … 현황  35`/`34  사내대학원 …`, 2024-40 `… 연구 ･ 141`,
+    `National Research Foundation _ 57`)은 FOOTER_RE가 못 걸러 매 쪽 제목 줄이 본문·헤딩에 섞인다.
+    규칙(문서 단위, 표 비의존 — 경량·전체 스캔 동일): 각 쪽의 맨 위(y0 < 15%)·맨 아래(y1 > 85%) 줄 중 리더런이
+    아니고 80자 이하이며 `제목 [구분자] 숫자` 또는 `숫자 [구분자] 제목`인 줄을 후보로 모아, 같은 위치에서
+    **쪽 번호 − 쪽 인덱스(오프셋)가 같은 후보가 3쪽 이상**인 묶음만 러닝헤드로 본다(제목이 장마다 바뀌어도,
+    합본으로 오프셋이 달라져도 각 묶음이 독립 판정; 우연히 숫자로 끝나는 본문 줄은 오프셋이 안 맞아 남는다).
+    제거한 줄의 번호는 그 쪽에 꼬리말이 없을 때 footer/footer_arabic로 채운다(`- 1 -` 앵커·합본 분할이 이런
+    판형에서도 작동). 번호 없는 러닝헤드(2019-70 머리말)와 맨몸 숫자 꼬리말은 대상이 아니다. 반환 = 제거 줄 수."""
+    groups: dict[tuple[str, int], list[tuple[PageScan, Line, int]]] = {}
+    for s in scans:
+        if not s.lines:
+            continue
+        top = min(s.lines, key=lambda l: l.y0)
+        bot = max(s.lines, key=lambda l: l.y1)
+        for pos, ln, in_band in (("top", top, top.y0 < RUN_HEAD_BAND * s.height),
+                                 ("bot", bot, bot.y1 > (1 - RUN_HEAD_BAND) * s.height)):
+            t = ln.text.strip()
+            if not in_band or ln.is_leader or len(t) > RUN_HEAD_MAX_LEN:
+                continue
+            m = RUN_HEAD_A.match(t) or RUN_HEAD_B.match(t)
+            # 제목부는 글자를 포함해야 한다 — 맨몸 세 자리 쪽 번호("100" → "10"+"0")·소수("82.3")는 러닝헤드가 아님
+            if not m or len(fold(m.group("t")).strip("·･‧_|-–—")) < 2 \
+                    or not re.search(r"[^\d\s·･‧_|\-–—.,]", m.group("t")):
+                continue
+            n = int(m.group("n"))
+            groups.setdefault((pos, n - s.index), []).append((s, ln, n))
+    removed = 0
+    for members in groups.values():
+        if len(members) < RUN_HEAD_MIN_PAGES:
+            continue
+        for s, ln, n in members:
+            if ln not in s.lines:
+                continue
+            s.lines.remove(ln)
+            removed += 1
+            s.text_chars = sum(len(l.text.strip()) for l in s.lines)
+            s.image_only = s.text_chars < 50 and s.n_images >= 1
+            s.blank = s.text_chars == 0 and s.n_images == 0
+            if s.footer is None:
+                s.footer = str(n)
+                s.footer_arabic = n
+    return removed
 
 
 def mark_footnotes(scans: list[PageScan], body_range: tuple[int, int]) -> int:
@@ -469,8 +528,32 @@ def detect_parts(scans: list[PageScan]) -> list[tuple[int, int]]:
     """합본 파트 경계 — register(경량 스캔, 등록부 pages 열의 출처)와 verify(전체 스캔, 대조)가
     공유하는 **유일한** 분할 규칙. 표(find_tables) 데이터에 의존하지 않는 PageScan 필드만
     써야 두 스캔이 일치한다(footer_arabic·blank·image_only·leader_lines·lines 수).
-    합본 병합 규칙 확장(WAVE_PLAN R2)도 여기에."""
-    return split_bundle(scans)
+    = split_bundle(쪽 번호 재시작 분할) → merge_front_parts(앞부속 오분리 병합, WAVE_PLAN R2)."""
+    return merge_front_parts(scans, split_bundle(scans))
+
+
+def part_has_body(scans: list[PageScan], part: tuple[int, int]) -> bool:
+    """파트에 본문 시작(1장 후보 페이지)이 있는가. 표 내부 표식을 무시해(ignore_tables) 경량 스캔과
+    전체 스캔이 같은 답을 낸다 — detect_parts 병합 판정 전용."""
+    return find_body_start(scans, part, ignore_tables=True)[0] is not None
+
+
+def merge_front_parts(scans: list[PageScan], parts: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """앞부속 오분리 병합(WAVE_PLAN §4 R2, 2026-09-09): 앞부속(제출문·요약문·목차)이 물리 쪽 번호로
+    매겨지고 본문이 '- 1 -'로 재시작하는 판형은 split_bundle이 앞부속을 별도 파트로 자른다(정찰 15권 —
+    그 파트는 본문 시작이 없어 skipped_no_body_start, 초록은 유실). 본문 시작이 없는 파트는 뒤 파트에
+    붙인다(앞부속이 연속이면 누적, 마지막 파트는 그대로). 진짜 합본·요약문 파트형 6권은 파트 1에 본문
+    시작이 있어 무영향(경량 스캔 실측 2026-09-09)."""
+    out: list[tuple[int, int]] = []
+    i = 0
+    while i < len(parts):
+        start, end = parts[i]
+        while i + 1 < len(parts) and not part_has_body(scans, (start, end)):
+            i += 1
+            end = parts[i][1]
+        out.append((start, end))
+        i += 1
+    return out
 
 
 def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
@@ -794,14 +877,17 @@ def profile_value(name: str, m: re.Match) -> int:
         return ROMAN_UNI.index(g) + 1
     if name == "roman_ascii":
         return roman_ascii_to_int(g)
+    if name == "roman_mixed":  # 한 글자 유니코드 Ⅰ~Ⅻ 또는 ASCII 조합 — 혼용 글리프 정수화
+        return ROMAN_UNI.index(g) + 1 if len(g) == 1 and g in ROMAN_UNI else roman_ascii_to_int(g)
     return int(g)
 
 
-def line_l1_candidates(ln: Line, next_ln: Line | None) -> list[str]:
-    """이 줄에서 1장 후보로 성립하는 프로파일 이름 목록(값=1인 것만)."""
+def line_l1_candidates(ln: Line, next_ln: Line | None, ignore_tables: bool = False) -> list[str]:
+    """이 줄에서 1장 후보로 성립하는 프로파일 이름 목록(값=1인 것만).
+    ignore_tables=True는 표 내부 표식을 무시한다(경량 스캔과 동일 판정 — detect_parts 병합용)."""
     out = []
     text = ln.text.strip()
-    if ln.in_table or ln.is_leader or ln.is_footnote:
+    if (ln.in_table and not ignore_tables) or ln.is_leader or ln.is_footnote:
         return out
     for name, pat, two_line in PROFILES:
         m = pat.match(text)
@@ -826,10 +912,10 @@ def line_l1_candidates(ln: Line, next_ln: Line | None) -> list[str]:
     return out
 
 
-def page_has_front_title(scan: PageScan) -> bool:
+def page_has_front_title(scan: PageScan, ignore_tables: bool = False) -> bool:
     """표 밖의 앞부속 표제 줄(요약문/SUMMARY/목차/CONTENTS/차례) 존재 여부 — 룩어헤드 가드용."""
     for ln in scan.lines[:8]:
-        if ln.in_table:
+        if ln.in_table and not ignore_tables:
             continue
         if FRONT_TITLE_RE.match(ln.text.strip()) or ABSTRACT_TITLE_RE.search(ln.text):
             return True
@@ -839,8 +925,10 @@ def page_has_front_title(scan: PageScan) -> bool:
 LOOKAHEAD_PAGES = 25  # 후보 페이지 뒤로 앞부속 표제가 남아 있으면 아직 앞부속(요약문 로마 헤딩 오탐 차단)
 
 
-def find_body_start(scans: list[PageScan], part: tuple[int, int]) -> tuple[int | None, list[str]]:
-    """(본문 시작 페이지, 그 페이지의 1장 후보 프로파일들). 앵커 = 파트 내 아라비아 '- 1 -' 마지막 페이지."""
+def find_body_start(scans: list[PageScan], part: tuple[int, int],
+                    ignore_tables: bool = False) -> tuple[int | None, list[str]]:
+    """(본문 시작 페이지, 그 페이지의 1장 후보 프로파일들). 앵커 = 파트 내 아라비아 '- 1 -' 마지막 페이지.
+    ignore_tables=True: 표 내부 표식 무시(경량 스캔과 같은 판정) — detect_parts의 앞부속 병합 판정용."""
     anchor = part[0]
     for i in range(part[0], part[1] + 1):
         if scans[i].footer_arabic == 1:
@@ -852,17 +940,123 @@ def find_body_start(scans: list[PageScan], part: tuple[int, int]) -> tuple[int |
         cands = []
         for j, ln in enumerate(scan.lines):
             nxt = scan.lines[j + 1] if j + 1 < len(scan.lines) else None
-            cands = line_l1_candidates(ln, nxt)
+            cands = line_l1_candidates(ln, nxt, ignore_tables)
             if cands:
                 break
         if not cands:
             continue
         # 룩어헤드: 뒤 25페이지 안에 앞부속 표제가 남아 있으면 이 후보는 요약문/영문요약 내부
         ahead_end = min(i + LOOKAHEAD_PAGES, part[1])
-        if any(page_has_front_title(scans[k]) for k in range(i + 1, ahead_end + 1)):
+        if any(page_has_front_title(scans[k], ignore_tables) for k in range(i + 1, ahead_end + 1)):
             continue
         return i, cands
     return None, []
+
+
+# --- 목차 장 번호·R4 장 번호 오타 승격 (extract walk_l1 ↔ verify C 목차 대조 공유) ---------------------------
+
+# 목차 줄용 완화 프로파일 — 목차는 분리형('제 1 장'·단독 숫자)을 한 줄로 조판하므로 기본형으로 대조
+RELAXED_PROFILE = {"jang_split": "jang", "bare_digit_split": "arabic"}
+BARE_MD_RE = re.compile(r"^(\d{1,2})\s+\S")  # bare_digit .md 헤딩 텍스트("1 제목")용
+
+
+def relaxed_profile_pats(profile_name: str) -> list[tuple[str, re.Pattern]]:
+    """목차 줄용 완화 패턴 목록. 로마자는 유니코드/ASCII 표기가 본문과 어긋나는 실측(2025-29: 목차 Ⅰ.
+    vs 본문 II.)이 있어 두 형태 모두 수집한다."""
+    pat_of = {n: p for n, p, _ in PROFILES}
+    r = RELAXED_PROFILE.get(profile_name, profile_name)
+    if r in ("roman_unicode", "roman_ascii"):
+        return [("roman_unicode", pat_of["roman_unicode"]), ("roman_ascii", pat_of["roman_ascii"])]
+    return [(r, pat_of[r])]
+
+
+def toc_title_key(line_text: str, m: re.Match) -> str:
+    """목차 줄에서 번호 토큰·리더런 이후(쪽 번호)·끝 쪽 번호를 뗀 제목 접기 — R4 제목 일치 판정용."""
+    t = line_text[m.end() - 1:]
+    t = re.split(r"[·‧․.]{2,}", t)[0]
+    t = re.sub(r"\s*\d{1,3}\s*$", "", t)
+    return fold(t)
+
+
+def toc_chapter_titles(scans, part, body_start, profile_name: str) -> dict[int, list[str]]:
+    """앞부속 목차(리더런 페이지)의 {장 번호: [제목 접기…]} — verify C 목차 대조와 R4 승격 조건이 같은 값을
+    쓴다. 표·그림 목차 항목(CAPTION_RE)은 제외. 같은 번호가 여러 줄이면(아라비아 하위 항목 혼입) 전부 보관."""
+    titles: dict[int, list[str]] = {}
+    pats = relaxed_profile_pats(profile_name)
+    for s in scans[part[0]:body_start]:
+        if s.leader_lines < 3:
+            continue
+        for ln in s.lines:
+            t = ln.text.strip()
+            if CAPTION_RE.match(t):
+                continue
+            for name, pat in pats:
+                m = pat.match(t)
+                if m:
+                    try:
+                        titles.setdefault(profile_value(name, m), []).append(toc_title_key(t, m))
+                    except (ValueError, IndexError):
+                        pass
+                    break
+    return titles
+
+
+def toc_chapter_values(scans, part, body_start, profile_name: str) -> set[int]:
+    """목차 장 번호 집합(toc_chapter_titles의 키)."""
+    return set(toc_chapter_titles(scans, part, body_start, profile_name))
+
+
+def chapter_title_key(text: str) -> str:
+    """장 헤딩 텍스트에서 선두 번호 토큰을 뗀 제목 접기 — R4 '다른 제목' 판정용."""
+    t = (text or "").strip()
+    for _name, pat, _two in PROFILES:
+        m = pat.match(t)
+        if m:
+            return fold(t[m.end() - 1:])
+    m = BARE_MD_RE.match(t)
+    return fold(t[m.end() - 1:] if m else t)
+
+
+def typo_promotable(prev_text: str, cand_text: str, cand_val: int, expected: int,
+                    toc: dict[int, list[str]] | None) -> bool:
+    """R4 장 번호 오타 승격(WAVE_PLAN §4 R4, 사용자 채택 2026-09-09 — 2021-38 p.143 '제4장 결론 및 시사점'이
+    목차의 제5장): 후보가 직전 장과 같은 번호(expected-1)이고 제목이 직전 장과 다르며, **목차의 다음 번호
+    (expected) 항목 제목과 일치**(접기 후 동일 또는 4자 이상 포함)할 때만 다음 서수로 승격한다.
+    '다른 제목'만으로는 러닝헤드+쪽 번호('제1장 서론 5')·랩 결합 변형·아라비아 하위 항목 '1.'이 승격되는
+    오탐이 적재 23권 회귀에서 3권 나와(2026-09-09) 목차 제목 일치를 필수 조건으로 삼았다.
+    extract(walk_l1)와 verify(C 목차 대조, md_chapter_values)가 같은 함수를 쓴다."""
+    if not toc or expected not in toc or cand_val != expected - 1:
+        return False
+    a, b = chapter_title_key(prev_text), chapter_title_key(cand_text)
+    if not a or not b or a == b:
+        return False
+    return any(k == b or (len(k) >= 4 and k in b) or (len(b) >= 4 and b in k) for k in toc[expected] if k)
+
+
+def md_chapter_values(texts: list[str], profile_name: str, toc: dict[int, list[str]] | None) -> list[int | None]:
+    """.md 깊이 1 헤딩 텍스트 열 → 유효 장 번호 열(표면 번호에 R4 승격을 같은 규칙으로 적용). 번호 없는
+    헤딩은 None. toc = toc_chapter_titles 결과. verify C가 목차 번호 집합과 대조할 때 사용."""
+    md_pats = list(relaxed_profile_pats(profile_name))
+    if profile_name == "bare_digit_split":
+        md_pats.append(("bare", BARE_MD_RE))
+    out: list[int | None] = []
+    prev_text, prev_val = "", None
+    for text in texts:
+        v = None
+        for name, pat in md_pats:
+            m = pat.match(text)
+            if m:
+                try:
+                    v = int(m.group(1)) if name == "bare" else profile_value(name, m)
+                except (ValueError, IndexError):
+                    v = None
+                break
+        if v is not None and prev_val is not None and typo_promotable(prev_text, text, v, prev_val + 1, toc):
+            v = prev_val + 1
+        out.append(v)
+        if v is not None:
+            prev_text, prev_val = text, v
+    return out
 
 
 def find_body_start_flat(scans, part) -> int | None:
@@ -930,8 +1124,11 @@ def _static_guard(ln: Line, rest_len: int) -> str | None:
 
 
 def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
-            no_footer_pages: set | None = None):
-    """선택 프로파일로 장 시퀀스 + 뒷부속 감지. (chapters, 소비된 addr 집합) 반환."""
+            no_footer_pages: set | None = None, toc: dict | None = None,
+            warnings: list | None = None):
+    """선택 프로파일로 장 시퀀스 + 뒷부속 감지. (chapters, 소비된 addr 집합) 반환.
+    toc = 앞부속 목차 {장 번호: [제목 접기]}(toc_chapter_titles — R4 장 번호 오타 승격 조건, None이면 승격 없음),
+    warnings = 승격 기록 대상(PartResult.warnings)."""
     name, pat, two_line = profile
     no_footer_pages = no_footer_pages or set()
     chapters: list[Heading] = []
@@ -1004,7 +1201,10 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                 log_reject(i, text, guard)
                 i += 1
                 continue
-            if val != expected:
+            # R4 승격 예비 판정(제목 비교는 제목 줄을 합친 뒤 typo_promotable에서)
+            promote = val != expected and toc is not None and val == expected - 1 \
+                and expected in toc and any(c.kind == "normal" for c in chapters)
+            if val != expected and not promote:
                 log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
                 i += 1
                 continue
@@ -1034,6 +1234,19 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                             and _is_full_width(ln, body_lines, pg):
                         title_text = f"{text} {nxt.text.strip()}"
                         extra = [i + 1]
+            if promote:
+                prev = [c for c in chapters if c.kind == "normal"][-1]
+                clean = re.sub(r"\s+", " ", title_text)
+                if not typo_promotable(prev.text, clean, val, expected, toc):
+                    log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
+                    i += 1
+                    continue
+                if warnings is not None:
+                    warnings.append(f"p.{pg + 1} 장 번호 오타 승격 {val}→{expected}: {clean[:30]}")
+                if diag is not None:
+                    diag.setdefault("l1_promoted", []).append(
+                        {"page": pg + 1, "text": clean[:40], "from": val, "to": expected})
+                val = expected
             h = Heading(addr=i, depth=1, hid="", text=re.sub(r"\s+", " ", title_text),
                         family=name, value=val, extra_addrs=extra)
             # 장 제목이 참고문헌이면 references 장으로 (2025-02 "6. 참고문헌")
@@ -1223,8 +1436,9 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
     return headings, depth_of, stats
 
 
-def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=None):
-    """L1 프로파일 확정(본문 시작 페이지의 1장 후보와 결합) → 장 + 하위 헤딩."""
+def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=None, warnings=None):
+    """L1 프로파일 확정(본문 시작 페이지의 1장 후보와 결합) → 장 + 하위 헤딩.
+    warnings = R4 장 번호 오타 승격 기록 대상(verify 재현 호출은 None)."""
     body_lines = collect_body_lines(scans, part, body_start)
     no_footer = {s.index for s in scans[body_start:part[1] + 1] if s.footer_arabic is None}
     ordered = [p for p in PROFILES if p[0] in cand_profiles]
@@ -1232,18 +1446,31 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     chapters = consumed = None
     attempts = {}
     for profile in ordered:
-        chs, cons = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer)
+        chs, cons = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer,
+                            toc=toc_chapter_titles(scans, part, body_start, profile[0]))
         attempts[profile[0]] = len([c for c in chs if c.kind == "normal"])
         if attempts[profile[0]] >= 2:
             chosen, chapters, consumed = profile, chs, cons
             break
+    # 로마자 혼용 우선(R1, 2026-09-09): 순수 로마 프로파일이 장 2개 이상을 잡아 먼저 채택돼도, 혼용 판형
+    # (2024-07: I·II ASCII + Ⅲ 유니코드 + IV·V)은 뒤 장을 놓친다 — roman_mixed가 더 많은 장을 잡으면 그쪽.
+    # 순수 로마 문서는 두 프로파일의 장 수가 같아 무영향.
+    if chosen is not None and chosen[0] in ("roman_unicode", "roman_ascii") and "roman_mixed" in cand_profiles:
+        mixed = next(p for p in PROFILES if p[0] == "roman_mixed")
+        chs, cons = walk_l1(body_lines, mixed, report_id, no_footer_pages=no_footer,
+                            toc=toc_chapter_titles(scans, part, body_start, "roman_mixed"))
+        attempts["roman_mixed"] = len([c for c in chs if c.kind == "normal"])
+        if attempts["roman_mixed"] > len([c for c in chapters if c.kind == "normal"]):
+            chosen, chapters, consumed = mixed, chs, cons
     if diag is not None:
         diag["l1_attempts"] = attempts  # 실패(플랫 폴백) 시에도 후보별 정상 장 수를 남긴다
     if chosen is None:
         return None
     # 확정 워크 (진단 수집 포함)
     chapters, consumed = walk_l1(body_lines, chosen, report_id, diag=diag,
-                                 no_footer_pages=no_footer)
+                                 no_footer_pages=no_footer,
+                                 toc=toc_chapter_titles(scans, part, body_start, chosen[0]),
+                                 warnings=warnings)
     for idx, ch in enumerate(chapters):
         ch.hid = f"{report_id}_c{idx + 1}"
     subs, depth_of, stats = detect_sub_headings(body_lines, chapters, chosen[0], report_id, diag=diag)
@@ -1774,7 +2001,8 @@ def process_pdf(path: str, lane: str = "auto"):
                 mark_footnotes(scans, (body_start, part[1]))
                 mark_colophon_pages(scans, part, r.warnings)
 
-                structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag)
+                structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag,
+                                             warnings=r.warnings)
 
         if structure is None:
             if lane != "flat":
