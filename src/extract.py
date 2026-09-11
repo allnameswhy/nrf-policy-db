@@ -978,15 +978,96 @@ def toc_title_key(line_text: str, m: re.Match) -> str:
     return fold(t)
 
 
-def toc_chapter_titles(scans, part, body_start, profile_name: str) -> dict[int, list[str]]:
-    """앞부속 목차(리더런 페이지)의 {장 번호: [제목 접기…]} — verify C 목차 대조와 R4 승격 조건이 같은 값을
-    쓴다. 표·그림 목차 항목(CAPTION_RE)은 제외. 같은 번호가 여러 줄이면(아라비아 하위 항목 혼입) 전부 보관."""
+# --- 목차 페이지 인식 (R6, 사용자 채택 2026-09-11) ---------------------------------------------------
+# 종전 유일 규칙 = 리더런(`····`) 3줄 이상 페이지. W1 실측 4권(2019-17·2021-81·2021-42·2019-69)은 목차에
+# 리더가 없거나(쪽 번호가 다음 줄에 단독), 리더 페이지가 표·그림 목차뿐이거나, 표제 앞에 템플릿 잔재
+# 「편집순서 N」이 붙어 대조를 생략했다. 보강: 목차 표제 페이지(「목차/차례」·「CONTENTS」 — 접두·괄호 꼬리
+# 「(영문목차)」 허용)와 그 뒤 표제 없는 이어짐 페이지(리더런 3줄 또는 맨몸 숫자 줄 3줄 이상)를 목차로 본다.
+# 표·그림 목차 등 다른 앞부속 표제는 이어짐을 끊는다. **국문 우선 2단**(사용자 결정): 장 번호는 1차(리더 페이지
+# ∪ 국문 표제·이어짐)에서 수집하고 하나도 없을 때만 2차(영문 CONTENTS·이어짐) — 영문 목차에만 번호가 붙은
+# 항목(`VI. References`류)이 「목차에만 있는 장 번호」 헛 FAIL을 내는 노출 차단. FRONT_TITLE_RE·page_is_front·
+# find_body_start·detect_parts는 건드리지 않는다(본문 시작·합본 분할 불변).
+TOC_TEMPLATE_PREFIX_RE = re.compile(r"^\s*편집순서\s*\d+\s*")
+TOC_PAREN_TAIL_RE = re.compile(r"\s*\([^()]*\)\s*$")
+TOC_TITLE_KO_RE = re.compile(r"^(?:목\s*차|차\s*례)$")
+TOC_TITLE_EN_RE = re.compile(r"^(?:CONTENTS|Contents)$")
+BARE_NUM_LINE_RE = re.compile(r"^\d{1,3}$")  # 쪽 번호가 제목 다음 줄에 단독으로 놓인 조판
+TOC_MIN_NUM_LINES = 3
+TOC_TITLE_SCAN_LINES = 8  # page_has_front_title과 같은 범위
+
+
+def toc_title_kind(text: str) -> str | None:
+    """앞부속 표제 줄 분류 — "ko"(목차/차례) · "en"(CONTENTS) · "other"(표·그림 목차, 요약문, SUMMARY, 제출문,
+    초록 등 다른 앞부속 표제 = 목차 이어짐을 끊는 줄) · None(표제 아님)."""
+    t = TOC_TEMPLATE_PREFIX_RE.sub("", text or "", count=1)
+    t = TOC_PAREN_TAIL_RE.sub("", t, count=1).strip()
+    if TOC_TITLE_KO_RE.match(t):
+        return "ko"
+    if TOC_TITLE_EN_RE.match(t):
+        return "en"
+    if FRONT_TITLE_RE.match(t) or ABSTRACT_TITLE_RE.search(t):
+        return "other"
+    return None
+
+
+def page_toc_title(scan: PageScan) -> tuple[str | None, int]:
+    """페이지의 첫 표제 (분류, 줄 인덱스). 목차 표제(ko/en)는 첫 8줄에서만, 다른 앞부속 표제(other)는 페이지
+    어디서든 — 목차 꼬리가 같은 쪽에서 표·그림 목차로 넘어가는 지점(2019-17 p14: `V. 결론`·`부록` 뒤 「표 차례」)을
+    잡기 위해서다."""
+    for j, ln in enumerate(scan.lines):
+        kind = toc_title_kind(ln.text.strip())
+        if kind == "other" or (kind in ("ko", "en") and j < TOC_TITLE_SCAN_LINES):
+            return kind, j
+    return None, -1
+
+
+def page_toc_kind(scan: PageScan) -> str | None:
+    return page_toc_title(scan)[0]
+
+
+def page_toc_like(scan: PageScan) -> bool:
+    """표제 없는 이어짐 페이지 판정 — 리더런 3줄 또는 맨몸 숫자 줄 3줄."""
+    if scan.leader_lines >= 3:
+        return True
+    return sum(1 for ln in scan.lines if BARE_NUM_LINE_RE.match(ln.text.strip())) >= TOC_MIN_NUM_LINES
+
+
+def lines_toc_like(lines) -> bool:
+    """표제 앞 꼬리 구간 판정 — 리더 줄 또는 맨몸 숫자 줄이 하나라도 있으면 목차 꼬리."""
+    return any(ln.is_leader or BARE_NUM_LINE_RE.match(ln.text.strip()) for ln in lines)
+
+
+def toc_pages(scans, part, body_start) -> tuple[list[int], list[int]]:
+    """(1차, 2차) 목차 페이지 인덱스(오름차순). 1차 = 리더런 페이지 ∪ 국문 표제 페이지·이어짐(종전 집합을
+    포함), 2차 = 영문 표제 페이지·이어짐(리더런 페이지는 어느 사슬에 있어도 1차). 사슬은 다른 앞부속 표제·
+    빈 쪽·목차답지 않은 쪽에서 끊기되, 표제 앞에 목차 꼬리(맨몸 숫자·리더 줄)가 있는 쪽은 사슬에 넣고 끊는다."""
+    primary: list[int] = []
+    secondary: list[int] = []
+    chain = None  # None | "ko" | "en" — 직전 표제 사슬
+    for i in range(part[0], body_start):
+        s = scans[i]
+        kind, at = (None, -1) if (s.blank or s.image_only) else page_toc_title(s)
+        tail_of = None  # 이 쪽 앞부분에서 끝나는 사슬(표·그림 목차 등이 같은 쪽 중간에서 시작)
+        if kind in ("ko", "en"):
+            chain = kind
+        elif kind == "other":
+            if chain is not None and at > 0 and lines_toc_like(s.lines[:at]):
+                tail_of = chain
+            chain = None
+        elif s.blank or s.image_only or (chain is not None and not page_toc_like(s)):
+            chain = None
+        lane = chain or tail_of
+        if s.leader_lines >= 3 or lane == "ko":
+            primary.append(i)
+        elif lane == "en":
+            secondary.append(i)
+    return primary, secondary
+
+
+def _collect_toc_titles(scans, pages, pats) -> dict[int, list[str]]:
     titles: dict[int, list[str]] = {}
-    pats = relaxed_profile_pats(profile_name)
-    for s in scans[part[0]:body_start]:
-        if s.leader_lines < 3:
-            continue
-        for ln in s.lines:
+    for i in pages:
+        for ln in scans[i].lines:
             t = ln.text.strip()
             if CAPTION_RE.match(t):
                 continue
@@ -998,6 +1079,18 @@ def toc_chapter_titles(scans, part, body_start, profile_name: str) -> dict[int, 
                     except (ValueError, IndexError):
                         pass
                     break
+    return titles
+
+
+def toc_chapter_titles(scans, part, body_start, profile_name: str) -> dict[int, list[str]]:
+    """앞부속 목차(toc_pages)의 {장 번호: [제목 접기…]} — verify C 목차 대조와 R4 승격 조건이 같은 값을
+    쓴다. 표·그림 목차 항목(CAPTION_RE)은 제외. 같은 번호가 여러 줄이면(아라비아 하위 항목 혼입) 전부 보관.
+    국문 우선 2단: 1차 페이지에서 하나도 못 모으면 2차(영문 CONTENTS) 페이지에서 수집."""
+    pats = relaxed_profile_pats(profile_name)
+    primary, secondary = toc_pages(scans, part, body_start)
+    titles = _collect_toc_titles(scans, primary, pats)
+    if not titles and secondary:
+        titles = _collect_toc_titles(scans, secondary, pats)
     return titles
 
 
@@ -1464,6 +1557,8 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
             chosen, chapters, consumed = mixed, chs, cons
     if diag is not None:
         diag["l1_attempts"] = attempts  # 실패(플랫 폴백) 시에도 후보별 정상 장 수를 남긴다
+        primary, secondary = toc_pages(scans, part, body_start)  # R6 육안 확인용(1-based 쪽)
+        diag["toc_pages"] = {"primary": [i + 1 for i in primary], "secondary": [i + 1 for i in secondary]}
     if chosen is None:
         return None
     # 확정 워크 (진단 수집 포함)
@@ -2105,6 +2200,7 @@ def scan_report(results, path) -> dict:
             "profile": diag.get("profile"),
             "l1_attempts": diag.get("l1_attempts"),
             "l1_suspects": diag.get("l1_suspects"),
+            "toc_pages": diag.get("toc_pages"),
             "chapters": diag.get("chapters"),
             "family_order": diag.get("family_order"),
             "family_depths": diag.get("family_depths"),
@@ -2239,6 +2335,7 @@ def main() -> None:
                 "unknown_glyphs": r.unknown_glyphs,
                 "l1_attempts": r.stats.get("diag", {}).get("l1_attempts"),
                 "l1_suspects": r.stats.get("diag", {}).get("l1_suspects"),
+                "toc_pages": r.stats.get("diag", {}).get("toc_pages"),
                 "warnings": r.warnings,
             }
             log_entries.append(entry)

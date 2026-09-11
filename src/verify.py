@@ -30,7 +30,8 @@ build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
                    표 내부 줄은 전역 포함 → 페이지 국소 table_covers 순으로 판정
                    (find_tables 행렬 단계 소실 검출 — 실측 4권 21건 부류).
                    재스캔 표 markdown/caption 포함, 이미지 전용 구간 마커도 검사.
-  C 목차 대조      (풀 검사 전용) 앞부속 목차(리더런 페이지)와 장 대조 — 제목
+  C 목차 대조      (풀 검사 전용) 앞부속 목차(리더런 페이지 + 목차 표제 페이지·이어짐,
+                   국문 우선 2단 — extract.toc_pages, R6 2026-09-11)와 장 대조 — 제목
                    포함(경고), 장 번호 커버(문법 미감지·헤딩 오탐 검출, FAIL)
   D 품질 판정      (LLM — 유일한 비결정론 검사, annotate 호출 레이어 재사용)
                    유닛 요약을 자기 근거 본문과 1:1 대조. 용도(검색·발견) 기준:
@@ -119,6 +120,7 @@ from extract import (
     scan_document,
     table_covers,
     toc_chapter_titles,
+    toc_pages,
 )
 from registry import STEM_RE, parts_for, rid_for, rid_reason
 
@@ -370,7 +372,12 @@ def _title_variants(text: str) -> list[str]:
 
 
 def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) -> None:
-    toc_scans = [scans[i] for i in range(part[0], body_start) if scans[i].leader_lines >= 3]
+    # R6(2026-09-11): 목차 페이지 = 리더런 페이지 ∪ 목차 표제 페이지·이어짐(extract.toc_pages). 제목 방향(a)은
+    # 경고라 1차·2차를 모두 보고, 번호 방향(b)은 toc_chapter_titles의 국문 우선 2단 규칙을 그대로 쓴다.
+    primary, secondary = toc_pages(scans, part, body_start)
+    toc_idx = sorted(set(primary) | set(secondary))
+    rep.stats["toc_pages"] = [i + 1 for i in toc_idx]
+    toc_scans = [scans[i] for i in toc_idx]
     if not toc_scans:
         rep.notes.append("목차 페이지 미발견 — 목차 대조 생략")
         return
