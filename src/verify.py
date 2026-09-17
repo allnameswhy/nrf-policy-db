@@ -371,6 +371,29 @@ def _title_variants(text: str) -> list[str]:
     return [v for v in vs if len(v) >= 4]
 
 
+# 목차 항목의 영문 뒷부속 표제(리더런이 있는 영문 CONTENTS 페이지는 1차 목차에 함께 들어온다 — 2024-29 `IX. Appendix`)
+TOC_BACKMATTER_EN_RE = re.compile(r"^(appendix|appendices|references|bibliography|attachments?)$", re.I)
+
+
+def toc_key_is_backmatter(key: str) -> bool:
+    """목차 제목 접기가 부록·참고문헌·첨부류인가 — .md 쪽 예외(mdio.is_excluded_chapter) + 영문 표제."""
+    return mdio.is_excluded_chapter(key) or bool(TOC_BACKMATTER_EN_RE.match(re.sub(r"[^0-9A-Za-z가-힣]", "", key)))
+
+
+def toc_backmatter_numbers(toc: dict, values) -> list:
+    """values 중 목차 제목 접기가 비어있지 않고 **전부** 뒷부속 꼴(부록·참고문헌·첨부, 국·영문)인 번호 (R8, 2026-09-17).
+    "목차에만 있는 장 번호"(over)에만 적용한다 — 2024-29 `IX. 부 록`/`IX. Appendix`(본문은 `부록. 설문지` 뒷부속 장).
+    .md 헤딩이 그 번호를 정상 장으로 갖고 있으면(2024-08 `7. 부록 …`류 번호 달린 뒷부속 장) 대조에서 빼지 않는다 —
+    1차 구현이 목차 집합 전체에서 뺐다가 그런 번호가 "목차에서 확인 안 되는 장 번호"로 뒤집혀 새 FAIL을 낸 회귀 실측.
+    R4 승격 입력(md_chapter_values의 toc)은 전체 사전 그대로 — extract와 같은 해석."""
+    out = []
+    for v in values:
+        ks = [k for k in toc.get(v, []) if k]
+        if ks and all(toc_key_is_backmatter(k) for k in ks):
+            out.append(v)
+    return sorted(out)
+
+
 def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) -> None:
     # R6(2026-09-11): 목차 페이지 = 리더런 페이지 ∪ 목차 표제 페이지·이어짐(extract.toc_pages). 제목 방향(a)은
     # 경고라 1차·2차를 모두 보고, 번호 방향(b)은 toc_chapter_titles의 국문 우선 2단 규칙을 그대로 쓴다.
@@ -418,6 +441,10 @@ def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) 
     missing = sorted(v for v, h in md_num.items()
                      if v not in toc_values and not mdio.is_excluded_chapter(h.text))
     over = sorted(v for v in toc_values if v not in md_num)
+    excluded = toc_backmatter_numbers(toc, over)     # R8: 목차에만 있는 번호 중 뒷부속 표제는 제외
+    if excluded:
+        rep.stats["toc_excluded"] = excluded
+        over = [v for v in over if v not in excluded]
     if missing:
         rep.fails.append(f"목차에서 확인 안 되는 장 번호 {missing} — 헤딩 오탐 의심")
     if over:

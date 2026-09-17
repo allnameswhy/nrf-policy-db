@@ -76,10 +76,13 @@ SUSPECT_BULLETS = set("◈☐■◦▶►●◇◆▷▹✓✔")
 
 MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
 MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
+DIVIDER_MAX_LINES = 15  # 장 구분 페이지(절 목록) 판정: 페이지의 비어있지 않은 줄 상한 (R8)
+BULLET_START_RE = re.compile(r"^[-•◦○●▪·※▶▷■□]")  # 구분 페이지 이어짐 줄에서 제외할 불릿 시작
 
 # L1(장) 프로파일 — (이름, 패턴, 두줄형 여부). 시도 순서 = 이 순서.
 PROFILES = [
-    ("jang_split", re.compile(r"^제\s+(\d{1,2})\s+장$"), True),
+    # R8(2026-09-16, 2024-16): 구분 페이지의 "제1장"(붙여쓰기) 단독 줄도 분리형 — 종전 `\s+`는 "제 1 장"만.
+    ("jang_split", re.compile(r"^제\s*(\d{1,2})\s*장$"), True),
     ("jang", re.compile(r"^제\s*(\d{1,2})\s*장[.\s]+\S"), False),
     ("roman_unicode", re.compile(r"^([Ⅰ-Ⅻ])\.\s*\S"), False),
     ("roman_ascii", re.compile(r"^([IVX]{1,4})\.?\s+\S"), False),
@@ -557,14 +560,18 @@ def merge_front_parts(scans: list[PageScan], parts: list[tuple[int, int]]) -> li
 
 
 def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
-    """아라비아 꼬리말 런이 1보다 큰 값까지 진행된 뒤, **무꼬리말/로마/목차 페이지를 사이에 두고**
-    '- 1 -'로 재시작하면 파트 경계. (앞부속·본문이 연속 아라비아인 판형(2025-02)은 분리 아님 —
-    간격 페이지가 있어야 합본으로 본다. 사이 페이지는 새 파트의 앞부속으로 귀속.)
+    """아라비아 꼬리말 런이 1보다 큰 값까지 진행된 뒤 '- 1 -'로 재시작하고, **재시작 앞 구간(현재 파트
+    시작~직전 쪽)에 이미 본문 시작이 있으면** 파트 경계(R8, 2026-09-16 사용자 결정 — 종전 "사이에 무꼬리말/
+    로마/목차 페이지가 있어야 경계"를 대체). 앞부속이 본문과 연속 아라비아인 판형(2025-02)은 앞 구간에
+    본문이 없어 분리되지 않고, 본편 뒤에 쪽 번호가 1로 재시작하는 부록 책자가 간격 쪽 없이 붙은 판형
+    (2024-23 p127 꼬리말 109 → p128 '- 1 -')은 분리된다 — 분리하지 않으면 find_body_start의 앵커(파트 내
+    마지막 '- 1 -')가 책자로 뛰어 본편이 통째로 앞부속 취급되는 무음 유실(실측 106쪽). 게이트는
+    part_has_body(표 비의존)라 register 경량 스캔·verify 전체 스캔이 같은 분할을 낸다. 경계 뒤 '뒤로
+    건너뛰기'는 새 파트의 번호 없는 표지·목차를 새 파트에 귀속시키는 단계(2025-17 p139 표지)로 유지.
     """
     n = len(scans)
     run_max = 0
     boundaries = [0]
-    prev_arabic_page = None
 
     def frontish(s: PageScan) -> bool:
         return s.blank or s.image_only or s.leader_lines >= 3 or \
@@ -573,8 +580,7 @@ def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
     for i, s in enumerate(scans):
         if s.footer_arabic is None:
             continue
-        gap = prev_arabic_page is not None and i - prev_arabic_page > 1
-        if s.footer_arabic == 1 and run_max > 1 and gap:
+        if s.footer_arabic == 1 and run_max > 1 and part_has_body(scans, (boundaries[-1], i - 1)):
             # 경계: 재시작 지점에서 뒤로, 앞부속스러운 페이지(무꼬리말/리더런/공백/이미지,
             # 잔류 꼬리말이 남은 그림목차 등)를 건너뛴 지점 (2025-17 p139 표지 실측)
             k = i - 1
@@ -589,7 +595,6 @@ def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
             run_max = 1
         else:
             run_max = max(run_max, s.footer_arabic)
-        prev_arabic_page = i
     parts = []
     for bi, start in enumerate(boundaries):
         end = (boundaries[bi + 1] - 1) if bi + 1 < len(boundaries) else n - 1
@@ -925,6 +930,16 @@ def page_has_front_title(scan: PageScan, ignore_tables: bool = False) -> bool:
 LOOKAHEAD_PAGES = 25  # 후보 페이지 뒤로 앞부속 표제가 남아 있으면 아직 앞부속(요약문 로마 헤딩 오탐 차단)
 
 
+def _first_l1_cands(scan: PageScan, ignore_tables: bool) -> list[str]:
+    """페이지에서 1장 후보가 성립하는 첫 줄의 프로파일 목록(없으면 빈 목록)."""
+    for j, ln in enumerate(scan.lines):
+        nxt = scan.lines[j + 1] if j + 1 < len(scan.lines) else None
+        cands = line_l1_candidates(ln, nxt, ignore_tables)
+        if cands:
+            return cands
+    return []
+
+
 def find_body_start(scans: list[PageScan], part: tuple[int, int],
                     ignore_tables: bool = False) -> tuple[int | None, list[str]]:
     """(본문 시작 페이지, 그 페이지의 1장 후보 프로파일들). 앵커 = 파트 내 아라비아 '- 1 -' 마지막 페이지.
@@ -935,16 +950,20 @@ def find_body_start(scans: list[PageScan], part: tuple[int, int],
             anchor = i
     for i in range(anchor, part[1] + 1):
         scan = scans[i]
-        if scan.blank or scan.image_only or page_is_front(scan):
+        if scan.blank or page_is_front(scan):
             continue
-        cands = []
-        for j, ln in enumerate(scan.lines):
-            nxt = scan.lines[j + 1] if j + 1 < len(scan.lines) else None
-            cands = line_l1_candidates(ln, nxt, ignore_tables)
-            if cands:
-                break
+        cands = _first_l1_cands(scan, ignore_tables)
         if not cands:
             continue
+        if scan.image_only:
+            # R8(2026-09-16, 2024-16): 장식 그림 때문에 image_only로 분류된 장 구분 페이지("제1장" + 제목 줄, 텍스트 5자)도
+            # 본문 시작이 될 수 있다 — 종전엔 image_only를 무조건 건너뛰어 앵커가 첫 텍스트 쪽의 3단계 항목(Ⅰ.)으로 밀리고
+            # 장 구조가 전부 어긋났다. 단 다음 텍스트 쪽이 1장 표식을 되풀이하면(2019-17 `I. 서론`·2021-43·2025-01 실측 —
+            # 그림 쪽은 요약 표제·절 목록일 수 있음) 종전대로 그 쪽이 본문 시작(적재본 불변).
+            nxt_scan = next((scans[k] for k in range(i + 1, part[1] + 1)
+                             if not scans[k].blank and not scans[k].image_only), None)
+            if nxt_scan is not None and _first_l1_cands(nxt_scan, ignore_tables):
+                continue
         # 룩어헤드: 뒤 25페이지 안에 앞부속 표제가 남아 있으면 이 후보는 요약문/영문요약 내부
         ahead_end = min(i + LOOKAHEAD_PAGES, part[1])
         if any(page_has_front_title(scans[k], ignore_tables) for k in range(i + 1, ahead_end + 1)):
@@ -1216,16 +1235,61 @@ def _static_guard(ln: Line, rest_len: int) -> str | None:
     return None
 
 
+def divider_list_addrs(body_lines, head_addr: int, start: int, pat, two_line: bool) -> list[int]:
+    """장 구분 페이지의 절 목록(R8, 2026-09-16 — 2024-29·2024-33 실측): 방금 채택한 장 헤딩(head_addr)과 같은
+    페이지의 나머지 줄(start 이후)이 전부 절 제목·뒷부속 표제 꼴이고 페이지가 짧으면 그 줄들은 목차이지 헤딩이
+    아니다 — 종전에는 목록 줄이 빈 절 헤딩이 되고 본문 쪽의 같은 절 제목은 순번 불일치로 기각되어 장 본문이
+    마지막 절 아래로 몰렸고, 목록 끝의 '참고 문헌' 줄이 참고문헌 장을 열어 결론 본문이 요약 제외됐다.
+    기준: 페이지 비어있지 않은 줄 ≤ DIVIDER_MAX_LINES, 전부 ≤ MAX_TITLE_LINE, 표·각주·리더 줄 없음, 목록 줄 ≥ 2,
+    각 목록 줄이 하위 패밀리·참고문헌·부록·L1 패턴 중 하나에 매치(분리형 L1은 다음 제목 줄과 한 단위, 매치 줄
+    바로 뒤 ≤30자 비마커·비불릿 줄 1개는 랩 이어짐으로 허용). 반환 = 헤딩 후보에서 제외할 addr 목록(빈 목록 =
+    구분 페이지 아님). 줄 자체는 build_body가 본문 텍스트로 남긴다(verify 커버리지 검사와 1:1 유지)."""
+    pg = body_lines[head_addr][0]
+    lo = head_addr
+    while lo > 0 and body_lines[lo - 1][0] == pg:
+        lo -= 1
+    hi = start
+    while hi < len(body_lines) and body_lines[hi][0] == pg:
+        hi += 1
+    page = [k for k in range(lo, hi) if body_lines[k][2].text.strip()]
+    if len(page) > DIVIDER_MAX_LINES:
+        return []
+    for k in page:
+        ln = body_lines[k][2]
+        if ln.in_table or ln.is_footnote or ln.is_leader or len(ln.text.strip()) > MAX_TITLE_LINE:
+            return []
+    rest = [k for k in page if k >= start]
+    if len(rest) < 2:
+        return []
+    prev_marker = False
+    idx = 0
+    while idx < len(rest):
+        t = body_lines[rest[idx]][2].text.strip()
+        m = pat.match(t)
+        if m or _match_sub_any(t) or REF_TITLE_RE.match(t) or APPENDIX_RE.match(t):
+            if m and two_line:      # 분리형 L1(번호 단독 줄) + 다음 제목 줄 = 한 단위
+                idx += 1
+            prev_marker = True
+        elif prev_marker and len(t) <= 30 and not BULLET_START_RE.match(t) \
+                and not any(p.match(t) for _, p, _ in PROFILES):
+            prev_marker = False     # 직전 마커 줄의 랩 이어짐 1줄
+        else:
+            return []
+        idx += 1
+    return rest
+
+
 def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
             no_footer_pages: set | None = None, toc: dict | None = None,
             warnings: list | None = None):
-    """선택 프로파일로 장 시퀀스 + 뒷부속 감지. (chapters, 소비된 addr 집합) 반환.
+    """선택 프로파일로 장 시퀀스 + 뒷부속 감지. (chapters, 소비된 addr 집합, 구분 페이지 제외 addr 집합) 반환.
     toc = 앞부속 목차 {장 번호: [제목 접기]}(toc_chapter_titles — R4 장 번호 오타 승격 조건, None이면 승격 없음),
     warnings = 승격 기록 대상(PartResult.warnings)."""
     name, pat, two_line = profile
     no_footer_pages = no_footer_pages or set()
     chapters: list[Heading] = []
     consumed: set[int] = set()
+    skip_addrs: set[int] = set()   # R8 장 구분 페이지 절 목록 — 헤딩 후보 제외(본문 텍스트로는 유지)
     expected = 1
     backmatter = False
     ref_seen = False
@@ -1239,7 +1303,7 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
     while i < len(body_lines):
         pg, j, ln = body_lines[i]
         text = ln.text.strip()
-        if not text or i in consumed:
+        if not text or i in consumed or i in skip_addrs:
             i += 1
             continue
 
@@ -1324,6 +1388,8 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                             and len(nxt.text.strip()) <= 30 and not nxt.in_table \
                             and not any(p.match(nxt.text.strip()) for _, p, _ in PROFILES) \
                             and not _match_sub_any(nxt.text.strip()) \
+                            and not REF_TITLE_RE.match(nxt.text.strip()) \
+                            and not APPENDIX_RE.match(nxt.text.strip()) \
                             and _is_full_width(ln, body_lines, pg):
                         title_text = f"{text} {nxt.text.strip()}"
                         extra = [i + 1]
@@ -1352,9 +1418,18 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
             consumed.update(extra)
             expected += 1
             i += 1 + len(extra)
+            if h.kind == "normal":
+                rest = divider_list_addrs(body_lines, h.addr, i, pat, two_line)
+                if rest:
+                    skip_addrs.update(rest)
+                    i = rest[-1] + 1
+                    if diag is not None:
+                        diag.setdefault("divider_pages", []).append(pg + 1)
+                    if warnings is not None:
+                        warnings.append(f"p.{pg + 1} 장 구분 페이지 절 목록 {len(rest)}줄 헤딩 제외")
             continue
         i += 1
-    return chapters, consumed
+    return chapters, consumed, skip_addrs
 
 
 def _match_sub_any(text: str):
@@ -1387,8 +1462,10 @@ def _sub_value(fam: str, m: re.Match):
     return None
 
 
-def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None):
-    """정규 장 내부에서 하위 패밀리 발견(전역 첫 등장 순서) + 부모 범위 단조증가 검증."""
+def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None, skip_addrs=None):
+    """정규 장 내부에서 하위 패밀리 발견(전역 첫 등장 순서) + 부모 범위 단조증가 검증.
+    skip_addrs = walk_l1이 장 구분 페이지 절 목록으로 제외한 addr(R8) — 두 패스 모두 건너뛴다."""
+    skip_addrs = skip_addrs or set()
     normal_spans = []
     for ci, ch in enumerate(chapters):
         if ch.kind != "normal":
@@ -1409,6 +1486,8 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
     family_order = []
     for ci, start, end in normal_spans:
         for i in range(start, end):
+            if i in skip_addrs:
+                continue
             pg, j, ln = body_lines[i]
             text = ln.text.strip()
             hit = _match_sub_any(text)
@@ -1456,6 +1535,9 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
         child_count: dict = {}      # 부모 hid → 자식 수 (서수 경로)
         i = start
         while i < end:
+            if i in skip_addrs:
+                i += 1
+                continue
             pg, j, ln = body_lines[i]
             text = ln.text.strip()
             consumed_extra = []
@@ -1539,7 +1621,7 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     chapters = consumed = None
     attempts = {}
     for profile in ordered:
-        chs, cons = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer,
+        chs, cons, _ = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer,
                             toc=toc_chapter_titles(scans, part, body_start, profile[0]))
         attempts[profile[0]] = len([c for c in chs if c.kind == "normal"])
         if attempts[profile[0]] >= 2:
@@ -1550,7 +1632,7 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     # 순수 로마 문서는 두 프로파일의 장 수가 같아 무영향.
     if chosen is not None and chosen[0] in ("roman_unicode", "roman_ascii") and "roman_mixed" in cand_profiles:
         mixed = next(p for p in PROFILES if p[0] == "roman_mixed")
-        chs, cons = walk_l1(body_lines, mixed, report_id, no_footer_pages=no_footer,
+        chs, cons, _ = walk_l1(body_lines, mixed, report_id, no_footer_pages=no_footer,
                             toc=toc_chapter_titles(scans, part, body_start, "roman_mixed"))
         attempts["roman_mixed"] = len([c for c in chs if c.kind == "normal"])
         if attempts["roman_mixed"] > len([c for c in chapters if c.kind == "normal"]):
@@ -1562,13 +1644,14 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     if chosen is None:
         return None
     # 확정 워크 (진단 수집 포함)
-    chapters, consumed = walk_l1(body_lines, chosen, report_id, diag=diag,
+    chapters, consumed, skip_addrs = walk_l1(body_lines, chosen, report_id, diag=diag,
                                  no_footer_pages=no_footer,
                                  toc=toc_chapter_titles(scans, part, body_start, chosen[0]),
                                  warnings=warnings)
     for idx, ch in enumerate(chapters):
         ch.hid = f"{report_id}_c{idx + 1}"
-    subs, depth_of, stats = detect_sub_headings(body_lines, chapters, chosen[0], report_id, diag=diag)
+    subs, depth_of, stats = detect_sub_headings(body_lines, chapters, chosen[0], report_id, diag=diag,
+                                                skip_addrs=skip_addrs)
     if diag is not None:
         diag["profile"] = chosen[0]
         diag["chapters"] = [{"page": body_lines[c.addr][0] + 1, "kind": c.kind,
@@ -2201,6 +2284,7 @@ def scan_report(results, path) -> dict:
             "l1_attempts": diag.get("l1_attempts"),
             "l1_suspects": diag.get("l1_suspects"),
             "toc_pages": diag.get("toc_pages"),
+            "divider_pages": diag.get("divider_pages"),
             "chapters": diag.get("chapters"),
             "family_order": diag.get("family_order"),
             "family_depths": diag.get("family_depths"),
@@ -2336,6 +2420,7 @@ def main() -> None:
                 "l1_attempts": r.stats.get("diag", {}).get("l1_attempts"),
                 "l1_suspects": r.stats.get("diag", {}).get("l1_suspects"),
                 "toc_pages": r.stats.get("diag", {}).get("toc_pages"),
+                "divider_pages": r.stats.get("diag", {}).get("divider_pages"),
                 "warnings": r.warnings,
             }
             log_entries.append(entry)
