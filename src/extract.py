@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import dataclasses
+import difflib
 import datetime
 import glob as globmod
 import json
@@ -107,7 +108,7 @@ L1_SUSPECT_RE = re.compile(
 
 # 하위 헤딩 패밀리 — 한 줄이 여러 패턴에 걸리면 이 순서의 첫 매치만 인정
 SUB_FAMILY_DEFS = [
-    ("jeol", re.compile(r"^제\s*(\d{1,2})\s*절[.\s]+\S")),
+    ("jeol", re.compile(r"^제\s*(\d{1,2})\s*절[.\s]*\S")),   # R9: 붙여쓴 `제1절연구의…` 허용(2023-07)
     ("num_dot_num", re.compile(r"^(\d{1,2})\.(\d{1,2})\.?\s+\S")),
     ("num_dot", re.compile(r"^(\d{1,2})\.(?!\s*\d)\s*\S")),
     ("paren_num", re.compile(r"^\((\d{1,2})\)\s*\S")),
@@ -1129,6 +1130,26 @@ def chapter_title_key(text: str) -> str:
     return fold(t[m.end() - 1:] if m else t)
 
 
+TITLE_SIM_MIN_LEN = 8    # 유사도 경로를 여는 최소 접기 길이(짧은 제목의 우연 일치 차단)
+TITLE_SIM_RATIO = 0.8    # difflib 비율 하한 — 2024-41 목차 Ⅴ '…기관 연계·협력 활성화 방안' vs 본문 '…기관 산학연 연계·협력 활성화' = 0.89
+
+
+def _toc_title_match(key: str, toc_keys) -> bool:
+    """제목 접기 key가 목차 항목 접기 중 하나와 (1) 동일 또는 4자 이상 포함 관계(R4 매칭 규칙 — R9에서 분리), 또는
+    (2) 둘 다 TITLE_SIM_MIN_LEN 이상이고 difflib 유사도가 TITLE_SIM_RATIO 이상(R9 — 단어 하나가 삽입·삭제된 표기 차이:
+    2024-41 '산학연' 삽입 0.89, 적재본 실측 `실험실창업지원사업 및 유사사업 현황`↔`…사업 현황` 0.81, `개편방안(안)`↔`개편방향(안)` 0.95;
+    전혀 다른 제목은 0.0~0.5)."""
+    for k in (toc_keys or []):
+        if not k:
+            continue
+        if k == key or (len(k) >= 4 and k in key) or (len(key) >= 4 and key in k):
+            return True
+        if len(k) >= TITLE_SIM_MIN_LEN and len(key) >= TITLE_SIM_MIN_LEN \
+                and difflib.SequenceMatcher(None, k, key).ratio() >= TITLE_SIM_RATIO:
+            return True
+    return False
+
+
 def typo_promotable(prev_text: str, cand_text: str, cand_val: int, expected: int,
                     toc: dict[int, list[str]] | None) -> bool:
     """R4 장 번호 오타 승격(WAVE_PLAN §4 R4, 사용자 채택 2026-09-09 — 2021-38 p.143 '제4장 결론 및 시사점'이
@@ -1136,13 +1157,17 @@ def typo_promotable(prev_text: str, cand_text: str, cand_val: int, expected: int
     (expected) 항목 제목과 일치**(접기 후 동일 또는 4자 이상 포함)할 때만 다음 서수로 승격한다.
     '다른 제목'만으로는 러닝헤드+쪽 번호('제1장 서론 5')·랩 결합 변형·아라비아 하위 항목 '1.'이 승격되는
     오탐이 적재 23권 회귀에서 3권 나와(2026-09-09) 목차 제목 일치를 필수 조건으로 삼았다.
-    extract(walk_l1)와 verify(C 목차 대조, md_chapter_values)가 같은 함수를 쓴다."""
-    if not toc or expected not in toc or cand_val != expected - 1:
+    extract(walk_l1)와 verify(C 목차 대조, md_chapter_values)가 같은 함수를 쓴다.
+    **R9(2026-09-18, 사용자 채택)**: 후보 번호가 expected+1(원문이 한 칸 건너뜀 — 2024-41 본문 I·II·IV·V·VI, 목차 Ⅰ~Ⅴ)
+    도 같은 조건(목차 expected 항목 제목 일치)으로 expected로 본다 → "기대 번호 ±1 + 제목 일치". 그 밖의 번호(장 안의
+    `1.` 항목 등)는 승격하지 않는다. 제목 일치는 정상 채택(번호 = 기대)의 조건이 아니다 — 적재 64권 실측에서 채택 장
+    329개 중 46개가 표기 차이로 매칭에 실패(IMPLEMENTATION_NOTES §3 단계①)."""
+    if not toc or expected not in toc or cand_val not in (expected - 1, expected + 1):
         return False
     a, b = chapter_title_key(prev_text), chapter_title_key(cand_text)
     if not a or not b or a == b:
         return False
-    return any(k == b or (len(k) >= 4 and k in b) or (len(b) >= 4 and b in k) for k in toc[expected] if k)
+    return _toc_title_match(b, toc[expected])
 
 
 def md_chapter_values(texts: list[str], profile_name: str, toc: dict[int, list[str]] | None) -> list[int | None]:
@@ -1279,6 +1304,62 @@ def divider_list_addrs(body_lines, head_addr: int, start: int, pat, two_line: bo
     return rest
 
 
+def _two_line_title_addr(body_lines, i: int, consumed, skip_addrs) -> int | None:
+    """분리형 L1(번호 단독 줄 i)의 제목 줄 addr. 기본은 다음 줄(i+1). **R9(c, 2023-07)**: 다음 줄이 하위 헤딩 꼴
+    (`제1절연구의…`)이고 같은 쪽 바로 앞 줄(i-1)이 짧은 비마커·비표·비각주 제목 줄(` 서론`)이면 앞 줄 — 제목이 번호
+    상자 위에 놓인 판형. 둘 다 부적합이면 None(종전 '두줄형 제목 줄 부적합')."""
+    pg = body_lines[i][0]
+    nxt = body_lines[i + 1][2] if i + 1 < len(body_lines) else None
+    nt = nxt.text.strip() if nxt is not None else ""
+    next_ok = bool(nt) and len(nt) <= MAX_TITLE_LINE and not FOOTER_RE.match(nt) \
+        and not LEADER_RE.search(nt) and not nxt.in_table
+    if next_ok and _match_sub_any(nt) and i - 1 >= 0:
+        ppg, _, prev = body_lines[i - 1]
+        pt = prev.text.strip()
+        if ppg == pg and (i - 1) not in consumed and (i - 1) not in skip_addrs and pt \
+                and len(pt) <= MAX_TITLE_LINE and not prev.in_table and not prev.is_leader \
+                and not prev.is_footnote and not FOOTER_RE.match(pt) and not LEADER_RE.search(pt) \
+                and not any(p.match(pt) for _, p, _ in PROFILES) and not _match_sub_any(pt) \
+                and not REF_TITLE_RE.match(pt) and not APPENDIX_RE.match(pt):
+            return i - 1
+    return i + 1 if next_ok else None
+
+
+def _l1_title_text(body_lines, i: int, two_line: bool, consumed, skip_addrs) -> str:
+    """L1 후보 i의 제목 비교용 텍스트(R9 b) — 분리형은 제목 줄을 붙이고, 단줄형은 그대로(랩 결합은 목차 접기의
+    4자 이상 포함 일치로 충분)."""
+    text = body_lines[i][2].text.strip()
+    if two_line:
+        t = _two_line_title_addr(body_lines, i, consumed, skip_addrs)
+        return f"{text} {body_lines[t][2].text.strip()}" if t is not None else text
+    return text
+
+
+def _next_same_value_cand(body_lines, start: int, pat, name: str, value: int, two_line: bool,
+                          consumed, skip_addrs) -> int | None:
+    """start 이후 **처음 나오는** 같은 프로파일 패턴·같은 번호·정적 가드 통과·미소비 L1 후보의 addr(없으면 None).
+    R9 b는 이 첫 후보만 본다 — 목차가 `N.` 항목을 여러 층위에 겹쳐 쓰는 판형(2024-04, 같은 번호 후보 61줄)에서
+    "뒤 어딘가의 일치 후보"는 엉뚱한 줄을 장으로 올리기 때문."""
+    for k in range(start, len(body_lines)):
+        if k in consumed or k in skip_addrs:
+            continue
+        ln = body_lines[k][2]
+        t = ln.text.strip()
+        if not t:
+            continue
+        m = pat.match(t)
+        if not m:
+            continue
+        try:
+            v = profile_value(name, m)
+        except (ValueError, IndexError):
+            continue
+        if v != value or _static_guard(ln, 0 if two_line else len(t[m.end() - 1:])):
+            continue
+        return k
+    return None
+
+
 def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
             no_footer_pages: set | None = None, toc: dict | None = None,
             warnings: list | None = None):
@@ -1359,27 +1440,36 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                 i += 1
                 continue
             # R4 승격 예비 판정(제목 비교는 제목 줄을 합친 뒤 typo_promotable에서)
-            promote = val != expected and toc is not None and val == expected - 1 \
+            promote = val != expected and toc is not None and val in (expected - 1, expected + 1) \
                 and expected in toc and any(c.kind == "normal" for c in chapters)
             if val != expected and not promote:
                 log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
                 i += 1
                 continue
+            # R9 b(2026-09-18, 2023-05 실측): 번호는 기대와 같은데 제목이 목차와 다르고, 뒤에서 **처음 나오는** 같은 번호
+            # 후보의 제목이 목차와 일치하면 현재 후보는 장 안의 항목(`4. 사업 추진 계획(안)`)으로 보고 기각한다.
+            # 목차 표기 차이만으로는(다음 후보가 없거나 그 후보도 불일치) 아무것도 바뀌지 않는다.
+            if val == expected and toc and expected in toc \
+                    and not _toc_title_match(chapter_title_key(
+                        _l1_title_text(body_lines, i, two_line, consumed, skip_addrs)), toc[expected]):
+                k = _next_same_value_cand(body_lines, i + 1, pat, name, expected, two_line, consumed, skip_addrs)
+                if k is not None and _toc_title_match(chapter_title_key(
+                        _l1_title_text(body_lines, k, two_line, consumed, skip_addrs)), toc[expected]):
+                    log_reject(i, text, f"목차 제목 불일치(다음 같은 번호 후보 p.{body_lines[k][0] + 1} 일치)")
+                    i += 1
+                    continue
             title_text = text
             extra = []
             if two_line:
-                if i + 1 >= len(body_lines):
-                    i += 1
-                    continue
-                nxt = body_lines[i + 1][2]
-                nt = nxt.text.strip()
-                if not nt or len(nt) > MAX_TITLE_LINE or FOOTER_RE.match(nt) \
-                        or LEADER_RE.search(nt) or nxt.in_table:
+                t_addr = _two_line_title_addr(body_lines, i, consumed, skip_addrs)
+                if t_addr is None:
                     log_reject(i, text, "두줄형 제목 줄 부적합")
                     i += 1
                     continue
-                title_text = f"{text} {nt}"
-                extra = [i + 1]
+                title_text = f"{text} {body_lines[t_addr][2].text.strip()}"
+                extra = [t_addr]
+                if t_addr < i and diag is not None:
+                    diag.setdefault("l1_two_line_prev", []).append({"page": pg + 1, "text": title_text[:40]})
             else:
                 # 헤딩 랩 결합: 줄이 컬럼 우측 끝까지 차고 다음 줄이 짧은 비마커 줄이면 이어붙임
                 if i + 1 < len(body_lines):
@@ -1400,13 +1490,18 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                     log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
                     i += 1
                     continue
+                kind = "skip" if val > expected else "typo"
+                label = "장 번호 건너뜀 보정" if kind == "skip" else "장 번호 오타 승격"
                 if warnings is not None:
-                    warnings.append(f"p.{pg + 1} 장 번호 오타 승격 {val}→{expected}: {clean[:30]}")
+                    warnings.append(f"p.{pg + 1} {label} {val}→{expected}: {clean[:30]}")
                 if diag is not None:
                     diag.setdefault("l1_promoted", []).append(
-                        {"page": pg + 1, "text": clean[:40], "from": val, "to": expected})
+                        {"page": pg + 1, "text": clean[:40], "from": val, "to": expected, "kind": kind})
                 val = expected
-            h = Heading(addr=i, depth=1, hid="", text=re.sub(r"\s+", " ", title_text),
+            head_addr = i
+            if extra and extra[0] < i:      # R9 c: 제목 줄이 번호 줄 앞 — 헤딩 단위의 첫 줄을 addr로, 번호 줄은 extra
+                head_addr, extra = extra[0], [i]
+            h = Heading(addr=head_addr, depth=1, hid="", text=re.sub(r"\s+", " ", title_text),
                         family=name, value=val, extra_addrs=extra)
             # 장 제목이 참고문헌이면 references 장으로 (2025-02 "6. 참고문헌")
             if fold(title_text).endswith("참고문헌"):
@@ -1414,10 +1509,10 @@ def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
                 ref_seen = True
                 backmatter = True
             chapters.append(h)
-            consumed.add(i)
+            consumed.add(h.addr)
             consumed.update(extra)
             expected += 1
-            i += 1 + len(extra)
+            i = max([h.addr, *extra]) + 1
             if h.kind == "normal":
                 rest = divider_list_addrs(body_lines, h.addr, i, pat, two_line)
                 if rest:
