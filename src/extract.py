@@ -43,6 +43,7 @@ import datetime
 import glob as globmod
 import json
 import re
+import statistics
 import sys
 import traceback
 import unicodedata
@@ -76,6 +77,15 @@ GLYPH_BULLETS = set(BULLET_RANK) - DASH_BULLETS
 SUSPECT_BULLETS = set("◈☐■◦▶►●◇◆▷▹✓✔")
 
 MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
+# R10(2026-09-21) 조건부 상한: 46~MAX_HEADING_LEN_TITLE자는 오른쪽 여백 전에 짧게 끝나고(not Line.wide) 그 쪽 본문보다
+# TITLE_SIZE_DELTA pt 이상 큰 줄만 헤딩 후보 — 괄호 원어 병기 제목(2024-41 `4. TUM (Technische Universität München) in
+# Singapore`). 단순 상향은 기각: 적재 64권에 상한 초과 헤딩 꼴 줄 1,087줄(문장 조각·법령 항목·설문 문항 — 찬 줄 71%·
+# 큰 글자 11%, 채택 헤딩은 찬 줄 7%·큰 글자 67%), 상한 60 회귀 32권 훼손·50도 2019-17·2019-48 훼손; 조건부 60은
+# 2019-70 절차 문장(정확히 60자) 오탐 → 55.
+MAX_HEADING_LEN_TITLE = 55
+TITLE_SIZE_DELTA = 0.5   # 쪽 본문 크기(20자 이상 줄 중위) 대비 "큰 글자" 하한(pt)
+WIDE_MARGIN_PT = 12      # 줄 끝이 쪽 본문 오른쪽 여백에서 이 안쪽이면 "찬 줄"
+SUB_SIZE_GATE_PT = 1.0   # 하위 헤딩 글자 크기 게이트: 같은 패밀리 채택 헤딩 크기 중위와의 격차 하한(pt)
 MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
 DIVIDER_MAX_LINES = 15  # 장 구분 페이지(절 목록) 판정: 페이지의 비어있지 않은 줄 상한 (R8)
 BULLET_START_RE = re.compile(r"^[-•◦○●▪·※▶▷■□]")  # 구분 페이지 이어짐 줄에서 제외할 불릿 시작
@@ -214,6 +224,8 @@ class Line:
     in_table: bool = False
     is_leader: bool = False
     is_footnote: bool = False
+    wide: bool = True         # 줄 끝이 쪽 본문 오른쪽 여백까지 참(_page_geometry, R10) — 기본값 = 종전 동작
+    size_delta: float = 0.0   # 글자 크기 − 쪽 본문 크기(_page_geometry, R10)
 
 
 @dataclasses.dataclass
@@ -311,10 +323,26 @@ def scan_page(page, index: int, tables: bool = True) -> PageScan:
             scan.leader_lines += 1
 
     scan.lines = kept
+    _page_geometry(scan)
     scan.text_chars = sum(len(l.text.strip()) for l in kept)
     scan.image_only = scan.text_chars < 50 and scan.n_images >= 1
     scan.blank = scan.text_chars == 0 and scan.n_images == 0
     return scan
+
+
+def _page_geometry(scan: PageScan) -> None:
+    """줄마다 `wide`·`size_delta`를 채운다(R10). 쪽 본문 = 20자 이상 줄 — 오른쪽 여백은 그 줄들 x1의 90퍼센타일,
+    본문 크기는 그 줄들 크기의 중위(짧은 줄까지 넣으면 법령 재인용처럼 작은 글자 항목이 많은 쪽에서 중위가 내려가
+    본문 크기 줄이 '큰 글자'로 보인다 — 2024-41 p.39). 20자 이상 줄이 없는 쪽은 전부 wide(조건부 상한 미적용),
+    크기 중위는 비어있지 않은 전 줄. 표 인식과 무관 — 경량·전체 스캔 동일."""
+    longs = [l for l in scan.lines if len(l.text.strip()) >= 20]
+    xs = sorted(l.x1 for l in longs)
+    right = xs[int(len(xs) * 0.9)] if xs else None
+    szs = [l.size for l in longs] or [l.size for l in scan.lines if l.text.strip()]
+    med = statistics.median(szs) if szs else 0.0
+    for l in scan.lines:
+        l.wide = right is None or right - l.x1 < WIDE_MARGIN_PT
+        l.size_delta = l.size - med
 
 
 def scan_document(doc, tables: bool = True) -> list[PageScan]:
@@ -1134,15 +1162,16 @@ TITLE_SIM_MIN_LEN = 8    # 유사도 경로를 여는 최소 접기 길이(짧�
 TITLE_SIM_RATIO = 0.8    # difflib 비율 하한 — 2024-41 목차 Ⅴ '…기관 연계·협력 활성화 방안' vs 본문 '…기관 산학연 연계·협력 활성화' = 0.89
 
 
-def _toc_title_match(key: str, toc_keys) -> bool:
+def _toc_title_match(key: str, toc_keys, contain: bool = True) -> bool:
     """제목 접기 key가 목차 항목 접기 중 하나와 (1) 동일 또는 4자 이상 포함 관계(R4 매칭 규칙 — R9에서 분리), 또는
     (2) 둘 다 TITLE_SIM_MIN_LEN 이상이고 difflib 유사도가 TITLE_SIM_RATIO 이상(R9 — 단어 하나가 삽입·삭제된 표기 차이:
     2024-41 '산학연' 삽입 0.89, 적재본 실측 `실험실창업지원사업 및 유사사업 현황`↔`…사업 현황` 0.81, `개편방안(안)`↔`개편방향(안)` 0.95;
-    전혀 다른 제목은 0.0~0.5)."""
+    전혀 다른 제목은 0.0~0.5). contain=False(R10 하위 헤딩 크기 게이트 면제)는 포함 관계를 쓰지 않는다 — 짧은 목차
+    제목이 긴 법령 문장 안에 들어 있는 경우를 면제하지 않기 위해."""
     for k in (toc_keys or []):
         if not k:
             continue
-        if k == key or (len(k) >= 4 and k in key) or (len(key) >= 4 and key in k):
+        if k == key or (contain and ((len(k) >= 4 and k in key) or (len(key) >= 4 and key in k))):
             return True
         if len(k) >= TITLE_SIM_MIN_LEN and len(key) >= TITLE_SIM_MIN_LEN \
                 and difflib.SequenceMatcher(None, k, key).ratio() >= TITLE_SIM_RATIO:
@@ -1256,7 +1285,9 @@ def _static_guard(ln: Line, rest_len: int) -> str | None:
     if ln.is_footnote:
         return "각주"
     if rest_len > MAX_HEADING_LEN:
-        return f"제목 {rest_len}자 초과"
+        # R10 조건부 상한: 짧게 끝나고 쪽 본문보다 큰 글자인 줄만 MAX_HEADING_LEN_TITLE까지 허용
+        if rest_len > MAX_HEADING_LEN_TITLE or ln.wide or ln.size_delta < TITLE_SIZE_DELTA:
+            return f"제목 {rest_len}자 초과"
     return None
 
 
@@ -1557,9 +1588,39 @@ def _sub_value(fam: str, m: re.Match):
     return None
 
 
-def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None, skip_addrs=None):
+def toc_sub_title_keys(scans, part, body_start) -> set[str]:
+    """앞부속 목차(toc_pages 1차 ∪ 2차)에서 하위 헤딩 꼴 줄의 제목 접기 집합 — R10 글자 크기 게이트의 면제 근거.
+    표·그림 목차 항목(CAPTION_RE)은 제외."""
+    primary, secondary = toc_pages(scans, part, body_start)
+    keys: set[str] = set()
+    for i in primary + secondary:
+        for ln in scans[i].lines:
+            t = ln.text.strip()
+            if CAPTION_RE.match(t):
+                continue
+            hit = _match_sub_any(t)
+            if hit:
+                k = toc_title_key(t, hit[1])
+                if k:
+                    keys.add(k)
+    return keys
+
+
+def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None, skip_addrs=None,
+                        toc_sub=None):
     """정규 장 내부에서 하위 패밀리 발견(전역 첫 등장 순서) + 부모 범위 단조증가 검증.
-    skip_addrs = walk_l1이 장 구분 페이지 절 목록으로 제외한 addr(R8) — 두 패스 모두 건너뛴다."""
+    skip_addrs = walk_l1이 장 구분 페이지 절 목록으로 제외한 addr(R8) — 두 패스 모두 건너뛴다.
+
+    **글자 크기 게이트**(R10, 2026-09-21 — 사용자 제안 "장-절 구조 파악에 글자 크기 고려"): 본문에 인용된 법령 조항·
+    설문 문항·표 조각의 `2. …`/`가. …` 줄이 순번에 맞아 절이 되고 진짜 절이 순번 불일치로 밀려나는 결함(2024-41 II·III장
+    — 진짜 절 `N.` 14.0pt, 인용 법령 항목 9.8~10.0pt = 본문 크기). 코퍼스 전체로는 크기를 1차 기준으로 쓸 수 없어(채택
+    헤딩의 33%가 본문과 같은 크기로 조판) **같은 패밀리 안의 일관성**만 본다: 후보가 그 패밀리의 이미 채택된 헤딩 크기
+    중위보다 SUB_SIZE_GATE_PT 이상 작고 **그 쪽 본문 크기보다 TITLE_SIZE_DELTA 이상 크지 않으면** 기각. 기각한 변형(64권
+    인프로세스 회귀): 중위 −1.0 무조건(2019-54·2021-38·2022-06·2025-29 진짜 헤딩 손실) · 본문 크기를 문서 전체 중위로
+    (2024-37·2022-04 손실) · 3.0pt 이상 무조건(2023-17·2024-01 손실) · 비교 기준을 같은 장 안으로(효과 없음).
+    **목차 면제**: toc_sub(toc_sub_title_keys — 앞부속 목차의 하위 헤딩 꼴 줄 제목 접기)가 있고 후보 제목이 그중 하나와
+    동일·유사도 일치(포함 관계 제외)면 게이트를 통과 — 한 장 안에서 절 제목 크기가 섞여 조판된 2024-37 3장(`1.`·`2.`
+    13.0pt, `3.`·`4.` 본문 크기 10.8~11.0pt, 목차에는 전부 수록). toc_sub=None이면 면제 없음."""
     skip_addrs = skip_addrs or set()
     normal_spans = []
     for ci, ch in enumerate(chapters):
@@ -1652,6 +1713,21 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
                     log_reject(fam, i, text, guard)
                     i += 1
                     continue
+                # R10 글자 크기 게이트(docstring) — 같은 패밀리 채택 헤딩보다 작고 쪽 본문 크기인 줄
+                szs = fam_sizes.get(fam)
+                if szs:
+                    med = sorted(szs)[len(szs) // 2]
+                    if med - ln.size >= SUB_SIZE_GATE_PT and ln.size_delta < TITLE_SIZE_DELTA:
+                        if toc_sub and _toc_title_match(fold(text[m.end() - 1:]), toc_sub, contain=False):
+                            stats[fam]["size_toc_exempt"] = stats[fam].get("size_toc_exempt", 0) + 1
+                            if diag is not None:
+                                diag.setdefault("sub_size_exempt", []).append(
+                                    {"family": fam, "page": pg + 1, "text": text[:40]})
+                        else:
+                            stats[fam]["size_rejected"] = stats[fam].get("size_rejected", 0) + 1
+                            log_reject(fam, i, text, f"글자 크기 미달({ln.size} < 패밀리 중위 {med})")
+                            i += 1
+                            continue
             elif TWO_LINE_HANGUL in depth_of and len(text) == 1 and text in HANGUL_ORD \
                     and not ln.in_table and not ln.is_leader and i + 1 < end:
                 nxt = body_lines[i + 1][2]
@@ -1746,7 +1822,8 @@ def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=Non
     for idx, ch in enumerate(chapters):
         ch.hid = f"{report_id}_c{idx + 1}"
     subs, depth_of, stats = detect_sub_headings(body_lines, chapters, chosen[0], report_id, diag=diag,
-                                                skip_addrs=skip_addrs)
+                                                skip_addrs=skip_addrs,
+                                                toc_sub=toc_sub_title_keys(scans, part, body_start))
     if diag is not None:
         diag["profile"] = chosen[0]
         diag["chapters"] = [{"page": body_lines[c.addr][0] + 1, "kind": c.kind,
