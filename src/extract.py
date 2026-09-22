@@ -126,6 +126,11 @@ SUB_FAMILY_DEFS = [
     ("ga_dot", re.compile(r"^([가-힣])\.\s*\S")),
     ("ga_paren", re.compile(r"^\(?([가-힣])\)\s*\S")),
 ]
+# R10 ③(2026-09-21): num_dot의 `(?!\s*\d)`는 표·목록의 `3. 2`·`1. 5%`를 막지만 `3. 2주기 전문대학…`·`1. 2025년 …`처럼 연도·
+# 차수로 시작하는 진짜 절 제목까지 버린다(63권 실측: 공백 있는 `N. 숫자…` 142줄 중 큰 글자·채택 절과 같은 크기 34줄·11권 =
+# 전부 진짜 헤딩; 공백 없는 `N.숫자`는 36,276줄 = 표 안 소수 → 계속 차단). 정규식은 그대로 두고 detect_sub_headings가
+# 글자 크기로만 되살린다(아래 NUM_DOT_DIGIT_RE 가지).
+NUM_DOT_DIGIT_RE = re.compile(r"^(\d{1,2})\.\s+(?=\d)")
 TWO_LINE_HANGUL = "two_line_hangul"  # 단독 1글자(가~하) + 다음 줄 제목 (2025-12 L4)
 
 # 뒷부속(참고문헌/부록) 마커. '붙임'·'[첨부]'(괄호형)는 본문 한가운데 출현 실측(2025-32)으로 제외.
@@ -1620,7 +1625,14 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
     (2024-37·2022-04 손실) · 3.0pt 이상 무조건(2023-17·2024-01 손실) · 비교 기준을 같은 장 안으로(효과 없음).
     **목차 면제**: toc_sub(toc_sub_title_keys — 앞부속 목차의 하위 헤딩 꼴 줄 제목 접기)가 있고 후보 제목이 그중 하나와
     동일·유사도 일치(포함 관계 제외)면 게이트를 통과 — 한 장 안에서 절 제목 크기가 섞여 조판된 2024-37 3장(`1.`·`2.`
-    13.0pt, `3.`·`4.` 본문 크기 10.8~11.0pt, 목차에는 전부 수록). toc_sub=None이면 면제 없음."""
+    13.0pt, `3.`·`4.` 본문 크기 10.8~11.0pt, 목차에는 전부 수록). toc_sub=None이면 면제 없음.
+
+    **숫자로 시작하는 절 제목**(R10 ③, 사용자 결정 — 단계별): num_dot 정규식이 후보로 안 보는 `N. 숫자…`(NUM_DOT_DIGIT_RE)
+    줄은 ① 이미 채택된 num_dot 헤딩 크기 중위와 ±0.3pt 이내면(무점 보정과 같은 기준) 후보, ② ①이 아닐 때만(기준 없음
+    또는 크기 다름) 그 쪽 본문보다 TITLE_SIZE_DELTA 이상 크면 후보. 후보가 된 뒤 순번 검사는 그대로(불일치는 기각 기록).
+    2024-35 실측: IV·V·VI장의 진짜 절(`3. 2주기 전문대학 혁신지원사업 성과에 대한 자체평가` 15.7pt)이 전부 빠지고 V장은
+    표 조각 `3. 재정적 안정성과`~`7. 글로벌 연계`(9.2pt)가 그 번호를 차지했다. num_dot이 장 문법인 문서(arabic)는
+    num_dot 패밀리가 금지라 자동 비활성 — 장 판정에는 적용하지 않는다(12권 실측 변화 0)."""
     skip_addrs = skip_addrs or set()
     normal_spans = []
     for ci, ch in enumerate(chapters):
@@ -1739,6 +1751,23 @@ def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None
                     val = HANGUL_ORD.index(text) + 1
                     title_text = f"{text} {nt}"
                     consumed_extra = [i + 1]
+            elif "num_dot" in depth_of and NUM_DOT_DIGIT_RE.match(text):
+                # R10 ③ 숫자로 시작하는 절 제목(docstring) — ① 채택 헤딩 크기 ±0.3 → ② 쪽 본문보다 큰 글자
+                dm = NUM_DOT_DIGIT_RE.match(text)
+                if not _static_guard(ln, len(text[dm.end():])):
+                    szs = fam_sizes.get("num_dot")
+                    tier = None
+                    if szs and abs(ln.size - sorted(szs)[len(szs) // 2]) <= 0.3:
+                        tier = "family"
+                    elif ln.size_delta >= TITLE_SIZE_DELTA:
+                        tier = "page"
+                    if tier:
+                        fam = "num_dot"
+                        val = int(dm.group(1))
+                        stats[fam]["digit_title"] = stats[fam].get("digit_title", 0) + 1
+                        if diag is not None:
+                            diag.setdefault("sub_digit_titles", []).append(
+                                {"page": pg + 1, "text": text[:40], "tier": tier})
             elif "num_dot" in depth_of and fam_sizes.get("num_dot"):
                 # 무점 보정(2025-25 "2 법·제도 개선 방향" 실측): 마침표 탈락 헤딩을
                 # 기대 순번 정확 일치 + 채택 헤딩 폰트 중위값 ±0.3에서만 구제
