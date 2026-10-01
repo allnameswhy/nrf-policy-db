@@ -1,0 +1,200 @@
+{
+ "file": "정책연구-2025-08-'융합연구 2.0'체계 기반 혁신 도전적 유망 융합신기술 발굴 기획 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 213,
+ "documents": [
+  {
+   "pages": [
+    1,
+    213
+   ],
+   "kind": "main",
+   "title": "융합연구 2.0 체계 기반 혁신도전적 유망 융합신기술 발굴 기획 연구",
+   "body_start": 26,
+   "back_start": 138,
+   "toc_pages": [
+    24,
+    25
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "서론",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구 배경 및 필요성",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "연구목적, 내용 및 절차",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "국내외 융합 R&D 동향 분석",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "융합 R&D 정책 동향",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "국내외 미래 유망기술 현황",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "유망 융합 신기술 발굴 추진 전략 및 체계",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "유망 융합 신기술 발굴 개요",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "유망 융합 신기술 발굴 과정",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "유망 융합 신기술 발굴위원회 운영",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "유망 융합 신기술 발굴 내용",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "유망 융합 신기술 후보군 상세 내용",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "최종 6대 분야별 상세 내용",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "결론 및 제언",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구결과 종합",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "유망 융합 신기술 육성을 위한 제언",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 115,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고1.",
+     "title": "융합연구 혁신전략위원회 위원(안)",
+     "page": 116,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고2.",
+     "title": "100대 유망 신기술 후보군 상세 내용",
+     "page": 117,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고3.",
+     "title": "융합연구혁신전략위 킥오프 회의 발표 자료",
+     "page": 129,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고4.",
+     "title": "34대 후보군 개념 요약서",
+     "page": 134,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고5.",
+     "title": "20대 후보군 기술요약서",
+     "page": 151,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고6.",
+     "title": "6대 유망 융합 신기술 확보 전략 내용",
+     "page": 171,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "참고7.",
+     "title": "미래융합포럼 내 발표자료",
+     "page": 183,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 187,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

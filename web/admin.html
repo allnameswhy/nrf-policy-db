@@ -157,9 +157,10 @@
       <span id="plan-preview" class="note"></span>
     </div>
     <div class="note" style="margin-top:8px">일괄 해결은 카드의 결정대로 필요한 파일만
-      파이프라인(추출 → 추출 검증 → 요약 생성 → 요약 품질 검증 → DB 동기화 → 카탈로그 재생성)에
-      태워 순서대로 처리합니다. 중간에 문제가 생긴 파일은 빼고 나머지는 끝까지 진행한 뒤,
-      남은 문제를 다시 카드로 띄웁니다.</div>
+      파이프라인(판독·등록 → 추출 → 추출 검증 → 요약 생성 → 요약 품질 검증 → DB 동기화 → 카탈로그 재생성)에
+      태워 순서대로 처리합니다. 새 PDF는 등록 단계에서 한 번 판독(LLM 1회)합니다. 중간에 문제가 생긴 파일은
+      빼고 나머지는 끝까지 진행한 뒤, 남은 문제를 다시 카드로 띄웁니다 — 목차 대응이 성립하지 않은 문서는
+      플랫으로 수용할지 묻는 카드로 돌아옵니다.</div>
   </div>
 
   <div class="panel">
@@ -473,17 +474,18 @@ function renderCards(cards) {
     }
     const b = box(c.severity, kids);
     const ex = c.extra || {};
-    if (c.kind === "detect_fail") {
-      const att = ex.l1_attempts && Object.keys(ex.l1_attempts).length
-        ? Object.entries(ex.l1_attempts).map(([k, v]) => `${k} ${v}`).join(" · ")
-        : "없음(장 번호 후보 신호 자체가 없음)";
-      b.appendChild(el("div", "hint", "후보 프로파일별 정상 장 수: " + att));
-      const sus = ex.l1_suspects || [];
-      if (sus.length) {
-        b.appendChild(el("div", "hint", `헤딩으로 의심되는 줄 ${sus.length}개 — 이 문서의 장 문법 후보:`));
-        b.appendChild(el("div", "mono-block", sus.join("\n")));
-      } else {
-        b.appendChild(el("div", "hint", "헤딩 의심 줄 없음 — 번호 문법이 아예 없는 문서일 가능성이 높습니다(플랫 수용 권장)."));
+    if (c.kind === "toc_fail" && ex.toc) {
+      const t = ex.toc;
+      if (!t.no_toc) {
+        const rate = t.rate_depth12 == null ? "-" : Math.round(t.rate_depth12 * 100) + "%";
+        b.appendChild(el("div", "hint",
+          `목차 항목 ${t.entries ?? "-"}개 중 ${t.anchored ?? "-"}개 대응 · 장·절 대응률 ${rate} · 대응된 장 ${t.depth1_anchored ?? "-"}개`));
+        const un = t.unanchored || [];
+        if (un.length) {
+          const more = t.unanchored_total > un.length ? ` (앞 ${un.length}개만 표시)` : "";
+          b.appendChild(el("div", "hint", `본문에서 찾지 못한 목차 항목 ${t.unanchored_total}개${more}:`));
+          b.appendChild(el("div", "mono-block", un.join("\n")));
+        }
       }
     }
     if (c.kind === "register_family") b.appendChild(familyForm(ex));
@@ -500,17 +502,16 @@ function renderCards(cards) {
       const con = c.control;
       const group = "ctl-" + (ctlSeq++);
       const w = ctlWrap(con.type, con.pdf);
-      if (con.type === "lane" || con.type === "lane_opt") {
-        if (con.type === "lane_opt") w.appendChild(checkbox("이번 해결에 포함", true));
-        w.append(radio(group, "structured", "structured (정책보고서류)", con.default === "structured"),
-                 radio(group, "flat", "flat (플랫 청킹)", con.default === "flat"));
-      } else if (con.type === "detect") {
-        w.append(radio(group, "promote", "승격 실행 (에이전트)", false),
-                 radio(group, "flat", "플랫으로 수용", false),
+      if (con.type === "include") {
+        w.appendChild(checkbox("이번 해결에 포함", con.default !== false));
+      } else if (con.type === "toc_fail") {  // 결정 단위 = 문서(rid) — 같은 PDF의 다른 문서는 건드리지 않는다
+        w.dataset.rid = con.rid;
+        w.append(radio(group, "flat", con.force ? "플랫으로 수용 (기존 .md 덮어씀 — 요약·검증 스탬프 소실)"
+                                                : "플랫으로 수용", false),
                  radio(group, "skip", "보류", true));
+        if (con.force) w.dataset.force = "1";
       } else if (con.type === "force") {
         w.appendChild(checkbox("--force 재추출 포함 (요약·검증 스탬프 소실)", false));
-        w.dataset.lane = con.lane;
       }
       b.appendChild(w);
     }
@@ -519,20 +520,21 @@ function renderCards(cards) {
 }
 
 function collectDecisions() {
-  const pdfs = {}, force = [];
+  // pdfs = 파일별 포함 여부(run|skip), flat = 플랫으로 수용한 문서(rid), force = --force 재추출 파일
+  const pdfs = {}, flat = [], force = [];
   for (const w of document.querySelectorAll("#cards .ctl")) {
     const type = w.dataset.type, pdf = w.dataset.pdf;
     const include = w.querySelector('input[data-role="include"]');
     const picked = w.querySelector('input[type="radio"]:checked');
     if (type === "force") {
       if (include && include.checked) force.push(pdf);
-    } else if (include && !include.checked) {
-      pdfs[pdf] = "skip";
-    } else if (picked) {
-      pdfs[pdf] = picked.value;
+    } else if (type === "toc_fail") {
+      if (picked && picked.value === "flat") flat.push(w.dataset.rid);
+    } else if (type === "include") {
+      pdfs[pdf] = include && include.checked ? "run" : "skip";
     }
   }
-  return { pdfs, force };
+  return { pdfs, flat, force };
 }
 
 async function updatePreview() {
@@ -571,8 +573,12 @@ async function updatePreview() {
 async function resolveAll() {
   if (busy) return;
   const decisions = collectDecisions();
-  if (decisions.force.length &&
-      !confirm(`--force 재추출 ${decisions.force.length}건이 포함되어 있습니다.\n` +
+  // 목차 대응 불성립 카드의 플랫 수용 중 기존 .md를 덮어쓰는 것도 --force 재추출이다
+  const overwrite = [...document.querySelectorAll('#cards .ctl[data-force="1"]')]
+    .filter((w) => decisions.flat.includes(w.dataset.rid)).length;
+  const nForce = decisions.force.length + overwrite;
+  if (nForce &&
+      !confirm(`--force 재추출 ${nForce}건이 포함되어 있습니다.\n` +
                "기존 요약·검증 스탬프를 버리고 재추출부터 검증·요약 재생성(LLM 사용량 소모)·" +
                "DB 반영까지 다시 돌립니다. 계속할까요?")) return;
   let res, j;
@@ -673,7 +679,6 @@ function showOutcome(j) {
   out.textContent = "";
   const failed = j.stages.filter((s) => s.code !== null && s.code !== 0);
   const dropped = j.stages.flatMap((s) => s.dropped || []);
-  const hadPromote = j.stages.some((s) => s.step === "promote");
   let b;
   if (j.code === 0) {
     b = box("ok", [txt("✓ 일괄 해결 완료 — 전 단계 통과, 탈락 없음.")]);
@@ -692,12 +697,6 @@ function showOutcome(j) {
     kids.push(el("div", "hint",
       "가능한 파일은 끝까지 처리했습니다. 위 로그의 강조 줄과 아래 카드를 확인하고, 결정을 조정해 다시 일괄 해결을 실행하면 남은 작업부터 이어집니다."));
     b = box("warn", kids);
-  }
-  if (hadPromote) {
-    b.appendChild(el("div", "hint",
-      j.stages.some((s) => s.step === "promote" && s.code === 0)
-        ? "프로파일 승격 성공분: extract.py 변경분은 미커밋 상태입니다 — 검토 후 커밋은 직접 해주세요."
-        : "승격 실패·부적합이면 이 문서는 플랫 수용을 권장합니다. extract.py 원상 복구 여부는 로그의 [promote] 보고로 확인하세요."));
   }
   const actions = el("div", "actions");
   actions.appendChild(ackButton("확인(닫기)"));

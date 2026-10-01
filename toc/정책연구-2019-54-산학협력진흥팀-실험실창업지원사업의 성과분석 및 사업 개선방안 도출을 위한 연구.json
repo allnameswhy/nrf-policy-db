@@ -1,0 +1,305 @@
+{
+ "file": "정책연구-2019-54-산학협력진흥팀-실험실창업지원사업의 성과분석 및 사업 개선방안 도출을 위한 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 131,
+ "documents": [
+  {
+   "pages": [
+    1,
+    131
+   ],
+   "kind": "main",
+   "title": "실험실창업지원사업의 성과분석 및 사업 개선방안 도출을 위한 연구",
+   "body_start": 10,
+   "back_start": 104,
+   "toc_pages": [
+    5,
+    6
+   ],
+   "boundary_reason": "단일 표지로 시작하고 꼬리말 번호가 1로 되돌아간 쪽이 없어 하나의 문서로 판단했다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "연구의 배경 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "연구의 목표 및 주요내용",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "실험실창업지원사업 현황",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "공공기술기반 시장연계 창업탐색 지원사업(한국형 I-Corps) 현황",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "실험실 특화형 창업선도대학사업 현황",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "미국 NSF I-Corps 현황",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "실험실창업지원사업 진단",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "진단 개요",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "유사 지원사업 현황",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "대학 창의적 자산 실용화 지원사업(BRIDGE+)",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "대학기술경영촉진",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "사회맞춤형 산학협력선도대학 육성사업(LINC+)",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "예비창업패키지",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "대학 기업가센터",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "기술수요 기반 신사업 창출지원",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "공공기술기반 시장연계 창업탐색 지원사업 진단",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "현장의견 조사 결과",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "전문가 자문 의견",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "공공기술기반 시장연계 창업탐색 지원사업 진단결과",
+     "page": 61,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절.",
+     "title": "실험실 특화형 창업선도대학 사업 진단",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "현장의견 조사 결과",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "전문가 자문 의견",
+     "page": 67,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "실험실 특화형 창업선도대학사업 진단결과",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "실험실창업지원사업 추진사항 개선(안)",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "공공기술기반 시장연계 창업탐색 지원사업 추진방안",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "실험실창업혁신단 추가공모(호남권/동남권)",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "실험실창업혁신단 추가공모(출연(연) 전담)",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "실험실창업탐색팀 공모",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "실험실창업탐색팀 교육 및 창업보육 지원",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "목표·성과관리 강화 통한 창업률 제고",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "실험실 창업 활성화 및 창업 문화 확산 프로그램",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "해외시장 진출을 위한 시범사업 추진",
+     "page": 85,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "실험실 특화형 창업선도대학 추진방안",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "중점 추진사항",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "평가방안",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 93,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 94,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "자문위원 명단",
+     "page": 94,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "의견수렴 세부내용",
+     "page": 95,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

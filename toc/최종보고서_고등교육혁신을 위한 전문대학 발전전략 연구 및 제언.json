@@ -1,0 +1,94 @@
+{
+ "file": "최종보고서_고등교육혁신을 위한 전문대학 발전전략 연구 및 제언.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 92,
+ "documents": [
+  {
+   "pages": [
+    1,
+    92
+   ],
+   "kind": "main",
+   "title": "고등교육혁신을 위한 전문대학 발전전략 연구 및 제언",
+   "body_start": 9,
+   "back_start": null,
+   "toc_pages": [
+    8
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "추진배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "추진경과",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "성과 및 진단",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "비전 및 추진방향",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "추진과제",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "학사제도 및 전문대학의 기능전환",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "산학협력 및 신산업 인력 육성",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국가 재정 지원의 혁신",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "국제 : 해외 우수인력 유치",
+     "page": 72,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "향후 추진계획",
+     "page": 83,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

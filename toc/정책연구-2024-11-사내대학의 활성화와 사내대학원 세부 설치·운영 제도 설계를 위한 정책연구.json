@@ -1,0 +1,171 @@
+{
+ "file": "정책연구-2024-11-사내대학의 활성화와 사내대학원 세부 설치·운영 제도 설계를 위한 정책연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 173,
+ "documents": [
+  {
+   "pages": [
+    1,
+    173
+   ],
+   "kind": "main",
+   "title": "사내대학의 활성화와 사내대학원 세부 설치·운영 제도 설계 관련 정책연구",
+   "body_start": 25,
+   "back_start": 127,
+   "toc_pages": [
+    9
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "",
+     "title": "요약문",
+     "page": null,
+     "kind": "front"
+    },
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구의 필요성 및 목적",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "연구의 내용 및 방법",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "사내대학(원) 관련 현황",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "선행연구 검토",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "사내대학 설립 기준 및 절차 검토",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "유사 제도 현황 분석",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "유관 기관 담당자 의견수렴을 통한 사내대학(원) 활성화 방안",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "개요",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "의견수렴 결과",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "사내대학(원) 활성화를 위한 제도 개선(안)",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "사내대학원 설치 기준 마련",
+     "page": 61,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "사내대학원 설립 근거",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "사내대학원 설치·운영 기준",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "사내대학(원) 설립인가 매뉴얼",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 101,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 103,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "’24년 사내대학(원) 설립 인가 매뉴얼",
+     "page": 105,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국내 사내대학원 적정규모 산정",
+     "page": 142,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사내대학원 설치·운영 제도 시뮬레이션 및 기대효과 분석",
+     "page": 144,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

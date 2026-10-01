@@ -1,0 +1,227 @@
+{
+ "file": "정책연구-2025-38-과학기술 AI Agent 활성화 방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 62,
+ "documents": [
+  {
+   "pages": [
+    1,
+    62
+   ],
+   "kind": "main",
+   "title": "과학기술 AI Agent 활성화 방안 연구",
+   "body_start": 10,
+   "back_start": 61,
+   "toc_pages": [
+    9
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장.",
+     "title": "사업개요",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "추진배경 및 필요성",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 목적 및 범위",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "추진 체계",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "추진 경과",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장.",
+     "title": "환경분석",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "정책 동향",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "기술 동향",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "시장 동향",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "시사점",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장.",
+     "title": "비전 및 추진전략",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "비전 및 목표",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "추진전략 및 성과지표",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "집단지성 기반 발굴 체계",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "에이전트 유형 정의 및 참조 아키텍처",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장.",
+     "title": "AI Co-Scientist Challenge 주요 사례",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "Track1: 분야별 AI 활용 과학기술 연구 사례",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "Track2: AI 에이전트 개발 사례",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사례 분석을 통한 시사점",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장.",
+     "title": "평가·확산 프레임워크",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "평가 지표 및 절차",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "확산·연계 방안",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "조직별 도입 가이드라인",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장.",
+     "title": "기대효과",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "정책적 기대효과",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "기술·제도 연계 기대효과",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구개발 및 산업적 기대효과",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "사회적 기대효과",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "부록.",
+     "title": "연구팀 편성표",
+     "page": 61,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

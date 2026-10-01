@@ -1,0 +1,221 @@
+{
+ "file": "정책연구-2025-02-기초연구사업의 사회적·경제적 파급효과에 대한 다각적 분석연구-SDGs 연관성 및 특허분석 중심으로.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 118,
+ "documents": [
+  {
+   "pages": [
+    1,
+    118
+   ],
+   "kind": "main",
+   "title": "기초연구사업의 사회적·경제적 파급효과에 대한 다각적 분석연구 -SDGs 연관성 및 특허분석 중심으로",
+   "body_start": 18,
+   "back_start": 116,
+   "toc_pages": [
+    14,
+    15
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "가.",
+     "title": "기초연구 투자 규모의 확대",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "나.",
+     "title": "기초연구 평가 기준의 정책적 전환",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "다.",
+     "title": "기초연구 투자의 사회경제적 가치 입증 체계의 필요성",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "라.",
+     "title": "기초연구의 다층적 특성과 평가의 다각화 필요성",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "마.",
+     "title": "국제동향: 전략적 기초연구 프로그램의 사례",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "바.",
+     "title": "연구의 필요성 및 목적",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "가.",
+     "title": "연구대상 데이터",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "나.",
+     "title": "분석방법",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "사회적 파급효과 연구결과",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "가.",
+     "title": "연구비 분석",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "나.",
+     "title": "과제 키워드 분석",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "다.",
+     "title": "과제 성과분석과 지속가능발전목표 기여도 분석",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "라.",
+     "title": "지속가능발전목표별 주요키워드",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "마.",
+     "title": "SDGs 관련 기초연구의 학문적 영향력 분석",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "바.",
+     "title": "국제협력의 영향력에 대한 효과",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "사.",
+     "title": "초고인용 논문의 특성과 기초연구 성공 모델 분석",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "4.",
+     "title": "경제적 파급효과 연구결과",
+     "page": 78,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "가.",
+     "title": "기술료",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "나.",
+     "title": "사업화",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "다.",
+     "title": "특허분석",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "라.",
+     "title": "특허인용분석",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "5.",
+     "title": "결론",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "가.",
+     "title": "기초연구의 사회적 파급효과",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "나.",
+     "title": "기초연구의 경제적 파급효과",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "다.",
+     "title": "성과확산을 위한 시스템의 개선과 연구자 중심 접근의 중요성",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "6.",
+     "title": "참고문헌",
+     "page": 99,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

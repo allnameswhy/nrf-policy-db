@@ -1,0 +1,129 @@
+{
+ "file": "정책연구-2024-14-나노·소재분야 DNA 활용 소재조합기술 개발 탐색연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 71,
+ "documents": [
+  {
+   "pages": [
+    1,
+    71
+   ],
+   "kind": "main",
+   "title": "나노·소재분야 DNA 활용 소재조합기술 개발 탐색연구",
+   "body_start": 32,
+   "back_start": 69,
+   "toc_pages": [
+    31
+   ],
+   "boundary_reason": "꼬리말 번호가 1로 되돌아간 쪽이 없고 표지가 하나뿐이라 71쪽 전체가 한 문서다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "연구 목적 및 필요성",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.1.",
+     "title": "DNA 나노소재조합기술의 연구동향",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.2.",
+     "title": "연구 목적 및 필요성",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.1.",
+     "title": "DNA 기반 복합소재의 중요성",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.2",
+     "title": "연구내용",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.3",
+     "title": "연구범위 및 활용방안",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "추진전략 및 방법",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "4.",
+     "title": "연구활동 및 수행결과",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.1.",
+     "title": "DNA 기능성 나노물질 조합기술개발",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.2.",
+     "title": "AI-powered DNA-나노소재 시뮬레이션 및 설계 기술",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.3.",
+     "title": "DNA 나노소재 기반 신개념 유전자 치료제 기술개발",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.4.",
+     "title": "DNA 알고리즘을 이용한 튜링 컴퓨터 개발 연구",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.5.",
+     "title": "DNA 정보저장장치 기술개발 연구",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "5.",
+     "title": "기대성과",
+     "page": 65,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

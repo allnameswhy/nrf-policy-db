@@ -1,0 +1,347 @@
+{
+ "file": "정책연구-2024-04-첨단분야 혁신융합대학사업 1단계 성과분석 및 2단계 발전방안 정책연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 260,
+ "documents": [
+  {
+   "pages": [
+    1,
+    260
+   ],
+   "kind": "main",
+   "title": "첨단분야 혁신융합대학사업 1단계 성과분석 및 2단계 발전방안 정책연구",
+   "body_start": 22,
+   "back_start": 259,
+   "toc_pages": [
+    14,
+    15
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "1단계 사업 성과분석",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "사업단 운영 현황",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "인공지능",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "빅데이터",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "차세대반도체",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "미래자동차",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "바이오헬스",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "실감미디어",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "지능형로봇",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "8.",
+     "title": "에너지신산업",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "1단계 사업 성과분석",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "성과분석 개요",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "통합 성과분석 결과",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "사업단별 실적 진단",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "자율성과지표 진단",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "1단계 백서 작성",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "개요",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "사업의 추진경과",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "사업의 비전과 추진체계",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "COSS사업의 비전 및 주요 내용",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "사업단별 비전",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "사업추진 체계",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절.",
+     "title": "사업단의 주요 성과",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "정성적 성과",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "정량적 성과",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제5절.",
+     "title": "주요 활동별 우수사례",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "COSS 공동 프로그램 운영 우수사례",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "교육과정 및 교과목 구성•개발",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "교원확보 및 지원",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "학생 참여 지원 및 학사제도 운영",
+     "page": 132,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "교육방법 및 교육환경 개선",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "성과확산",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "지·산·학 협업 및 운영",
+     "page": 154,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "8.",
+     "title": "취창업 우수사례",
+     "page": 158,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "2단계 발전방안 수립",
+     "page": 210,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "RISE체계 편입에 따른 운영방안 마련",
+     "page": 210,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "22대 신기술분야 공백영역 해소",
+     "page": 214,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "학령인구 감소에 따른 외국인 유학생 참여 확대",
+     "page": 218,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절.",
+     "title": "생산인구 감소에 따른 평생교육 강화",
+     "page": 223,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제5절.",
+     "title": "사업운영의 고도화",
+     "page": 228,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "교육과정 및 교과목 질관리 강화",
+     "page": 228,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "교과목 및 교육과정 공유 체계 강화",
+     "page": 229,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "18개 컨소시엄 연계 교육운영 방안 마련",
+     "page": 231,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "혁신인재양성을 위한 창업교육 확대",
+     "page": 234,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 237,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

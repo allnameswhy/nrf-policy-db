@@ -1,0 +1,234 @@
+{
+ "file": "정책연구-2024-26-대학의 자율적 학술활동 건전성 강화 실천방안 연구 단과대학 중심으로.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 113,
+ "documents": [
+  {
+   "pages": [
+    1,
+    113
+   ],
+   "kind": "main",
+   "title": "대학의 자율적 학술활동 건전성 강화 실천방안 연구 : 단과대학 중심으로",
+   "body_start": 13,
+   "back_start": 67,
+   "toc_pages": [
+    10
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구의 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구추진 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국내외 현황",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구의 필요성",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "연구내용 및 범위",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "추진전략 및 방법",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "기대성과 및 활용방안",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "부실의심학술지 관련 주요 이슈 정의",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "부실의심학술지 기준의 모호성",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "블랙리스트와 화이트리스트의 딜레마",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "부실의심학술지 논문 게재로 인한 대학원생의 불이익",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "부실의심학술지 논문 게재로 인한 연구자의 불이익",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "건전학술 문화를 위한 방향성 제안",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "부실의심학술지 이슈 예방을 위한 대응 모델 개발",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "단과대학 차원의 학술 활동 건전성 강화",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "학과(부) 차원의 학술 활동 건전성 강화",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "서울대학교 자연과학대학 구성원 대상 설문 조사",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "타 대학교 전문가 자문회의",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "타 단과대학 부학장 자문회의",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "활용가능한 실천적 모델 제시",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "단과대학 차원에서 활용가능한 실천적 방안",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "타 대학교의 실천적 사례 조사",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "타 기관의 실천적 사례 조사",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "결론",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 55,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 1.",
+     "title": "서울대학교 자연과학대학 구성원 대상 설문 조사 문항",
+     "page": 56,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 2.",
+     "title": "서울대학교 자연과학대학 구성원 대상 설문 응답",
+     "page": 63,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 3.",
+     "title": "타 대학교 전문가 자문회의 회의록 (2024.11.19.)",
+     "page": 75,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 4.",
+     "title": "타 단과대학 부학장 자문회의 회의록 (2024.11.21.)",
+     "page": 86,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 5.",
+     "title": "서울대학교 자연과학대학 전임교원 인사규정 (제정 2024.02.20.)",
+     "page": 95,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

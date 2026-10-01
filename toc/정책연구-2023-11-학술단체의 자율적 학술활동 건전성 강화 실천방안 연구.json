@@ -1,0 +1,452 @@
+{
+ "file": "정책연구-2023-11-학술단체의 자율적 학술활동 건전성 강화 실천방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 251,
+ "documents": [
+  {
+   "pages": [
+    1,
+    251
+   ],
+   "kind": "main",
+   "title": "학술단체의 자율적 학술활동 건전성 강화 실천방안 연구(수학분야/논문 중심으로)",
+   "body_start": 9,
+   "back_start": 143,
+   "toc_pages": [
+    4,
+    5
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구의 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구추진 배경 및 현황",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 필요성",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구목표 및 추진방법",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연구목표",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "추진전략 및 연구방법",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기대성과 및 활용방안",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "기대성과",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "활용방안",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "부실학술활동 이슈 진단",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국내외 부실학술활동 현황",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "약탈적 저널과의 전쟁",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "부실의심학술지 리스트",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "부실의심학술지에 대한 연구자들의 경험과 인식결과",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "과학학술지 출판 동향(부실학술지 중심)",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국내외 연구자의 부실학술지 출판현황 분석",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "국내외 연구자의 부실학술지 출판현황",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "한국 연구자의 부실학술지 출판현황",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "국내외 연구기관 및 학술단체의 업적 평가와 학술지 관리",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국내 주요 대학의 연구업적 평가 현황",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "교수 업적평가 및 보상",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "학위과정",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "시사점(소결)",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "해외 주요 국가의 연구업적 평가 현황 및 문제점",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "과학자의 연구성과 평가 방식 개선 요구(DORA 선언, 라이덴선언, IEEE 권고안 등)",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "해외 주요대학의 연구성과 평가 현황",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "주요 국가별 수학분야 학술지 관리 현황",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "시사점",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "건전한 학술활동 교육·예방활동",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구자 및 연구기관 의견수렴 및 시사점 도출",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연구자 의견수렴",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "대학관계자 (수학과 출신 학장 및 처장) 인터뷰 보고서",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "수학분야 학회원 대상 공청회 및 교육·예방활동",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "공청회 개최",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "학술건전성 강화 캠페인",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "건전한 학술활동 문화의 확산 포럼 개최",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "포럼 개요",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "포럼 추진결과 및 시사점",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "부실학술활동 근절을 위한 실천적 정책 대안",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "학회를 활용한 학술활동 건전성 강화 실천적 방안",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "논문 투고시 유의점",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "수학분야 권장학술지 목록(acknowledgeable/allowable journal list)",
+     "page": 120,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구업적 및 연구지원 평가 개선을 위한 실천적 방안(대학, 연구지원기관)",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "대학 연구업적 평가 개선 방안",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "국가연구개발사업 지원 평가 방식 개선 방안",
+     "page": 125,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장",
+     "title": "결론 및 제언",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구내용 종합 및 결론",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연구 개요 및 주요 내용",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "결론",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "제언 (건전한 학술활동을 위한 성명서)",
+     "page": 132,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 135,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 1.",
+     "title": "2023년 수학분야 권장학술지 목록",
+     "page": 136,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록 1-1]",
+     "title": "수학분야 권장학술지 목록(acknowledgeable/allowable journal list) 작성 경과",
+     "page": 144,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 2.",
+     "title": "미국수학회 수학분야 저널 ranking (MathSciNet, MCQ 포함)",
+     "page": 146,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 3.",
+     "title": "수학분야 부실의심학술지 목록(국회 언론 보도 자료 기반)",
+     "page": 149,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 4.",
+     "title": "대의원교(전국대학 수학관련 학과) 연구업적평가 현황",
+     "page": 151,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 5.",
+     "title": "연구자 대상 (설문문항)",
+     "page": 172,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 6.",
+     "title": "대한수학회원 설문조사 개별 답변",
+     "page": 178,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 7.",
+     "title": "폴란드에서 제작한 수학분야 학술지 목록",
+     "page": 194,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 8.",
+     "title": "이탈리아 로마저널리스트(2015)",
+     "page": 224,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 9.",
+     "title": "노르웨이 Level X 저널 리스트(2023년 8월 기준)",
+     "page": 241,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,468 @@
+{
+ "file": "정책연구-2024-01-대학창의적자산실용화지원사업(BRIDGE ) 종합성과 분석 및 백서 발간.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 363,
+ "documents": [
+  {
+   "pages": [
+    1,
+    363
+   ],
+   "kind": "main",
+   "title": "대학창의적자산실용화지원사업(BRIDGE+) 종합성과 분석 및 백서",
+   "body_start": 8,
+   "back_start": 267,
+   "toc_pages": [
+    4,
+    5,
+    6,
+    7
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "연구개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "추진전략 및 방법",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기대성과 및 활용방법",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "BRIDGE+ 사업 성과 분석",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "BRIDGE+ 사업 개요",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BRIDGE+ 사업단 운영 현황",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "BRIDGE+ 사업 핵심 성과 지표",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "핵심 성과 지표를 통한 BRIDGE+ 사업 성과 분석",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "주요 성과",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "BRIDGE+ 사업단 성과 현황",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "BRIDGE+ 사업단별 핵심 지표 성과(단기)",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "BRIDGE+ 사업단별 핵심 지표 성과(중·장기)",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "시사점",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "BRIDGE+ 사업을 통한 대학 기술 사업화 역량 변화",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "BRIDGE+ 사업을 통한 우리나라 대학 기술사업화 성과 분석",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "분석 개요",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "대학 연구비 수주",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "IP 창출",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "기술이전",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "교원창업",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "BRIDGE+ 참여대학의 기술사업화 역량 변화",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "기술이전 성과 측면",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교원창업 성과 측면",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "시사점",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "BRIDGE+ 사업을 통한 “BRIDGE+ 기업의 성장” 변화",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "BRIDGE+기업 도출",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BRIDGE+ 기업분류",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "BRIDGE+ 참여 사업단 및 기술이전 실적 분석을 통한 BRIDGE+ 기업 도출",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "BRIDGE+기업 지역별 현황",
+     "page": 159,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "사업단별 BRIDGE+ 기업현황 분석",
+     "page": 159,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "BRIDGE+ 기업의 지역별 분석",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "지역별 기술이전 BRIDGE+ 기업 세부현황",
+     "page": 162,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "BRIDGE+기업 투자현황 분석",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "창업시기에 따른 BRIDGE+기업 투자 현황 분석",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "투자단계별 BRIDGE+기업 분석",
+     "page": 166,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "BRIDGE+기업 매출현황 분석",
+     "page": 168,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BRIDGE+기업 3개년(`21~`23) 매출현황 분석",
+     "page": 168,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "BRIDGE+기업의 GDP대비 매출 기여율",
+     "page": 170,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "BRIDGE+ 유니콘 기업 성장 분석",
+     "page": 171,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "BRIDGE+ 기업의 고용인원 변화 추이 분석",
+     "page": 178,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BRIDGE+기업의 고용창출효과",
+     "page": 178,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "TIPS 선정 BRIDGE 기업의 현황",
+     "page": 180,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "TIPS 연계 성과확산 BRIDGE 기업분석",
+     "page": 180,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "지역별 TIPS 선정기업 현황",
+     "page": 182,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "시사점",
+     "page": 185,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "BRIDGE+ 사업과 국가 기술사업화 성과 비교분석",
+     "page": 186,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국내 기술사업화 분야에서의 BRIDGE+ 위치",
+     "page": 186,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "국내 기술사업화 성과 비교",
+     "page": 186,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "계약 규모별 기술이전 성과",
+     "page": 188,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "초대형 기술이전 성과와 Social Impact",
+     "page": 190,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "기술료 수입에 따른 성과",
+     "page": 193,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "산업관점에서의 BRIDGE+ 기술사업화 성과",
+     "page": 201,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "바.",
+     "title": "국내 산업정책/동향과 BRIDGE+ 기술사업화 성과",
+     "page": 207,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "사.",
+     "title": "권역별 기술이전 성과",
+     "page": 213,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "아.",
+     "title": "대학 설립유형에 따른 기술이전 성과",
+     "page": 218,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "자.",
+     "title": "해외기술이전 성과",
+     "page": 221,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "주요 해외 국가의 기술사업화 성과 비교분석",
+     "page": 223,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연차별 질적 성과를 통한 BRIDGE+ 위치",
+     "page": 246,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "시사점",
+     "page": 251,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "BRIDGE+사업의 효과, 한계, 시사점",
+     "page": 254,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "[부록]",
+     "title": "BRIDGE+ 사업 우수 사례",
+     "page": 259,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

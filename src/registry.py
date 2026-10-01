@@ -2,14 +2,14 @@
 
 report_id는 파일명에서 유도하지 않는다(2026-09-04 결정 — 파일명 표기가 제각각이라
 표지에 인쇄된 관리번호 하나로 통일). `src/register.py`(1단계)가 표지를 읽어 이 표를
-채우고, extract·verify·promote·status·serve는 여기서 조회만 한다. 표에 없거나 rid가
+채우고, extract·verify·status·serve는 여기서 조회만 한다. 표에 없거나 rid가
 공란인 행이 하나라도 있는 PDF는 어느 단계도 지나지 못한다(미등록 = FAIL — 사람이 기입).
 
 - 열(v4, 2026-09-08) = file · pages · report_id · source(cover|manual) · cover_title ·
   registered(rid를 적은 날, ISO) · note. 탭 구분, UTF-8, 헤더 1줄. **행 키 = (file, pages)**:
   file = PDF 파일명(NFC, 디렉터리 무관), pages = 합본 파트의 쪽 범위(`139-233`, 1-based 양끝
   포함; 단독본은 공란 = 파일 전체). 합본은 register가 파트마다 행을 만든다 — 등록 단위 =
-  문서(파트도 각자 rid), `_NN` 접미는 폐지.
+  문서(파트도 각자 rid), `_NN` 접미는 폐지. 문서 범위는 판독 파일이 정한다(아래).
 - rid 형식: ASCII `[A-Za-z0-9-]`만(밑줄·한글·글롭 메타문자 불가). 표준형 =
   `YYYY-NN[-b][-vN]` — 글자 = 같은 번호의 **다른 독립 보고서**(-b, -c…), v = 그 보고서의
   **권·부록·별권**(-v1, -v2…). `2019-31-b-v1` = -b 보고서의 별권. verify의 연도 대조는
@@ -17,6 +17,9 @@ report_id는 파일명에서 유도하지 않는다(2026-09-04 결정 — 파일
 - note는 register가 쓰는 고정 세그먼트(` · ` 구분)라 `parse_note`가 되읽는다 — 공란 행의
   표지 번호(가족 묶음·정렬)와 권 신호·표지 단서(카드 제안).
 - 캐시는 파일 mtime 기준 — 장수 프로세스(serve)가 표 변경을 새로고침에서 본다.
+- 합본 분할의 원천은 **판독 파일** `toc/{PDF stem}.json`(src/docread.py — register가 PDF당 LLM 1회 판독으로
+  만든다, 2026-10-01). 행의 쪽 범위가 판독 문서 범위와 다르거나 판독 파일이 없으면 그 PDF도 미등록 취급이다
+  (`toc_problem` — 판독 없음은 register 재실행, 범위 불일치는 --drop 후 재등록).
 - `pdfs/hold/`(2026-09-07) = 아직 적재하지 않을 **보류 PDF**. 파이프라인·status·/admin의
   PDF 스캔은 `pdfs/` 직하만 보므로 보류 파일은 어느 단계에도 잡히지 않고, **등록부에도 없다**
   (register는 hold 경로 인자를 거부하고, 표에 남은 보류 행은 `orphans`·register `--check`가
@@ -27,6 +30,7 @@ report_id는 파일명에서 유도하지 않는다(2026-09-04 결정 — 파일
 from __future__ import annotations
 
 import csv
+import json
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -168,7 +172,7 @@ def _rows_problem(rows: list[Row]) -> str:
     for a, b in zip(ranges, ranges[1:]):
         if b[0] <= a[1]:
             return "pages 범위 겹침·역순 — python src/register.py --drop 후 재등록"
-    return ""
+    return toc_problem(rows)  # 행의 쪽 범위 = 판독 파일의 문서 범위(분할의 원천)여야 한다
 
 
 def parts_for(pdf_path, path: Path = REGISTRY_PATH) -> list[tuple[str, tuple[int, int] | None]]:
@@ -189,6 +193,54 @@ def rid_for(pdf_path, path: Path = REGISTRY_PATH) -> str | None:
 def rid_reason(pdf_path, path: Path = REGISTRY_PATH) -> str:
     """미등록 사유(사람이 읽는 문장) — 표에 없음 / 공란(+note) / 형식 위반 / pages 문제."""
     return _rows_problem(rows_for(pdf_path, path))
+
+
+# ---------------------------------------------------------------------------
+# 판독 파일(toc/{PDF stem}.json) — 합본 분할의 원천. 등록부 행의 쪽 범위는 판독 문서 범위와 같아야 한다.
+# ---------------------------------------------------------------------------
+
+TOC_DIR = REPO_ROOT / "toc"
+TOC_MISSING = "판독 파일 없음"            # 사유 접두 — register가 판독(LLM 1회)을 채우면 풀린다
+TOC_MISMATCH = "쪽 범위가 판독과 다름"    # 사유 접두 — 행 삭제 후 재등록
+_toc_cache: dict[str, tuple[float, "list[tuple[int, int]] | None"]] = {}
+
+
+def toc_path(pdf_path, toc_dir=None) -> Path:
+    stem = unicodedata.normalize("NFC", Path(str(pdf_path)).stem)
+    return Path(toc_dir or TOC_DIR) / f"{stem}.json"
+
+
+def toc_ranges(pdf_path, toc_dir=None) -> list[tuple[int, int]] | None:
+    """판독 파일의 문서 쪽 범위(0-based 양끝 포함) 목록. 파일이 없거나 읽을 수 없으면 None.
+    json만 읽는다(status·serve가 새로고침마다 부르므로 가벼워야 한다) — 경로·mtime 캐시."""
+    p = toc_path(pdf_path, toc_dir)
+    try:
+        mtime = p.stat().st_mtime
+    except OSError:
+        return None
+    hit = _toc_cache.get(str(p))
+    if hit and hit[0] == mtime:
+        return hit[1]
+    try:
+        docs = json.loads(p.read_text(encoding="utf-8")).get("documents", [])
+        rngs = [(int(d["pages"][0]) - 1, int(d["pages"][1]) - 1) for d in docs] or None
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        rngs = None
+    _toc_cache[str(p)] = (mtime, rngs)
+    return rngs
+
+
+def toc_problem(rows: list[Row]) -> str:
+    """파일의 행들(쪽 범위 형식은 검사된 상태)이 판독 파일과 맞지 않으면 사유, 맞으면 ''."""
+    docs = toc_ranges(rows[0].file)
+    if docs is None:
+        return f"{TOC_MISSING} — python src/register.py 실행(LLM 판독 1회)"
+    rngs = [parse_pages(r.pages) for r in rows]
+    if (len(docs) == 1 and rngs == [None]) or rngs == docs:
+        return ""
+    have = ", ".join(r.pages or "전체" for r in rows)
+    want = ", ".join(format_pages(d) for d in docs)
+    return f"{TOC_MISMATCH}(등록부 {have} / 판독 {want}) — python src/register.py --drop 후 재등록"
 
 
 def rid_file_map(path: Path = REGISTRY_PATH) -> dict[str, str]:

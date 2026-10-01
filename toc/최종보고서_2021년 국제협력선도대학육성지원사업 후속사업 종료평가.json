@@ -1,0 +1,213 @@
+{
+ "file": "최종보고서_2021년 국제협력선도대학육성지원사업 후속사업 종료평가.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 161,
+ "documents": [
+  {
+   "pages": [
+    1,
+    161
+   ],
+   "kind": "main",
+   "title": "2021년 국제협력선도대학육성지원사업 후속사업 종료평가",
+   "body_start": 39,
+   "back_start": 112,
+   "toc_pages": [
+    35
+   ],
+   "boundary_reason": "꼬리말 번호가 1로 되돌아간 쪽이 없고 표지가 1쪽뿐인 단일 문서이며, 앞부속은 로마 숫자 쪽 번호를 쓰고 본문은 1쪽부터 시작한다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "",
+     "title": "요 약",
+     "page": null,
+     "kind": "front"
+    },
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "평가 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "평가 추진전략",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "대상사업 개요 및 성과 관리 틀",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "가천대학교",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "창원대학교",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "국제협력선도대학육성지원사업 평가모형 및 지표도출",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "교육 ODA 평가모형 및 지표분석",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국제협력선도대학육성지원사업 평가방법 및 지표",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국제협력선도대학육성지원사업 평가 매트릭스",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "사업별 평가결과",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "가천대학교",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "창원대학교",
+     "page": 72,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "사업별 종합평가 및 촉진요인과 제약요인",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업별 종료평가 및 제언",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "촉진요인",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "제약요인",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "결론 및 제언",
+     "page": 100,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국제협력선도대학육성지원사업 종표평가 매트릭스(안)",
+     "page": 100,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "대학 계열 특성에 따른 성과평가 틀",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국제협력선도대학육성지원사업 발전을 위한 제언",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참 고 문 헌",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "면담질문지",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "설문지",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "외부전문가 기술자문진 주요 검토의견 및 반영결과",
+     "page": null,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

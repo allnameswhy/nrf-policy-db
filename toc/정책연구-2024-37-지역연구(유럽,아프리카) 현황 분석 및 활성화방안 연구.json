@@ -1,0 +1,537 @@
+{
+ "file": "정책연구-2024-37-지역연구(유럽,아프리카) 현황 분석 및 활성화방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 134,
+ "documents": [
+  {
+   "pages": [
+    1,
+    134
+   ],
+   "kind": "main",
+   "title": "지역연구(유럽/아프리카) 현황분석 및 활성화방안 연구",
+   "body_start": 14,
+   "back_start": 132,
+   "toc_pages": [
+    11,
+    12,
+    13
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서론",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 배경",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국내 유럽/아프리카 지역연구 현황 및 한계",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구의 필요성",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "연구 내용 및 범위",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "연구 방법",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "추진전략 및 방법",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "기대 성과 및 활용방안",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "한국연구재단의 지역연구(유럽/아프리카) 지원 사업 현황",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "한국사회과학연구(SSK)",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인문사회연구소 지원사업",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "공동연구지원",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "박사과정생 장려지원금",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "신진연구자 지원사업",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "중견연구자 지원사업",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "저술출판지원사업",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.",
+     "title": "우수학자 지원사업",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.",
+     "title": "인문사회 학술연구교수(A유형)",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "10.",
+     "title": "인문사회 학술연구교수(B유형)",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "한국연구재단 지원사업과제 선정 현황 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연도별 선정 현황",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "지역별 선정 현황",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사업별 선정 현황",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "연구책임자 지위별 선정 현황",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "주관기관 소재지별 선정 현황",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "연구형태별 선정 현황",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "국가과학기술 분류별 선정 현황",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.",
+     "title": "학술분야별 선정 현황",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "지역연구 연구자 정보 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 지역",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구분야 대분류",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구분야 중분류",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "박사학위 취득 국가",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "직종",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "소속기관 소재지",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "소속기관 유형",
+     "page": 67,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.",
+     "title": "인구학적 속성",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.",
+     "title": "연구자 간 네트워크 구조",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "유럽-아프리카 연구 동향",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "유럽-아프리카 연구 동향",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "분석자료",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "추세",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "주제 분류",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4)",
+     "title": "작성 언어",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5)",
+     "title": "등재 정보",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "토픽모델링 분석을 통한 유럽-아프리카 연구 주제 비교",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "분석방법 및 자료",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "분석자료 기초 통계",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "유럽/아프리카 연구 현황 분석",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "유럽/아프리카 연구 현황 분석 개요",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "유럽 지역 연구 국문초록 분석 결과",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "유럽 지역 연구 기대효과 분석 결과",
+     "page": 88,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(4)",
+     "title": "아프리카 지역 연구 국문초록 분석 결과",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(5)",
+     "title": "아프리카 지역 연구 기대효과 분석 결과",
+     "page": 104,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VI.",
+     "title": "연구 분석 결과 및 함의",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 현황에 따른 분석 결과 개요",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "항목별 분석 결과",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(1)",
+     "title": "개인 연구의 비중",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(2)",
+     "title": "신진 연구자 육성 및 충원",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(3)",
+     "title": "지역별 편중",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(4)",
+     "title": "다학제간 연구 진행 부족",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(5)",
+     "title": "지역연구 연구자 정보 분석",
+     "page": 118,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(6)",
+     "title": "연구주제 편중성",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(7)",
+     "title": "연구 지속 및 심화도 문제",
+     "page": 120,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국제 정세에 따른 필요 연구 주제 연구 현황에 대한 함의와 제언",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(1)",
+     "title": "필요 연구 주제에 따른 기술통계 분석 결과",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(2)",
+     "title": "필요 연구 주제에 따른 토픽 모델링 분석 결과",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "유럽/아프리카 지역연구의 개선 방안",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(1)",
+     "title": "개인 연구의 비중",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(2)",
+     "title": "신진 연구자 육성 및 충원",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(3)",
+     "title": "지역별 편중",
+     "page": 129,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "(4)",
+     "title": "다학제간 연구 진행 부족",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 132,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

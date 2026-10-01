@@ -1,0 +1,524 @@
+{
+ "file": "정책연구-2023-40-선진국 고등연구원 운영현황 분석을 통한 국내 발전적 적용방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 174,
+ "documents": [
+  {
+   "pages": [
+    1,
+    174
+   ],
+   "kind": "main",
+   "title": "선진국 고등연구원 운영현황 분석을 통한 국내 발전적 적용방안 연구",
+   "body_start": 29,
+   "back_start": 165,
+   "toc_pages": [
+    25,
+    26,
+    27,
+    28
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구 목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구의 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "연구의 목적",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구 목적",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "연구방법 및 추진체계",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국내외 고등연구원 현황 분석",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "문헌 및 심층 자료 분석",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "외국 고등연구원 펠로우 인터뷰",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "국내 고등연구기관 펠로우 인터뷰",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "추진체계",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "한국 고등연구기관 현황 및 과제",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "한국 고등과학원(KIAS) 현황 및 운영체계와 시사점",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "한국 고등과학원의 현황 및 실태",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "KIAS 펠로우 프로그램의 개요 및 특성",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "KIAS 방문 펠로우 심사과정의 개요 및 특성",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "KIAS 펠로우 워크샵의 개요 및 특성",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "고등과학원(KIAS)의 국제협력 네트워크 구축 현황 및 특성",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "KIAS 펠로우 프로그램의 개선사항",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "한국 기초과학연구원(IBS)의 운영 체계 및 시사점",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "한국 기초과학연구원(IBS)의 현황 및 실태",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "IBS 펠로우십 프로그램의 개요 및 특성",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "국제 공동연구 프로그램의 현황 및 특성",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "IBS 해외 유명 학자 초청 프로그램",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "한국 고등연구기관의 개선 방향 및 과제",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국내외 연구인력 유치 및 역량 강화의 기본 전제",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "방문 펠로우 프로그램의 개선 방향 및 과제",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "순수기초과학 연구의 고등연구원 집중",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "펠로우 워크샵의 개선 방향 및 과제",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "국제협력 네트워크의 내실화",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "전략적인 펠로우 발굴과 활용",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "해외 고등연구원의 운영체계 및 시사점",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "베를린 고등연구원(WIKO)의 운영체계 및 펠로우 프로그램",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연혁 및 연대별 특이 사항",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "베를린 고등연구원의 운영체계",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "베를린 고등연구원의 펠로우 프로그램의 특성",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "베를린 고등연구원의 국제협력교류 현황 및 특성",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "프린스턴 고등연구원(IAS)의 운영체계 및 펠로우 프로그램",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연혁 및 연대별 특이사항",
+     "page": 72,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "프린스턴 고등연구원의 운영체계",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "프린스턴 고등연구원(IAS)의 방문펠로우 프로그램",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "국제학술교류 네트워크 구축 현황과 특성",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "KIAS, IBS, WIKO, Princeton IAS의 특성 비교",
+     "page": 87,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "2000년대 이후 설립된 주요 IAS의 운영체계 및 연구 동향",
+     "page": 88,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "대학 기반 IAS의 급증",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "최근 IAS 연구동향의 변화",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "중국 및 일본 IAS의 동향 및 특성",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절",
+     "title": "해외 고등연구원 운영 사례의 함의 및 시사점",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "자유로운 연구 공간 및 네트워크의 확장 모색",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "소통과 교류의 극대화를 위한 이벤트 개발",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "학제간 융합연구의 실질화",
+     "page": 100,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "IAS 기관의 책무와 펠로우 자율성의 균형 모색",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "여성 및 소수자 특화적인 펠로우 프로그램의 강화",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "학문공동체 형성을 위한 캠퍼스의 구성",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "대학 기반 IAS의 위상에 대한 현실적 검토",
+     "page": 104,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "한국적 인문사회 고등연구원 설립의 방향과 실천적 과제",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "한국적 인문사회 IAS 설립의 방향 및 운영 전략",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "한국적 인문사회 IAS의 설립 방향과 비전",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "인문사회 펠로우 선정의 개선 과제 및 전략",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "펠로우 프로그램의 유연성 및 다양화 모색",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "펠로우 지원 및 보상 프로그램의 다각화 모색",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "지속 가능한 펠로우 커뮤니티 네트워크의 모색",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "IAS 재정 운용과 자율성의 균형 모색",
+     "page": 120,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "실천적·정책적 제언",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "편리하고 쾌적한 생활환경 및 서비스 제공",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "펠로우 프로그램 기간의 유연성 강화",
+     "page": 124,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "펠로우의 멘토링 역할 강화",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "사회적 책무와 다양한 주체가 참여하는 펠로우 프로그램",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "펠로우 교류 및 융합연구 활성화 방안",
+     "page": 129,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "신진연구자를 위한 펠로우 지원 방안의 보완",
+     "page": 132,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "대학 기반 IAS 설립의 적극 검토 및 활용 방안",
+     "page": 133,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

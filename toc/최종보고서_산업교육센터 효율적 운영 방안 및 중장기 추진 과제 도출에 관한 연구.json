@@ -1,0 +1,157 @@
+{
+ "file": "최종보고서_산업교육센터 효율적 운영 방안 및 중장기 추진 과제 도출에 관한 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 175,
+ "documents": [
+  {
+   "pages": [
+    1,
+    175
+   ],
+   "kind": "main",
+   "title": "산업교육센터 효율적 운영 방안 및 중장기 추진 과제 도출에 관한 연구",
+   "body_start": 13,
+   "back_start": 154,
+   "toc_pages": [
+    7
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "연구개요",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 배경 및 필요성",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구의 목적 및 주요 내용",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구의 수행 방법",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "연구의 조사 및 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설문조사 및 결과분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "FGI 시행 및 결과분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국내·외 유사기관 사례연구 및 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "시사점",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "연구 내용",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "산업교육의 정의 및 공유 정보 요소의 내용과 활용성",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "센터의 1단계 주요 추진과제 수립",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "산업교육협의회 구성방법 및 역할",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "센터의 중장기 조직 운영방안",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "정책 제언",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "참고문헌",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설문지",
+     "page": null,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "FGI 질문지 및 답변서 요약본",
+     "page": null,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

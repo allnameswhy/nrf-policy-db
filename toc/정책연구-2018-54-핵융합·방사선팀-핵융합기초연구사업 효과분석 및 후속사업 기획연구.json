@@ -1,0 +1,185 @@
+{
+ "file": "정책연구-2018-54-핵융합·방사선팀-핵융합기초연구사업 효과분석 및 후속사업 기획연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 168,
+ "documents": [
+  {
+   "pages": [
+    1,
+    168
+   ],
+   "kind": "main",
+   "title": "핵융합기초연구사업 효과분석 및 후속사업 기획 보고서",
+   "body_start": 4,
+   "back_start": 105,
+   "toc_pages": [
+    3
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장.",
+     "title": "핵융합기초연구사업 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절.",
+     "title": "사업의 목적, 필요성, 중점 추진 내용 및 근거",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절.",
+     "title": "사업의 추진 경위 및 기본 체계",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장.",
+     "title": "기획 연구 개요",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절.",
+     "title": "연구 목적 및 필요성",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절.",
+     "title": "연구 내용, 방법 및 추진 경위",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장.",
+     "title": "해외 핵융합연구 동향",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절.",
+     "title": "ITER 공동개발사업 개요",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절.",
+     "title": "해외 주요 국가의 핵융합연구 동향",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장.",
+     "title": "핵융합기초연구사업 효과분석",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절.",
+     "title": "개요 및 지원 현황",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절.",
+     "title": "인력양성(전문인력 및 저변확대인력) 성과",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절.",
+     "title": "SCI 논문 성과",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4절.",
+     "title": "특허 성과",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5절.",
+     "title": "KSTAR 및 ITER에 활용 중 또는 활용 가능한 대표 기술",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6절.",
+     "title": "효과분석을 통한 후속사업 기획 시 주요 고려 사항 요약",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장.",
+     "title": "후속사업 기획결과(안)",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절.",
+     "title": "후속사업 개요",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절.",
+     "title": "연구단위별 목표, 추진 방식 및 규모",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장.",
+     "title": "기존 사업 및 타 사업과의 차별성",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제7장.",
+     "title": "후속사업 기획결과 요약",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 102,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 104,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

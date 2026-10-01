@@ -1,0 +1,340 @@
+{
+ "file": "최종보고서_2021년 원자력연구개발사업을 통한 원자력분야 안전기여도 및 기술수준 분석 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 163,
+ "documents": [
+  {
+   "pages": [
+    1,
+    163
+   ],
+   "kind": "main",
+   "title": "2021년 원자력연구개발사업을 통한 원자력분야 안전기여도 및 기술수준 분석연구",
+   "body_start": 13,
+   "back_start": 145,
+   "toc_pages": [
+    9,
+    10
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구 개요",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구 배경",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구의 필요성",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "연구 목표 및 내용",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "연구 추진 전략 및 방법",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "활용 방안 및 기대효과",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "기술수준평가 분류체계",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "국가과학기술표준분류체계",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "목적 및 배경",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "분류 원칙 및 구성",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "원자력기술 국가과학기술표준분류체계",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "원자력안전기술 분류체계",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기존 분류체계",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "적용 분류체계",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "원자력 관련 동향",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "세계 원전 현황",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "운영 현황",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "건설·폐쇄 현황",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "해외 주요국 동향",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "미국",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "프랑스",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "영국",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "일본",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "중국",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "러시아",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "캐나다",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "국내 원자력 동향",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "정책 동향",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "원자력기술 분야별 동향",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "원자력안전기술 성과지표",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "원자력안전기술 수준평가",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기술수준평가",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "원자력안전기술 수준조사",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "원자력 안전도 제고 기여지수",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "계산식",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "원자력 R&D 기여도",
+     "page": 129,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "산정 결과",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "전문가 검토 및 제언",
+     "page": 133,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "결론 및 시사점",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "결론",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "시사점",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 143,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록 1]",
+     "title": "원자력연구개발사업 성과지표 관련 설문조사",
+     "page": 145,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록 2]",
+     "title": "원자력안전기술 체감지수 (온라인 설문)",
+     "page": 157,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록 3]",
+     "title": "국내 원자력 안전성능지표 현황",
+     "page": 158,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

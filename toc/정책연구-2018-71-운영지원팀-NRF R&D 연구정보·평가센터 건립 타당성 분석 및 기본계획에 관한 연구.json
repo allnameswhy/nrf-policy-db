@@ -1,0 +1,21 @@
+{
+ "file": "정책연구-2018-71-운영지원팀-NRF R&D 연구정보·평가센터 건립 타당성 분석 및 기본계획에 관한 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 12,
+ "documents": [
+  {
+   "pages": [
+    1,
+    12
+   ],
+   "kind": "main",
+   "title": "NRF R&D 연구정보·평가센터 건립 타당성 분석 및 기본계획에 관한 연구",
+   "body_start": 1,
+   "back_start": null,
+   "toc_pages": [],
+   "boundary_reason": "",
+   "entries": []
+  }
+ ]
+}

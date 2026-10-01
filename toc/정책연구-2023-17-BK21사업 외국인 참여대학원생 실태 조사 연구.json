@@ -1,0 +1,518 @@
+{
+ "file": "정책연구-2023-17-BK21사업 외국인 참여대학원생 실태 조사 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 235,
+ "documents": [
+  {
+   "pages": [
+    1,
+    235
+   ],
+   "kind": "main",
+   "title": "BK21 외국인 참여대학원생 실태 조사 연구",
+   "body_start": 47,
+   "back_start": 189,
+   "toc_pages": [
+    38,
+    39,
+    40,
+    41,
+    42
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서론",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기대효과",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "선행연구 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "BK21 사업 개요",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BK21 사업 추진배경 및 연혁",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "4단계 BK 21(2020~27) 기본방향 및 지원 분야",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "최근 3개년(2020~23) BK21 사업 외국인 참여대학원생 현황",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "관련 선행연구 분석",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BK21 사업 관련 선행 연구",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "외국인 유학생 관련 선행연구",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "연구방법",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "관련 문헌 및 통계자료 분석",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "외국인 참여대학원생 설문조사",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "BK21 사업단 관계자 및 외국인 참여대학원생 면담",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "BK 21 외국인 참여대학원생 실태조사(1): 설문조사 결과 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "BK 21 사업 외국인 참여대학원생 기초 통계 분석결과",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "학생 개인적 특성",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "입학 전 준비과정",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "재학 중 경험",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "졸업 후 취업·진로계획 및 정주지원",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "석사 vs. 박사 과정별 차이 분석",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "입학 전 준비과정",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재학 중 경험",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "졸업 후 취업·진로계획 및 정주지원",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "이공 vs. ·인문사회 계열별 차이 분석",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "입학 전 준비과정",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재학 중 경험",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "졸업 후 취업·진로계획 및 정주지원",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "수도권 vs .비수도권 지역별 차이 분석",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "입학 전 준비과정",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재학 중 경험",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "졸업 후 취업·진로계획 및 정주지원",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "BK 21 외국인 참여대학원생 실태조사(2): 면담 조사 결과 분석",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "지역 인재 수급을 위해 외국인 대학원생 유치는 필요한가?",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "주로 어떤 대학/전공에서 외국인 대학원생들을 선발하는가?",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "왜 외국인 학생을 선발하는가? 전체 대학원 학생들 중 어느 정도 비율을 외국인 학생들로 선발하며, 그 이유는 무엇인가?",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "석사, 석박통합, 박사과정 중 어떤 과정을 중심으로 외국인 학생들을 선발하는가? 석/박사 과정 학생들의 경우 직전 학위를 한 국가는 주로 어디인가?",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "주로 어떤 방식으로 외국인 유학생들을 유치하는가? 학교 혹은 학과에서 타겟팅하는 특정한 그룹이 있나? 대학/사업단 차원에서 학생들을 유치하기 위해 어떤 노력을 하는가?",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "주로 어떤 외국인 학생이 왜 오는가?",
+     "page": 88,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "주로 어떤 국가의 학생들이 오는가? 과거와 비교할 때 외국인 대학원생들의 출신 국가이나, 수준에는 어떤 특정한 패턴의 변화가 관찰되는가?",
+     "page": 88,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "어떤 사람들은 상위권 대학의 우수한 학생들만 핀셋처럼 데려와야 한다는 주장들도 있는데 이에 대해서는 어떻게 생각하나?",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "학생들의 언어 능력은 어느 정도인가? 학생을 선발할 때 언어 측면에서 어떤 점을 고려하는가? 한국어 영어 중 어떤 언어로 소통하는가?",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "외국인 학생들은 한국 대학과 사회에서 어떤 경험을 하고 있는가?",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "(장학금 등 재정지원 현황과 한국 대학/사회에서의 생활) 외국인 학생들에게 BK장학금을 포함해서 어떤 재정적 지원을 해 주고 있는가? 석사/박사 과정별로 어떤 차이가 있는가? 이것은 외국인 학생들이 학업과 생활을 하기에 부족하지 않는 수준인가?",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "(수업과 관련한 문제점) 수업은 한국어, 영어 중 주로 어떤 언어로 제공되는가? 수업에서 외국인 학생들이 강의를 따라오는데 어려움이 있는가?",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "연구 수행",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "1)",
+     "title": "자신의 랩/혹은 사업단 전체적인 학생 구성은? 전체 대학원 학생들 중 외국인 학생들이 몇 % 정도나 되나? 주로 어떤 나라에서 오는가?",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "2)",
+     "title": "R&D 과제 등을 수행할 때 외국인 유학생들이 얼마나 도움이 되는가? 외국인 학생들의 기여가 있다면 주로 어떤 부분에서 기여를 하고 있는지?(실험하기, 논문쓰기, 연구과제 관리하기, 강의 조교 등). 예컨대 연구 논문을 기준으로 할 때 연구실의 성과 중 몇 %정도가 유학생들의 성과라고 할 수 있을까? 출신 국가별로 관찰되는 패턴의 차이가 있는가?",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "(행정 처리 등 기타 업무에 대한 역할) 연구 행정 처리를 외국인 유학생들에게 맡기는 경우도 있는가? 이것이 어렵다면 이것 때문에 국내 학생들과 갈등은 생기지 않는가? 이와 관련해서 랩을 운영하면서 경험한 어려움은 무엇인가?",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "(지도교수, 랩에서 동료 학생들과의 관계) 외국인 학생을 지도할 때 지도교수로서 느끼는 가장 큰 애로사항은 무엇인가?",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "외국인 유학생들은 졸업 후 주로 어디로 가는가?",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "BK사업단에서 공부한 석사, 박사 졸업생들은 졸업 후 주로 어디로 가는가? 국내 취업 vs. 해외 취업",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "한국에 취업하는 경우 학생들이 가장 선호하는 취업처는 어디인가? 출신국가별, 학문 분야별로 이러한 경향에 차이가 있는가?",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "외국인 학생들의 취업과 관련하여 지도교수의 역할은 무엇인가? 지도교수의 입장에서 어떤 어려움이 있는가?",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "특히 외국인 석사과정생들의 경우 박사로 진학할 때 서울 등 수도권에…",
+     "page": 108,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "외국인 인재 유치, 취업, 정주를 위해 대학, 지자체/정부 차원의 노력과 지원방안은?",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VI.",
+     "title": "결론: 연구결과 종합 및 시사점, 제언",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구결과 종합 및 시사점",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "양적연구결과 요약",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "질적연구 결과 요약",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "종합 및 시사점",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "제언",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "기본방향",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "제언",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "[부록1]",
+     "title": "국문 설문지",
+     "page": 146,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록2]",
+     "title": "영문 설문지",
+     "page": 158,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록3]",
+     "title": "국가별 차이 분석 결과",
+     "page": 173,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록 4]",
+     "title": "BK21사업 참여 외국인대학원생 면담 내용",
+     "page": 188,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

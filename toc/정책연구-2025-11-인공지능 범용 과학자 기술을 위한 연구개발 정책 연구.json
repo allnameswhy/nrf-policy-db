@@ -1,0 +1,199 @@
+{
+ "file": "정책연구-2025-11-인공지능 범용 과학자 기술을 위한 연구개발 정책 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 89,
+ "documents": [
+  {
+   "pages": [
+    1,
+    89
+   ],
+   "kind": "main",
+   "title": "인공지능 범용 과학자 기술을 위한 연구개발 정책 연구",
+   "body_start": 15,
+   "back_start": 64,
+   "toc_pages": [
+    12
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장.",
+     "title": "사업개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "추진배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "사업설명",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "추진체계",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "지원근거 및 추진경과",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장.",
+     "title": "환경분석",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "정책동향",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "시장동향",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기술동향",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "시사점",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장.",
+     "title": "비전 및 추진전략",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "비전 및 목표",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "추진전략 및 성과지",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "주요내용",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기존사업과의 차별화",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장.",
+     "title": "분야별 추진내용",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "과학적발견 최적화 원천기술확보",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "초연산 AI 모델 원천기술확보",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "초저전력 고효율 AI 모델 원천기술확보",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장.",
+     "title": "기대효과",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "기술적 기대효과",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "경제적 기대효과",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사회적기대효과",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "부록 1.",
+     "title": "주요 용어 정리 및 약어",
+     "page": 49,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록 2.",
+     "title": "차세대 AI+S&T 기반 기술개발 사업 과제 후보(안)",
+     "page": 50,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

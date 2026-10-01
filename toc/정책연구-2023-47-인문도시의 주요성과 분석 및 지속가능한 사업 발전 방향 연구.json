@@ -1,0 +1,270 @@
+{
+ "file": "정책연구-2023-47-인문도시의 주요성과 분석 및 지속가능한 사업 발전 방향 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 154,
+ "documents": [
+  {
+   "pages": [
+    1,
+    154
+   ],
+   "kind": "main",
+   "title": "인문도시의 주요성과 분석 및 지속가능한 사업 발전 방향 연구",
+   "body_start": 23,
+   "back_start": 129,
+   "toc_pages": [
+    19,
+    20
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "연구 목적과 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.1",
+     "title": "인문도시지원사업 정책 방향성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.2",
+     "title": "인문도시지원사업의 성과분석의 방법",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "인문도시지원사업의 성과분석",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.1",
+     "title": "인문도시지원사업 지원 현황 및 사업 변천 과정",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.2",
+     "title": "인문도시지원사업 성과분석 및 보완점",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.3",
+     "title": "성과 분석 결과 시사점",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "국내외 사례 조사와 우수 사례 분석",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.1",
+     "title": "국내 인문도시 우수 사례 발굴",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.1.1",
+     "title": "소외 계층을 위한 인문도시지원사업 우수사례",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.1.2",
+     "title": "풀뿌리 인문자원을 활용한 우수사례",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.1.3",
+     "title": "지자체와의 협업 성공사례",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.1.4",
+     "title": "지역문화자원을 활용한 우수사례",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.1.5",
+     "title": "지속가능성을 확보에 노력한 우수사례",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.2",
+     "title": "해외 인문도시 유사 사례 조사 분석",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.1",
+     "title": "유럽문화도시",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.2",
+     "title": "유네스코 창의도시네트워크",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.3",
+     "title": "프랑스 성인을 위한 인문 교육 제도",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.4",
+     "title": "미국 뉴욕주 성인·평생교육",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.5",
+     "title": "유네스코 평생학습도시 사업",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.2.6",
+     "title": "일본의 인문도시 유사 사례",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.3",
+     "title": "사례 분석 결과 시사점",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "4.",
+     "title": "지속가능한 인문도시지원사업 발전 방향과 시사점",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.1.",
+     "title": "인문도시사업의 특수성 확보",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.2",
+     "title": "지역의 특수성 확보",
+     "page": 85,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.3",
+     "title": "인문도시지원사업 기간 선택지의 확장",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.4",
+     "title": "지자체와의 협업관계 유연화",
+     "page": 88,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.5",
+     "title": "풀뿌리 인문자산과 인재의 활용",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.6",
+     "title": "인문도시지원사업 기관들 간의 네트워크 형성",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.7",
+     "title": "사업인력의 확보",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.8",
+     "title": "사업 종료 후의 지속성 보장 방안",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "5.",
+     "title": "인문주간 운영에 대한 제언",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "6.",
+     "title": "기대효과와 제언",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "<부록>",
+     "page": 107,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "<참고문헌>",
+     "page": 129,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

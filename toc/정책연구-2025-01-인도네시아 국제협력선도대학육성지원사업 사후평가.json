@@ -1,0 +1,404 @@
+{
+ "file": "정책연구-2025-01-인도네시아 국제협력선도대학육성지원사업 사후평가.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 214,
+ "documents": [
+  {
+   "pages": [
+    1,
+    214
+   ],
+   "kind": "main",
+   "title": "인도네시아 국제협력선도대학육성지원사업 사후평가",
+   "body_start": 40,
+   "back_start": 188,
+   "toc_pages": [
+    33,
+    34,
+    35
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서론",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "필요성 및 목적",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "평가 내용 및 방법",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "평가대상 및 범위",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "주요 평가 내용",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "추진 전략 및 방법",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "평가대상 사업 개요",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "평가 설계",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "평가 방법론",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "평가 원칙과 기준",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "사업 등급 부여 기준",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "평가 매트릭스",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "적절성",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "효율성",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "효과성·영향력",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "지속가능성",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "일관성",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "평가 수행 내용",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "문헌 검토 결과",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "적절성 평가",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "효과성",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "효율성 평가",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "영향력 평가",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "지속가능성 평가",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "이해관계자 면담 결과",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "사업책임자 면담 결과",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "SDU 화학교육과 학과장 서면면담 결과",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "SDU 화학교육과 관계자 면담 결과",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "재학생 및 졸업생 설문조사 결과",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "응답자 현황",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재학생 조사 결과",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "졸업생 조사 결과",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "시사점",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "평가 결과",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업 등급",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "평가 결과 요약",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "종합평가 결과표",
+     "page": 108,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "OECD DAC 사업 평가 기준별 평가 결과",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "적절성",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "효율성",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "효과성·영향력",
+     "page": 118,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "지속가능성",
+     "page": 124,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "일관성",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "시사점 및 제언",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "시사점",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "성공요인",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "한계요인",
+     "page": 143,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "후속 사업을 위한 제언",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 151,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부 록",
+     "page": 155,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록1]",
+     "title": "사업책임자 면담 질문지",
+     "page": 155,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록2]",
+     "title": "SDU 화학교육과 재학생 및 졸업생 설문 조사지",
+     "page": 158,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록3]",
+     "title": "SDU 화학교육과 학과장 서면면담 질문지",
+     "page": 164,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록4]",
+     "title": "SDU 화학교육과 관계자 면담 질문지",
+     "page": 171,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,790 @@
+{
+ "file": "정책연구-2025-03-기초전략연구의 전략적 연계를 위한 전략기초연구 추진 방안 도출.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 315,
+ "documents": [
+  {
+   "pages": [
+    1,
+    315
+   ],
+   "kind": "main",
+   "title": "기초·전략연구의 전략적 연계를 위한 전략기초연구 추진 방안 도출",
+   "body_start": 23,
+   "back_start": 197,
+   "toc_pages": [
+    15,
+    16,
+    17,
+    18
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구의 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "추진 배경 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구추진 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "사업추진 필요성",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "R&D 양분화 구조의 근본 원인과 결과",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "연구 목적 및 범위",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구 목적",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "연구 내용 및 범위",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "R&D 예산 투자 지형 분석",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "국가 R&D 투자의 지형변화",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "거시적 동향 분석(2019~2023)",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "기초연구의 양적 팽창과 전략적 위축",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략연구 투자의 부상",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "정책적 진단",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "시스템적 문제와 광범위한 영향",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "미래지향적 R&D 정책을 위한 전략적 제언",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "국가 R&D 사업 심층분석",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "기초연구 대표 사업 분석",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구자 생애주기 맞춤형 지원 체계",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "선정평가 및 관리",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "기대효과 및 시스템적 과제",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "전략연구 대표 사업 분석",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국가적 임무를 향한 선택과 집중",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "선정평가 및 관리",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "기대효과 및 시스템적 과제",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절",
+     "title": "비교 종합 및 전략적 고찰",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "평가와 관리 패러다임 차이",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "격차 해소를 위한 발견에서 경제적 가치 창출까지",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "통합적이고 효과적인 R&D 생태계 조성을 위한 제언",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "전략기초연구 정의 및 범위",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "전략기초연구의 이해와 국가적 중요성",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "서론",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "전략기초연구의 정의",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구의 목표와 중요성",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "전략기초연구 비교 분석",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "전략기초연구와 기초연구의 비교 분석",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "전략기초연구와 전략연구의 분류",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구와 국가전략연구의 차이점 구체화",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "전략기초연구와 목적기초연구의 비교 분석",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절",
+     "title": "‘기초연구’ vs. ‘전략기초연구’ vs. ‘전략연구’",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "해외 사례 분석",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "미국",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "과학기술·혁신 정책동향",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "R&D 예산 지원 및 추진체계",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구 추진 체계 및 현황",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "유럽",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "과학기술·혁신 정책동향",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "R&D 예산 지원 및 추진체계",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구 추진 체계 및 현황",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절",
+     "title": "일본",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "과학기술·혁신 정책동향",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "R&D 예산 지원 및 추진체계",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구 추진 체계 및 현황",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4절",
+     "title": "중국",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "과학기술·혁신 정책동향",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "R&D 예산 지원 및 추진체계",
+     "page": 104,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기초연구 추진 체계 및 현황",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5절",
+     "title": "시사점",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장",
+     "title": "국내 사례 분석",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "창의적 연구진흥사업",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "사업의 목적과 비전",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "사업의 주요 특징",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "사업의 관리 체계",
+     "page": 118,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "저해 요인과 미완의 잠재력",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "대한민국 R&D 지형에 남긴 흔적",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "리더 연구자 지원사업",
+     "page": 125,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "사업의 목적과 비전",
+     "page": 125,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "사업의 특징",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "관리 방식",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "저해 요인과 도전 과제",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절",
+     "title": "국내 혁신 도전형 R&D 사업 사례 분석",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국내 혁신 도전형 R&D 사업 분석",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제7장",
+     "title": "조직개편 방안",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "현 한국연구재단 조직 체계 특징 및 한계 분석",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "‘전략기초연구’특성을 고려한 조직개편 방향",
+     "page": 133,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "조직개편(안) 제안 : 3가지 시나리오",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "조직개편(안)에 따른 장단점",
+     "page": 136,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "‘전략기초연구’성공을 위한 PM 제도 개편",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "성과분석 및 전략기획 환류를 위한 전담조직 및 인프라 구축",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제8장",
+     "title": "전략기초연구 프로그램 사업기획(안)",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1절",
+     "title": "기초연구의 전략성 강화 방안",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2절",
+     "title": "(버전 1) 연결과 도약을 위한 전략기초연구 지원사업",
+     "page": 144,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "추진 배경",
+     "page": 144,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "필요성 및 지향점",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "사업개요",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "세부 추진계획",
+     "page": 147,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3절",
+     "title": "(버전 2) 전략기술 브릿지 R&D 프로그램(STB)",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "진단 및 분석",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "제안 내용",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "전략기술 브릿지 R&D 프로그램(STB) 설계 방안",
+     "page": 153,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "연차별 추진 방향",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "전략기술 분야별 맞춤형 접근",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "기대효과",
+     "page": 157,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4절",
+     "title": "(버전 3) S-Gateway Program(Strategic Gateway Program) : 전략 R&D 관문 프로그램",
+     "page": 160,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "진단 및 분석",
+     "page": 160,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "제안 내용",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "프로그램 설계 방안",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "S-Gateway Program 설계 방안",
+     "page": 162,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "사업관리 방법",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "S-Gateway Program 연차별 추진 방향",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "기대효과",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5절",
+     "title": "전략기초연구 3가지 사업 프로그램 지향점 정리",
+     "page": 166,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6절",
+     "title": "기술 수요 주체 정립 및 의견수렴 방안 구체화",
+     "page": 167,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제9장",
+     "title": "전문가 의견 종합분석",
+     "page": 168,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "전문가 의견 종합분석",
+     "page": 168,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "종합 결론 및 지향점",
+     "page": 174,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 175,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록1.",
+     "title": "전문가 서면자문",
+     "page": 181,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "부록2.",
+     "title": "회의록",
+     "page": 285,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

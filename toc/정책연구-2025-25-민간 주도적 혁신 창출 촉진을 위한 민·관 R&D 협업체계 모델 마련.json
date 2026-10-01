@@ -1,0 +1,241 @@
+{
+ "file": "정책연구-2025-25-민간 주도적 혁신 창출 촉진을 위한 민·관 R&D 협업체계 모델 마련.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 183,
+ "documents": [
+  {
+   "pages": [
+    1,
+    183
+   ],
+   "kind": "main",
+   "title": "민간 주도적 혁신 창출 촉진을 위한 민관 R&D 협업체계 모델 도출",
+   "body_start": 8,
+   "back_start": 166,
+   "toc_pages": [
+    6
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 배경 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구목적 및 주요내용",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구 추진체계 개요",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "국내외 민·관 R&D 협력 동향 및 사례 분석",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "글로벌 기술환경 변화와 R&D 정책 패러다임 전환",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "주요국 민·관 R&D 협력 전략 및 운영사례",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "국내 민·관 R&D 협력 정책 현황 및 성과",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "민·관 R&D 협력 정책의 사례 비교: 성과와 한계",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "민간 주도 혁신형 R&D 협력체계 설계 요소 분석",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "민간 주도형 R&D의 개념 및 특성",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "이해관계자별 역할과 기여 범위",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "거버넌스 구조와 의사결정 메커니즘",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "리스크 분담·성과 배분 구조 분석",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "기술 분야별 적용 가능성 검토",
+     "page": 78,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "산업계 수요 기반 우선순위 R&D 로드맵",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "산업계 수요조사 및 중점 분야 도출",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "중점 분야 도출",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "프로젝트 추진방향 및 지원체계",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "민·관 R&D 협업체계 모델 제안",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설계 원칙과 기본 구조",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "유형별 협업 모델 제시",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "모델별 기대효과 및 한계",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "최적 모델 조합 및 적용방안",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장",
+     "title": "정책 제언 및 실행 전략",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "단기·중장기 추진 로드맵",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2",
+     "title": "법·제도 개선 방향",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "민간 참여 활성화를 위한 지원정책 패키지",
+     "page": 151,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제7장",
+     "title": "결론",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 종합결과 요약",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "향후 과제 및 연구 한계",
+     "page": 159,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

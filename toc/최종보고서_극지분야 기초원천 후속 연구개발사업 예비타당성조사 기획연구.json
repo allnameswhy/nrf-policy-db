@@ -1,0 +1,101 @@
+{
+ "file": "최종보고서_극지분야 기초원천 후속 연구개발사업 예비타당성조사 기획연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 136,
+ "documents": [
+  {
+   "pages": [
+    1,
+    136
+   ],
+   "kind": "main",
+   "title": "극지분야 기초원천 후속 연구개발사업 예비타당성조사 기획연구",
+   "body_start": 15,
+   "back_start": null,
+   "toc_pages": [
+    13
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구목적 및 필요성",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구목적",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "연구 필요성",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "주요 연구내용",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "국내외 환경분석 및 문제이슈 도출",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "사업목표 설정, 추진체계 및 전략수립",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "사업 추진의 타당성 분석",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절",
+     "title": "예비타당성조사 기술성평가 대응 지원",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "기대성과 및 활용방안",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "기대성과",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "활용방안",
+     "page": 114,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

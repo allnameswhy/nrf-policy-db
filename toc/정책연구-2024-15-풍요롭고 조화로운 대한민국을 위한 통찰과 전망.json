@@ -1,0 +1,439 @@
+{
+ "file": "정책연구-2024-15-풍요롭고 조화로운 대한민국을 위한 통찰과 전망.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 408,
+ "documents": [
+  {
+   "pages": [
+    1,
+    408
+   ],
+   "kind": "main",
+   "title": "풍요롭고 조화로운 대한민국을 위한 통찰과 전망",
+   "body_start": 45,
+   "back_start": null,
+   "toc_pages": [
+    28,
+    29,
+    30
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "풍요롭고 조화로운 대한민국을 위한 통찰",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.1",
+     "title": "서론",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.2",
+     "title": "대한민국의 성공",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.3",
+     "title": "대한민국이 성공한 나라가 된 표면적 이유(proximate causes)",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.4",
+     "title": "성공한 더 근본적인 이유(ultimate causes)",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.5",
+     "title": "미완의 과제",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.6",
+     "title": "살기 좋은 나라 만들기의 전제",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "한국의 경제발전: 평가와 제언",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.1",
+     "title": "서론",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.2",
+     "title": "한국경제의 발전단계",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.3",
+     "title": "한국 경제발전의 동인(動因)",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.4",
+     "title": "경제발전의 후과",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.5",
+     "title": "한국경제를 위한 제언",
+     "page": 86,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.6",
+     "title": "결론",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "한국 기업의 현황 및 전략방향",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.1",
+     "title": "서론 - 21세기 경영전략의 방향",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.2",
+     "title": "이해관계자 자본주의와 ESG경영",
+     "page": 108,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.3",
+     "title": "경영권승계",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.4",
+     "title": "지배구조의 개선과 정책방향",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.5",
+     "title": "기업가정신과 벤처의 활성화",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.6",
+     "title": "결론",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "혁신이 시급한 곳, 노동과 교육",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.1",
+     "title": "서론 - 왜 노동과 교육의 혁신이 시급한가?",
+     "page": 143,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.2",
+     "title": "노동법의 경직성과 기형적 유연성",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.3",
+     "title": "국가주도형 교육의 성공과 한계",
+     "page": 154,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.4",
+     "title": "노동과 교육의 혁신을 위한 정책 제언",
+     "page": 162,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "저성장 극복을 위한 산업구조 개혁과 혁신정책",
+     "page": 175,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.1",
+     "title": "서론",
+     "page": 177,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.2",
+     "title": "한국경제의 저성장과 생산성",
+     "page": 179,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.3",
+     "title": "효율적 자원 재배분을 통한 생산성 제고",
+     "page": 184,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.4",
+     "title": "혁신역량 확충을 통한 생산성 제고",
+     "page": 192,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.5",
+     "title": "결론",
+     "page": 207,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장",
+     "title": "무역환경의 변화와 한국의 대응",
+     "page": 211,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.1",
+     "title": "서론",
+     "page": 213,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.2",
+     "title": "세계 무역 환경의 변화",
+     "page": 215,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.3",
+     "title": "한국 경제의 대응",
+     "page": 235,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.4",
+     "title": "결론",
+     "page": 250,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제7장",
+     "title": "탄소 중립 시대의 경제성장 전략",
+     "page": 255,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.1",
+     "title": "서론",
+     "page": 257,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.2",
+     "title": "온실가스 배출과 2050 탄소중립 선언",
+     "page": 259,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.3",
+     "title": "중화학공업과 고탄소 산업",
+     "page": 263,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.4",
+     "title": "글로벌 경제환경 변화와 신성장동력 산업",
+     "page": 272,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.5",
+     "title": "정책 제안",
+     "page": 278,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.6",
+     "title": "결론",
+     "page": 289,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제8장",
+     "title": "번영과 공존: 사회안전망 개혁",
+     "page": 293,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.1",
+     "title": "서론",
+     "page": 295,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.2",
+     "title": "번영과 공존: 성장과 분배는 함께 가는가?",
+     "page": 296,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.3",
+     "title": "한국 경제의 성장과 분배",
+     "page": 301,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.4",
+     "title": "번영과 공존의 지속을 위한 사회안전망 개혁",
+     "page": 306,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.5",
+     "title": "결론",
+     "page": 326,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제9장",
+     "title": "풍요롭고 조화로운 대한민국을 위한 제안과 전망",
+     "page": 331,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.1",
+     "title": "(제안 1) 국가의 기본을 튼튼하게 하자",
+     "page": 333,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.2",
+     "title": "(제안 2) 경제의 불합리한 정치화를 경계하자",
+     "page": 338,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.3",
+     "title": "(제안 3) 인재(두뇌) 강국을 건설하자",
+     "page": 340,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.4",
+     "title": "(제안 4) 기업과 산업이 강한 나라를 만들자",
+     "page": 346,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.5",
+     "title": "(제안 5) 대한민국을 세계 속으로, 세계를 대한민국 안으로",
+     "page": 348,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.6",
+     "title": "(제안 6) 자원 및 환경 지속성을 확보하자",
+     "page": 349,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.7",
+     "title": "(제안 7) 자조 자립을 중시하는 방향으로 복지제도와 연금제도를 개혁하자",
+     "page": 352,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.8",
+     "title": "(미래 전망) 대한민국의 미래",
+     "page": 355,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

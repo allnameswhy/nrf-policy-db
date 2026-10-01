@@ -1,0 +1,510 @@
+{
+ "file": "정책연구-2025-17-방사선 안전 강화를 위한 스마트 감마선 영상기술의 현장 적용 전략 및 방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 233,
+ "documents": [
+  {
+   "pages": [
+    1,
+    138
+   ],
+   "kind": "main",
+   "title": "방사선 안전 강화를 위한 스마트 감마선 영상기술의 현장 적용 및 방안 연구",
+   "body_start": 44,
+   "back_start": 112,
+   "toc_pages": [
+    36,
+    37
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서 론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 배경 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 범위 및 방법론",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "용어 정의 및 기술 개요",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "국내외 방사선 사고 사례 및 위험 요인 분석",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국내 주요 방사선 사고 사례 분석",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "해외 사례 비교 분석",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사고의 공통 위험 요인 및 구조적 문제 도출",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "사고 대응 과정에서의 기술적 제약 분석",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "기존 국내외 방사선 계측 기술 특허 및 연구개발 동향 분석",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국외 방사선 계측 기술 특허 및 연구개발 동향 분석",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국내 방사선 계측 기술 특허 및 연구개발 동향 분석",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "기존 방사선 계측기술의 기술적 한계 및 개선 방안",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "휴대용 방사선량계, 감마 카메라 등 기존 장비 기능 분석",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "감마선 방향성 및 핵종 식별 관련 기술적 한계 도출",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "고감도, 고해상도 영상 기술을 위한 개선 요구사항 제시",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "방사선 계측 R&D 사업화 제약 이유",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "방사선 계측 R&D 사업화 촉진을 위한 개선 방안",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "감마선 영상기술의 현황 및 기술적 과제",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "감마선 영상기술의 구성요소 및 작동 원리",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "영상 알고리즘, 공간 분해능, 실시간성 기술 분석",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "현장 적용 시 예상되는 기술적 장애 요인 도출",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "휴대성, 배터리 효율, 방사선 내구성 등 실제 조건 평가",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "산업현장의 수요 분석 및 실용화 적용성 평가",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "비파괴검사, 원전해체, 폐기물관리 등 산업별 요구사항 정리",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "유관 산업체 및 기술기관(한국원자력연구원, 원자력안전기술원 등) 의견 수렴",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사용자 관점의 실용성 평가(정확도, 사용 편의성 등)",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기술 적용 우선 분야 도출 및 비용-효과 분석",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅶ.",
+     "title": "감마선 영상기술의 현장 적용 전략 및 로드맵",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "핵심 요소기술별 개발·적용 단계 제시",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "산업현장 적용 프로세스(시제품 검증, 사용자 교육 등) 설계",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "단기/중장기 기술개발 로드맵 작성",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "민관 협력 기반 기술 실증 방안 제시",
+     "page": 61,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅷ.",
+     "title": "정책적 지원방안 및 제언",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "방사선 계측기술 고도화를 위한 법·제도 개선 방향",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "안전관리 기준 고도화 및 표준화 방안",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기술개발 지원사업 및 정부 투자전략 제안",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기술 상용화 촉진을 위한 인프라 및 인증체계 정비 방안",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅸ.",
+     "title": "결론 및 시사점",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 결과 요약 및 시사점",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "향후 정책/기술 개발을 위한 제언",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌(References)",
+     "page": 68,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록 1",
+     "page": 72,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록 2",
+     "page": 76,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록 3",
+     "page": 87,
+     "kind": "back"
+    }
+   ]
+  },
+  {
+   "pages": [
+    139,
+    233
+   ],
+   "kind": "appendix",
+   "title": "스마트 감마선 기반 국가 방사선 안전·환경방재·표준화 기술 통합",
+   "body_start": 146,
+   "back_start": 195,
+   "toc_pages": [
+    141
+   ],
+   "boundary_reason": "PDF 139쪽의 별도 표지·간지와 자체 목차(141쪽) 뒤 146쪽에서 꼬리말 번호가 1로 다시 시작하고, 본편 쪽 번호가 이어지지 않는 독립 기획서 책자이다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "추진 배경 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "①",
+     "title": "추진 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "②",
+     "title": "추진 필요성",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "추진경과 및 사업범위",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "①",
+     "title": "추진경과 및 지원근거",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "②",
+     "title": "국내외 스마트 감마선 영상 기술 현황",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "③",
+     "title": "SWOT 분석",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "④",
+     "title": "사업범위",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "⑤",
+     "title": "기존 사업과 차별성",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "추진전략 및 세부내용",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "①",
+     "title": "산업안전·AR/XR·고방사선 대응 기술 개발",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "②",
+     "title": "지상·공중·차량 기반 방사선 환경방재·비상대응 기술 개발",
+     "page": 48,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "③",
+     "title": "성능평가·표준시험·인증 기반 구축(표준화·규제 활용)",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (1-1)",
+     "page": 50,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (1-2)",
+     "page": 56,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (1-3)",
+     "page": 62,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (2-1)",
+     "page": 65,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (2-2)",
+     "page": 68,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (2-3)",
+     "page": 71,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (2-4)",
+     "page": 75,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (2-5)",
+     "page": 81,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임",
+     "title": "기술수요조사서 (3-1)",
+     "page": 85,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

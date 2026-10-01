@@ -1,36 +1,26 @@
-"""PDF → 계층 .md 변환 (파이프라인 1단계).
-
-PROJECT_NOTES.md §3 단계 ① 참조. 코퍼스 실측(2026-08, 10권) 기반 설계.
+"""PDF → 계층 .md 변환 (파이프라인 2단계 — 1단계는 register).
 
 - 입력: pdfs/*.pdf (자체 글롭 확장 — PowerShell 미확장 대응)
 - 출력: reports/{report_id}.md (frontmatter + 헤딩 계층 + 본문. LLM 요약 없음)
-- 도구: PyMuPDF로만 텍스트 추출 (`import pymupdf` — fitz 별칭은 deprecated). LLM 사용 금지.
-- 계층 판별: 북마크 미사용. L1(장) 문법 프로파일 6종 순차 시도 + 하위 패밀리 캐스케이드
-  (보고서 전역 첫 등장 순서 → ##~####, 4단계 캡, 부모 범위 내 1부터 단조증가 검증).
-- 헤딩 ID: 감지 서수 경로 {report_id}_c{i}s{j}… (PROJECT_NOTES §4)
-- report_id: **등록부 report_ids.tsv 조회만**(src/registry.py — 1단계 register.py가 표지
-  관리번호로 채움, 2026-09-04). 파일명 유도·슬러그 폴백 없음 — 미등록 PDF는 프리플라이트에서
-  `skipped_unregistered`로 시끄럽게 스킵. **합본 분할도 등록부**(2026-09-08): register가
-  경량 스캔(detect_parts)으로 파트마다 행(rid, pages)을 만들고 여기서는 그 범위를 그대로
-  쓴다 — 파트도 각자 rid(`_NN` 접미 폐지), 파트 하나가 공란이면 파일 전체 미등록.
-- 진단: --scan (md 미작성, 감지 결과만 덤프). 로그: logs/extract_log.json
-- 구조(장 문법)가 잡히지 않는 문서는 **플랫 청킹 폴백**(투 레인): 문단 경계 그리디
-  크기 청킹 → 합성 '# 구간 N (p.a-b)' 헤딩 + frontmatter 'structure: flat' 표식으로
-  수용해 다운스트림(mdio/annotate/build_*)이 무수정 처리한다. 본문 텍스트 400자
-  미만(이미지 위주 문서)이면 종전대로 스킵 + 로그 후 수동 확인(OCR 별도 과제).
-- 레인 수동 지정: --lane {auto,structured,flat} (기본 auto=자동 분기).
-  structured = 감지 실패 시 플랫 폴백 억제·시끄러운 스킵(승격 검토 대상),
-  flat = 구조 감지 생략·곧장 구간 청킹. 감지 실패 시 l1_attempts + 헤딩 의심 줄
-  샘플(l1_suspects)을 로그·--scan에 남겨 프로파일 승격 판단 재료로 쓴다.
-- 재실행 가드: 출력 .md가 이미 있으면 기본 스킵, --force로만 재추출·덮어쓰기.
-  재추출은 annotate가 삽입한 요약 블록과 verify가 기록한 verified_extract·
-  verified_annotate 스탬프를 소실시킨다(소실 = 의도된 미검증 리셋). 합본은 파트
-  일부의 .md만 있어도 스킵 — 부분 실패 재시도는 --force뿐이며 성공 파트의 요약도 함께
-  소실됨에 주의. --scan은 가드 미적용.
-- 검증 스탬프 1단 verified_register(2026-09-07): .md를 만드는 시점에 등록부 rid 조회가
-  이미 성공했으므로 extract가 frontmatter에 오늘 날짜로 기록한다(재추출 시 새로 기록).
-  이후 verify가 verified_extract → verified_annotate를 차례로 얹고, build_db·build_index는
-  세 스탬프가 모두 있는 파일만 싣는다.
+- 본문·헤딩 텍스트는 PyMuPDF로만 추출한다(`import pymupdf`). 이 모듈은 LLM을 부르지 않는다.
+- 문서 단위 = 등록부 행(report_ids.tsv — rid, 쪽 범위). 범위의 원천은 판독 파일 `toc/{PDF stem}.json`
+  (register가 src/docread.py로 PDF당 LLM 1회 판독해 만든 문서 범위·본문 시작·목차 항목)이고, 등록부와
+  판독이 어긋난 PDF는 등록부 조회 단계에서 미등록 취급된다(registry.toc_problem) → `skipped_unregistered`.
+- 구조: **목차 대응**(src/toclane.py) — 판독의 목차 항목을 본문 줄에 대응시켜 그 줄을 헤딩으로 삼는다
+  (frontmatter `structure: toc`). 헤딩 ID = 서수 경로 {report_id}_c{i}s{j}…, 판독 파일이 같으면 재추출해도 같다.
+  대응이 성립하지 않으면(`skipped_toc_anchor`) 또는 목차 항목이 없으면(`skipped_no_toc`) .md를 만들지 않는다 —
+  /admin 카드에서 사람이 그 문서만 플랫으로 수용할지 정한다.
+- 플랫(`--flat`): 판독의 본문 시작부터 문단 경계 크기 청킹 → 합성 `# 구간 N (p.a-b)` 헤딩 +
+  `structure: flat`. 본문 텍스트 400자 미만(이미지 위주)이면 `skipped_flat_guard`(OCR 별도 과제).
+- 대상 지정: `--rid RID`(반복) = 그 문서만. 없으면 주어진 PDF의 모든 문서.
+- 재실행 가드: .md가 이미 있는 문서는 **문서 단위로** 건너뛴다(합본의 나머지 문서는 추출). `--force`는
+  처리 대상 문서만 덮어쓴다 — annotate 요약과 verify의 verified_extract·verified_annotate 스탬프가 사라진다.
+- 진단: --scan (md·로그 미작성, 결과만 stdout 덤프).
+- 로그 logs/extract_log.json: 문서(파일, rid)별 **마지막 결과를 병합 보관**(이번 실행이 다룬 문서만 교체) —
+  /admin 카드의 재료. 건너뛴 문서(skipped_exists)는 기록하지 않는다.
+- 검증 스탬프 1단 verified_register: .md를 만드는 시점에 등록부 rid 조회가 이미 성공했으므로 frontmatter에
+  오늘 날짜로 기록한다. 이후 verify가 verified_extract → verified_annotate를 얹는다.
+- 종료 코드: 0 = 처리한 문서 전부 성공, 1 = 실패·보류 문서 있음, 2 = 사용 오류.
 """
 
 from __future__ import annotations
@@ -38,12 +28,10 @@ from __future__ import annotations
 import argparse
 import bisect
 import dataclasses
-import difflib
 import datetime
 import glob as globmod
 import json
 import re
-import statistics
 import sys
 import traceback
 import unicodedata
@@ -76,69 +64,11 @@ GLYPH_BULLETS = set(BULLET_RANK) - DASH_BULLETS
 # 랭크표 밖의 불릿 의심 글리프 — 원문 유지 + 로그
 SUSPECT_BULLETS = set("◈☐■◦▶►●◇◆▷▹✓✔")
 
-MAX_HEADING_LEN = 45   # 번호 토큰 이후 허용 글자수
-# R10(2026-09-21) 조건부 상한: 46~MAX_HEADING_LEN_TITLE자는 오른쪽 여백 전에 짧게 끝나고(not Line.wide) 그 쪽 본문보다
-# TITLE_SIZE_DELTA pt 이상 큰 줄만 헤딩 후보 — 괄호 원어 병기 제목(2024-41 `4. TUM (Technische Universität München) in
-# Singapore`). 단순 상향은 기각: 적재 64권에 상한 초과 헤딩 꼴 줄 1,087줄(문장 조각·법령 항목·설문 문항 — 찬 줄 71%·
-# 큰 글자 11%, 채택 헤딩은 찬 줄 7%·큰 글자 67%), 상한 60 회귀 32권 훼손·50도 2019-17·2019-48 훼손; 조건부 60은
-# 2019-70 절차 문장(정확히 60자) 오탐 → 55.
-MAX_HEADING_LEN_TITLE = 55
-TITLE_SIZE_DELTA = 0.5   # 쪽 본문 크기(20자 이상 줄 중위) 대비 "큰 글자" 하한(pt)
-WIDE_MARGIN_PT = 12      # 줄 끝이 쪽 본문 오른쪽 여백에서 이 안쪽이면 "찬 줄"
-SUB_SIZE_GATE_PT = 1.0   # 하위 헤딩 글자 크기 게이트: 같은 패밀리 채택 헤딩 크기 중위와의 격차 하한(pt)
-MAX_TITLE_LINE = 60    # 두 줄형 헤딩의 제목 줄 허용 글자수
-DIVIDER_MAX_LINES = 15  # 장 구분 페이지(절 목록) 판정: 페이지의 비어있지 않은 줄 상한 (R8)
-BULLET_START_RE = re.compile(r"^[-•◦○●▪·※▶▷■□]")  # 구분 페이지 이어짐 줄에서 제외할 불릿 시작
-
-# L1(장) 프로파일 — (이름, 패턴, 두줄형 여부). 시도 순서 = 이 순서.
-PROFILES = [
-    # R8(2026-09-16, 2024-16): 구분 페이지의 "제1장"(붙여쓰기) 단독 줄도 분리형 — 종전 `\s+`는 "제 1 장"만.
-    ("jang_split", re.compile(r"^제\s*(\d{1,2})\s*장$"), True),
-    ("jang", re.compile(r"^제\s*(\d{1,2})\s*장[.\s]+\S"), False),
-    ("roman_unicode", re.compile(r"^([Ⅰ-Ⅻ])\.\s*\S"), False),
-    ("roman_ascii", re.compile(r"^([IVX]{1,4})\.?\s+\S"), False),
-    # 로마자 혼용(WAVE_PLAN R1, 2026-09-09 — 정찰 8권): 한 문서에 ASCII "I."와 유니코드 "Ⅱ."가 섞여 위 두
-    # 프로파일이 장을 1개만 잡는 판형. 순수 로마 문서는 앞 프로파일이 먼저 채택되므로 무영향.
-    ("roman_mixed", re.compile(r"^([IVXⅠ-Ⅻ]{1,4})\.?\s+\S"), False),
-    ("arabic", re.compile(r"^(\d{1,2})\.(?!\s*\d)\s+\S"), False),
-    ("bare_digit_split", re.compile(r"^(\d{1,2})$"), True),
-]
-
-# 감지 실패 시 승격 판단용 헤딩 의심 줄 캐치올(번호 토큰류 줄머리) — 진단 전용, 추출에 무관여
-L1_SUSPECT_RE = re.compile(
-    r"^(?:제\s*\d{1,3}\s*[가-힣]"            # 제N장/편/부/절 …
-    r"|\d{1,3}\s*[장편부절]"                  # N장 (제 생략형)
-    r"|\d{1,3}\s*[.)]"                       # N. / N)
-    r"|\d{1,3}$"                             # 단독 숫자 (두줄형)
-    r"|[Ⅰ-Ⅻⅰ-ⅻ]"                          # 로마 유니코드
-    r"|[IVXLC]{1,5}\s*[.)]"                  # 로마 ASCII
-    r"|[\[(]\s*\d{1,3}\s*[\])]"              # (N) / [N]
-    r"|(?:Chapter|CHAPTER|Part|PART)\s+\S)"  # 영문 표기
-)
-
-# 하위 헤딩 패밀리 — 한 줄이 여러 패턴에 걸리면 이 순서의 첫 매치만 인정
-SUB_FAMILY_DEFS = [
-    ("jeol", re.compile(r"^제\s*(\d{1,2})\s*절[.\s]*\S")),   # R9: 붙여쓴 `제1절연구의…` 허용(2023-07)
-    ("num_dot_num", re.compile(r"^(\d{1,2})\.(\d{1,2})\.?\s+\S")),
-    ("num_dot", re.compile(r"^(\d{1,2})\.(?!\s*\d)\s*\S")),
-    ("paren_num", re.compile(r"^\((\d{1,2})\)\s*\S")),
-    ("num_paren", re.compile(r"^(\d{1,2})\)\s*\S")),
-    ("ga_dot", re.compile(r"^([가-힣])\.\s*\S")),
-    ("ga_paren", re.compile(r"^\(?([가-힣])\)\s*\S")),
-]
-# R10 ③(2026-09-21): num_dot의 `(?!\s*\d)`는 표·목록의 `3. 2`·`1. 5%`를 막지만 `3. 2주기 전문대학…`·`1. 2025년 …`처럼 연도·
-# 차수로 시작하는 진짜 절 제목까지 버린다(63권 실측: 공백 있는 `N. 숫자…` 142줄 중 큰 글자·채택 절과 같은 크기 34줄·11권 =
-# 전부 진짜 헤딩; 공백 없는 `N.숫자`는 36,276줄 = 표 안 소수 → 계속 차단). 정규식은 그대로 두고 detect_sub_headings가
-# 글자 크기로만 되살린다(아래 NUM_DOT_DIGIT_RE 가지).
-NUM_DOT_DIGIT_RE = re.compile(r"^(\d{1,2})\.\s+(?=\d)")
-TWO_LINE_HANGUL = "two_line_hangul"  # 단독 1글자(가~하) + 다음 줄 제목 (2025-12 L4)
-
 # 뒷부속(참고문헌/부록) 마커. '붙임'·'[첨부]'(괄호형)는 본문 한가운데 출현 실측(2025-32)으로 제외.
 REF_TITLE_RE = re.compile(r"^\[?\s*참\s*고\s*문\s*헌\s*\]?$")
 APPENDIX_RE = re.compile(r"^[<\[]?\s*부\s*록(?=$|[\s\d>\].:_])[>\]]?\s*\.?\s*(.*)$")
-ATTACH_RE = re.compile(r"^첨\s*부(?=$|[\s\d.:_])\s*\.?\s*(.*)$")  # 맨몸 첨부 — 무꼬리말 페이지에서만 인정
 
-# 앞부속 페이지 표제(본문 시작 탐색 시 배제)
+# 앞부속 페이지 표제(목차 쪽 판별·판독 프로필 표식용)
 FRONT_TITLE_RE = re.compile(
     r"^\s*(요\s*약\s*문|SUMMARY|Summary|CONTENTS|Contents|목\s*차|제\s*출\s*문"
     r"|표\s*차\s*례|그\s*림\s*차\s*례|표\s*목\s*차|그\s*림\s*목\s*차"
@@ -229,8 +159,6 @@ class Line:
     in_table: bool = False
     is_leader: bool = False
     is_footnote: bool = False
-    wide: bool = True         # 줄 끝이 쪽 본문 오른쪽 여백까지 참(_page_geometry, R10) — 기본값 = 종전 동작
-    size_delta: float = 0.0   # 글자 크기 − 쪽 본문 크기(_page_geometry, R10)
 
 
 @dataclasses.dataclass
@@ -259,9 +187,8 @@ class PageScan:
 
 
 def scan_page(page, index: int, tables: bool = True) -> PageScan:
-    """페이지 1장 스캔. tables=False = 표 인식(find_tables) 생략 — register의 합본 판별용
-    경량 스캔(0.5~1.3초/권, 2026-09-08 실측). 꼬리말·공백·이미지·리더 줄 판정은 표와 무관하므로
-    detect_parts 결과는 두 모드가 동일해야 한다(verify가 전체 스캔으로 대조)."""
+    """페이지 1장 스캔. tables=False = 표 인식(find_tables) 생략 — 판독(docread)의 쪽 프로필용
+    경량 스캔(0.5~1.3초/권, 2026-09-08 실측). 꼬리말·공백·이미지·리더 줄 판정은 표와 무관하다."""
     d = page.get_text("dict")
     scan = PageScan(index=index, width=page.rect.width, height=page.rect.height,
                     footer=None, footer_arabic=None)
@@ -328,26 +255,10 @@ def scan_page(page, index: int, tables: bool = True) -> PageScan:
             scan.leader_lines += 1
 
     scan.lines = kept
-    _page_geometry(scan)
     scan.text_chars = sum(len(l.text.strip()) for l in kept)
     scan.image_only = scan.text_chars < 50 and scan.n_images >= 1
     scan.blank = scan.text_chars == 0 and scan.n_images == 0
     return scan
-
-
-def _page_geometry(scan: PageScan) -> None:
-    """줄마다 `wide`·`size_delta`를 채운다(R10). 쪽 본문 = 20자 이상 줄 — 오른쪽 여백은 그 줄들 x1의 90퍼센타일,
-    본문 크기는 그 줄들 크기의 중위(짧은 줄까지 넣으면 법령 재인용처럼 작은 글자 항목이 많은 쪽에서 중위가 내려가
-    본문 크기 줄이 '큰 글자'로 보인다 — 2024-41 p.39). 20자 이상 줄이 없는 쪽은 전부 wide(조건부 상한 미적용),
-    크기 중위는 비어있지 않은 전 줄. 표 인식과 무관 — 경량·전체 스캔 동일."""
-    longs = [l for l in scan.lines if len(l.text.strip()) >= 20]
-    xs = sorted(l.x1 for l in longs)
-    right = xs[int(len(xs) * 0.9)] if xs else None
-    szs = [l.size for l in longs] or [l.size for l in scan.lines if l.text.strip()]
-    med = statistics.median(szs) if szs else 0.0
-    for l in scan.lines:
-        l.wide = right is None or right - l.x1 < WIDE_MARGIN_PT
-        l.size_delta = l.size - med
 
 
 def scan_document(doc, tables: bool = True) -> list[PageScan]:
@@ -550,90 +461,6 @@ def table_covers(text: str, table_fold: str) -> bool:
     if needle in table_fold:
         return True
     return all(t in table_fold for t in (fold_g(tok) for tok in text.split()) if t)
-
-
-# ---------------------------------------------------------------------------
-# report_id · 합본 분리
-# ---------------------------------------------------------------------------
-
-def find_existing_outputs(out_dir: Path, rids: list[str]) -> list[Path]:
-    """등록부 rid들(합본이면 파트마다 각자 rid)의 기존 출력 {rid}.md 탐지 — 재실행 가드."""
-    return [p for p in (Path(out_dir) / f"{rid}.md" for rid in rids) if p.exists()]
-
-
-def detect_parts(scans: list[PageScan]) -> list[tuple[int, int]]:
-    """합본 파트 경계 — register(경량 스캔, 등록부 pages 열의 출처)와 verify(전체 스캔, 대조)가
-    공유하는 **유일한** 분할 규칙. 표(find_tables) 데이터에 의존하지 않는 PageScan 필드만
-    써야 두 스캔이 일치한다(footer_arabic·blank·image_only·leader_lines·lines 수).
-    = split_bundle(쪽 번호 재시작 분할) → merge_front_parts(앞부속 오분리 병합, WAVE_PLAN R2)."""
-    return merge_front_parts(scans, split_bundle(scans))
-
-
-def part_has_body(scans: list[PageScan], part: tuple[int, int]) -> bool:
-    """파트에 본문 시작(1장 후보 페이지)이 있는가. 표 내부 표식을 무시해(ignore_tables) 경량 스캔과
-    전체 스캔이 같은 답을 낸다 — detect_parts 병합 판정 전용."""
-    return find_body_start(scans, part, ignore_tables=True)[0] is not None
-
-
-def merge_front_parts(scans: list[PageScan], parts: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    """앞부속 오분리 병합(WAVE_PLAN §4 R2, 2026-09-09): 앞부속(제출문·요약문·목차)이 물리 쪽 번호로
-    매겨지고 본문이 '- 1 -'로 재시작하는 판형은 split_bundle이 앞부속을 별도 파트로 자른다(정찰 15권 —
-    그 파트는 본문 시작이 없어 skipped_no_body_start, 초록은 유실). 본문 시작이 없는 파트는 뒤 파트에
-    붙인다(앞부속이 연속이면 누적, 마지막 파트는 그대로). 진짜 합본·요약문 파트형 6권은 파트 1에 본문
-    시작이 있어 무영향(경량 스캔 실측 2026-09-09)."""
-    out: list[tuple[int, int]] = []
-    i = 0
-    while i < len(parts):
-        start, end = parts[i]
-        while i + 1 < len(parts) and not part_has_body(scans, (start, end)):
-            i += 1
-            end = parts[i][1]
-        out.append((start, end))
-        i += 1
-    return out
-
-
-def split_bundle(scans: list[PageScan]) -> list[tuple[int, int]]:
-    """아라비아 꼬리말 런이 1보다 큰 값까지 진행된 뒤 '- 1 -'로 재시작하고, **재시작 앞 구간(현재 파트
-    시작~직전 쪽)에 이미 본문 시작이 있으면** 파트 경계(R8, 2026-09-16 사용자 결정 — 종전 "사이에 무꼬리말/
-    로마/목차 페이지가 있어야 경계"를 대체). 앞부속이 본문과 연속 아라비아인 판형(2025-02)은 앞 구간에
-    본문이 없어 분리되지 않고, 본편 뒤에 쪽 번호가 1로 재시작하는 부록 책자가 간격 쪽 없이 붙은 판형
-    (2024-23 p127 꼬리말 109 → p128 '- 1 -')은 분리된다 — 분리하지 않으면 find_body_start의 앵커(파트 내
-    마지막 '- 1 -')가 책자로 뛰어 본편이 통째로 앞부속 취급되는 무음 유실(실측 106쪽). 게이트는
-    part_has_body(표 비의존)라 register 경량 스캔·verify 전체 스캔이 같은 분할을 낸다. 경계 뒤 '뒤로
-    건너뛰기'는 새 파트의 번호 없는 표지·목차를 새 파트에 귀속시키는 단계(2025-17 p139 표지)로 유지.
-    """
-    n = len(scans)
-    run_max = 0
-    boundaries = [0]
-
-    def frontish(s: PageScan) -> bool:
-        return s.blank or s.image_only or s.leader_lines >= 3 or \
-            (bool(s.lines) and s.leader_lines / len(s.lines) > 0.3)
-
-    for i, s in enumerate(scans):
-        if s.footer_arabic is None:
-            continue
-        if s.footer_arabic == 1 and run_max > 1 and part_has_body(scans, (boundaries[-1], i - 1)):
-            # 경계: 재시작 지점에서 뒤로, 앞부속스러운 페이지(무꼬리말/리더런/공백/이미지,
-            # 잔류 꼬리말이 남은 그림목차 등)를 건너뛴 지점 (2025-17 p139 표지 실측)
-            k = i - 1
-            while k > boundaries[-1]:
-                sk = scans[k]
-                if sk.footer_arabic is not None and not frontish(sk):
-                    break
-                k -= 1
-            start = k + 1
-            if start > boundaries[-1]:
-                boundaries.append(start)
-            run_max = 1
-        else:
-            run_max = max(run_max, s.footer_arabic)
-    parts = []
-    for bi, start in enumerate(boundaries):
-        end = (boundaries[bi + 1] - 1) if bi + 1 < len(boundaries) else n - 1
-        parts.append((start, end))
-    return parts
 
 
 # ---------------------------------------------------------------------------
@@ -896,60 +723,8 @@ def fallback_title(scans: list[PageScan], part: tuple[int, int], meta: Meta) -> 
 
 
 # ---------------------------------------------------------------------------
-# 본문 시작 · 구조 감지
+# 앞부속 표제 · 목차 페이지 인식
 # ---------------------------------------------------------------------------
-
-def page_is_front(scan: PageScan) -> bool:
-    if scan.leader_lines >= 3:
-        return True
-    if scan.lines and scan.leader_lines / len(scan.lines) > 0.3:
-        return True
-    for ln in scan.lines[:6]:
-        if FRONT_TITLE_RE.match(ln.text.strip()) or ABSTRACT_TITLE_RE.search(ln.text):
-            return True
-    return False
-
-
-def profile_value(name: str, m: re.Match) -> int:
-    g = m.group(1)
-    if name == "roman_unicode":
-        return ROMAN_UNI.index(g) + 1
-    if name == "roman_ascii":
-        return roman_ascii_to_int(g)
-    if name == "roman_mixed":  # 한 글자 유니코드 Ⅰ~Ⅻ 또는 ASCII 조합 — 혼용 글리프 정수화
-        return ROMAN_UNI.index(g) + 1 if len(g) == 1 and g in ROMAN_UNI else roman_ascii_to_int(g)
-    return int(g)
-
-
-def line_l1_candidates(ln: Line, next_ln: Line | None, ignore_tables: bool = False) -> list[str]:
-    """이 줄에서 1장 후보로 성립하는 프로파일 이름 목록(값=1인 것만).
-    ignore_tables=True는 표 내부 표식을 무시한다(경량 스캔과 동일 판정 — detect_parts 병합용)."""
-    out = []
-    text = ln.text.strip()
-    if (ln.in_table and not ignore_tables) or ln.is_leader or ln.is_footnote:
-        return out
-    for name, pat, two_line in PROFILES:
-        m = pat.match(text)
-        if not m:
-            continue
-        try:
-            if profile_value(name, m) != 1:
-                continue
-        except (ValueError, IndexError):
-            continue
-        if two_line:
-            if next_ln is None or not next_ln.text.strip():
-                continue
-            nt = next_ln.text.strip()
-            if len(nt) > MAX_TITLE_LINE or FOOTER_RE.match(nt) or LEADER_RE.search(nt):
-                continue
-        else:
-            rest = text[m.end() - 1:]
-            if len(rest) > MAX_HEADING_LEN:
-                continue
-        out.append(name)
-    return out
-
 
 def page_has_front_title(scan: PageScan, ignore_tables: bool = False) -> bool:
     """표 밖의 앞부속 표제 줄(요약문/SUMMARY/목차/CONTENTS/차례) 존재 여부 — 룩어헤드 가드용."""
@@ -961,85 +736,11 @@ def page_has_front_title(scan: PageScan, ignore_tables: bool = False) -> bool:
     return False
 
 
-LOOKAHEAD_PAGES = 25  # 후보 페이지 뒤로 앞부속 표제가 남아 있으면 아직 앞부속(요약문 로마 헤딩 오탐 차단)
-
-
-def _first_l1_cands(scan: PageScan, ignore_tables: bool) -> list[str]:
-    """페이지에서 1장 후보가 성립하는 첫 줄의 프로파일 목록(없으면 빈 목록)."""
-    for j, ln in enumerate(scan.lines):
-        nxt = scan.lines[j + 1] if j + 1 < len(scan.lines) else None
-        cands = line_l1_candidates(ln, nxt, ignore_tables)
-        if cands:
-            return cands
-    return []
-
-
-def find_body_start(scans: list[PageScan], part: tuple[int, int],
-                    ignore_tables: bool = False) -> tuple[int | None, list[str]]:
-    """(본문 시작 페이지, 그 페이지의 1장 후보 프로파일들). 앵커 = 파트 내 아라비아 '- 1 -' 마지막 페이지.
-    ignore_tables=True: 표 내부 표식 무시(경량 스캔과 같은 판정) — detect_parts의 앞부속 병합 판정용."""
-    anchor = part[0]
-    for i in range(part[0], part[1] + 1):
-        if scans[i].footer_arabic == 1:
-            anchor = i
-    for i in range(anchor, part[1] + 1):
-        scan = scans[i]
-        if scan.blank or page_is_front(scan):
-            continue
-        cands = _first_l1_cands(scan, ignore_tables)
-        if not cands:
-            continue
-        if scan.image_only:
-            # R8(2026-09-16, 2024-16): 장식 그림 때문에 image_only로 분류된 장 구분 페이지("제1장" + 제목 줄, 텍스트 5자)도
-            # 본문 시작이 될 수 있다 — 종전엔 image_only를 무조건 건너뛰어 앵커가 첫 텍스트 쪽의 3단계 항목(Ⅰ.)으로 밀리고
-            # 장 구조가 전부 어긋났다. 단 다음 텍스트 쪽이 1장 표식을 되풀이하면(2019-17 `I. 서론`·2021-43·2025-01 실측 —
-            # 그림 쪽은 요약 표제·절 목록일 수 있음) 종전대로 그 쪽이 본문 시작(적재본 불변).
-            nxt_scan = next((scans[k] for k in range(i + 1, part[1] + 1)
-                             if not scans[k].blank and not scans[k].image_only), None)
-            if nxt_scan is not None and _first_l1_cands(nxt_scan, ignore_tables):
-                continue
-        # 룩어헤드: 뒤 25페이지 안에 앞부속 표제가 남아 있으면 이 후보는 요약문/영문요약 내부
-        ahead_end = min(i + LOOKAHEAD_PAGES, part[1])
-        if any(page_has_front_title(scans[k], ignore_tables) for k in range(i + 1, ahead_end + 1)):
-            continue
-        return i, cands
-    return None, []
-
-
-# --- 목차 장 번호·R4 장 번호 오타 승격 (extract walk_l1 ↔ verify C 목차 대조 공유) ---------------------------
-
-# 목차 줄용 완화 프로파일 — 목차는 분리형('제 1 장'·단독 숫자)을 한 줄로 조판하므로 기본형으로 대조
-RELAXED_PROFILE = {"jang_split": "jang", "bare_digit_split": "arabic"}
-BARE_MD_RE = re.compile(r"^(\d{1,2})\s+\S")  # bare_digit .md 헤딩 텍스트("1 제목")용
-
-
-def relaxed_profile_pats(profile_name: str) -> list[tuple[str, re.Pattern]]:
-    """목차 줄용 완화 패턴 목록. 로마자는 유니코드/ASCII 표기가 본문과 어긋나는 실측(2025-29: 목차 Ⅰ.
-    vs 본문 II.)이 있어 두 형태 모두 수집한다."""
-    pat_of = {n: p for n, p, _ in PROFILES}
-    r = RELAXED_PROFILE.get(profile_name, profile_name)
-    if r in ("roman_unicode", "roman_ascii"):
-        return [("roman_unicode", pat_of["roman_unicode"]), ("roman_ascii", pat_of["roman_ascii"])]
-    return [(r, pat_of[r])]
-
-
-def toc_title_key(line_text: str, m: re.Match) -> str:
-    """목차 줄에서 번호 토큰·리더런 이후(쪽 번호)·끝 쪽 번호를 뗀 제목 접기 — R4 제목 일치 판정용."""
-    t = line_text[m.end() - 1:]
-    t = re.split(r"[·‧․.]{2,}", t)[0]
-    t = re.sub(r"\s*\d{1,3}\s*$", "", t)
-    return fold(t)
-
-
-# --- 목차 페이지 인식 (R6, 사용자 채택 2026-09-11) ---------------------------------------------------
-# 종전 유일 규칙 = 리더런(`····`) 3줄 이상 페이지. W1 실측 4권(2019-17·2021-81·2021-42·2019-69)은 목차에
-# 리더가 없거나(쪽 번호가 다음 줄에 단독), 리더 페이지가 표·그림 목차뿐이거나, 표제 앞에 템플릿 잔재
-# 「편집순서 N」이 붙어 대조를 생략했다. 보강: 목차 표제 페이지(「목차/차례」·「CONTENTS」 — 접두·괄호 꼬리
+# --- 목차 페이지 인식 (R6, 2026-09-11) --------------------------------------------------------------
+# 리더런(`····`) 3줄 이상 페이지에 더해, 목차 표제 페이지(「목차/차례」·「CONTENTS」 — 템플릿 접두·괄호 꼬리
 # 「(영문목차)」 허용)와 그 뒤 표제 없는 이어짐 페이지(리더런 3줄 또는 맨몸 숫자 줄 3줄 이상)를 목차로 본다.
-# 표·그림 목차 등 다른 앞부속 표제는 이어짐을 끊는다. **국문 우선 2단**(사용자 결정): 장 번호는 1차(리더 페이지
-# ∪ 국문 표제·이어짐)에서 수집하고 하나도 없을 때만 2차(영문 CONTENTS·이어짐) — 영문 목차에만 번호가 붙은
-# 항목(`VI. References`류)이 「목차에만 있는 장 번호」 헛 FAIL을 내는 노출 차단. FRONT_TITLE_RE·page_is_front·
-# find_body_start·detect_parts는 건드리지 않는다(본문 시작·합본 분할 불변).
+# 표·그림 목차 등 다른 앞부속 표제는 이어짐을 끊는다. 쓰는 곳: 판독(docread)이 모델에 보여 줄 목차 쪽을 고를 때
+# (tocparse.toc_page_set)와 쪽 프로필 표식.
 TOC_TEMPLATE_PREFIX_RE = re.compile(r"^\s*편집순서\s*\d+\s*")
 TOC_PAREN_TAIL_RE = re.compile(r"\s*\([^()]*\)\s*$")
 TOC_TITLE_KO_RE = re.compile(r"^(?:목\s*차|차\s*례)$")
@@ -1117,133 +818,6 @@ def toc_pages(scans, part, body_start) -> tuple[list[int], list[int]]:
     return primary, secondary
 
 
-def _collect_toc_titles(scans, pages, pats) -> dict[int, list[str]]:
-    titles: dict[int, list[str]] = {}
-    for i in pages:
-        for ln in scans[i].lines:
-            t = ln.text.strip()
-            if CAPTION_RE.match(t):
-                continue
-            for name, pat in pats:
-                m = pat.match(t)
-                if m:
-                    try:
-                        titles.setdefault(profile_value(name, m), []).append(toc_title_key(t, m))
-                    except (ValueError, IndexError):
-                        pass
-                    break
-    return titles
-
-
-def toc_chapter_titles(scans, part, body_start, profile_name: str) -> dict[int, list[str]]:
-    """앞부속 목차(toc_pages)의 {장 번호: [제목 접기…]} — verify C 목차 대조와 R4 승격 조건이 같은 값을
-    쓴다. 표·그림 목차 항목(CAPTION_RE)은 제외. 같은 번호가 여러 줄이면(아라비아 하위 항목 혼입) 전부 보관.
-    국문 우선 2단: 1차 페이지에서 하나도 못 모으면 2차(영문 CONTENTS) 페이지에서 수집."""
-    pats = relaxed_profile_pats(profile_name)
-    primary, secondary = toc_pages(scans, part, body_start)
-    titles = _collect_toc_titles(scans, primary, pats)
-    if not titles and secondary:
-        titles = _collect_toc_titles(scans, secondary, pats)
-    return titles
-
-
-def toc_chapter_values(scans, part, body_start, profile_name: str) -> set[int]:
-    """목차 장 번호 집합(toc_chapter_titles의 키)."""
-    return set(toc_chapter_titles(scans, part, body_start, profile_name))
-
-
-def chapter_title_key(text: str) -> str:
-    """장 헤딩 텍스트에서 선두 번호 토큰을 뗀 제목 접기 — R4 '다른 제목' 판정용."""
-    t = (text or "").strip()
-    for _name, pat, _two in PROFILES:
-        m = pat.match(t)
-        if m:
-            return fold(t[m.end() - 1:])
-    m = BARE_MD_RE.match(t)
-    return fold(t[m.end() - 1:] if m else t)
-
-
-TITLE_SIM_MIN_LEN = 8    # 유사도 경로를 여는 최소 접기 길이(짧은 제목의 우연 일치 차단)
-TITLE_SIM_RATIO = 0.8    # difflib 비율 하한 — 2024-41 목차 Ⅴ '…기관 연계·협력 활성화 방안' vs 본문 '…기관 산학연 연계·협력 활성화' = 0.89
-
-
-def _toc_title_match(key: str, toc_keys, contain: bool = True) -> bool:
-    """제목 접기 key가 목차 항목 접기 중 하나와 (1) 동일 또는 4자 이상 포함 관계(R4 매칭 규칙 — R9에서 분리), 또는
-    (2) 둘 다 TITLE_SIM_MIN_LEN 이상이고 difflib 유사도가 TITLE_SIM_RATIO 이상(R9 — 단어 하나가 삽입·삭제된 표기 차이:
-    2024-41 '산학연' 삽입 0.89, 적재본 실측 `실험실창업지원사업 및 유사사업 현황`↔`…사업 현황` 0.81, `개편방안(안)`↔`개편방향(안)` 0.95;
-    전혀 다른 제목은 0.0~0.5). contain=False(R10 하위 헤딩 크기 게이트 면제)는 포함 관계를 쓰지 않는다 — 짧은 목차
-    제목이 긴 법령 문장 안에 들어 있는 경우를 면제하지 않기 위해."""
-    for k in (toc_keys or []):
-        if not k:
-            continue
-        if k == key or (contain and ((len(k) >= 4 and k in key) or (len(key) >= 4 and key in k))):
-            return True
-        if len(k) >= TITLE_SIM_MIN_LEN and len(key) >= TITLE_SIM_MIN_LEN \
-                and difflib.SequenceMatcher(None, k, key).ratio() >= TITLE_SIM_RATIO:
-            return True
-    return False
-
-
-def typo_promotable(prev_text: str, cand_text: str, cand_val: int, expected: int,
-                    toc: dict[int, list[str]] | None) -> bool:
-    """R4 장 번호 오타 승격(WAVE_PLAN §4 R4, 사용자 채택 2026-09-09 — 2021-38 p.143 '제4장 결론 및 시사점'이
-    목차의 제5장): 후보가 직전 장과 같은 번호(expected-1)이고 제목이 직전 장과 다르며, **목차의 다음 번호
-    (expected) 항목 제목과 일치**(접기 후 동일 또는 4자 이상 포함)할 때만 다음 서수로 승격한다.
-    '다른 제목'만으로는 러닝헤드+쪽 번호('제1장 서론 5')·랩 결합 변형·아라비아 하위 항목 '1.'이 승격되는
-    오탐이 적재 23권 회귀에서 3권 나와(2026-09-09) 목차 제목 일치를 필수 조건으로 삼았다.
-    extract(walk_l1)와 verify(C 목차 대조, md_chapter_values)가 같은 함수를 쓴다.
-    **R9(2026-09-18, 사용자 채택)**: 후보 번호가 expected+1(원문이 한 칸 건너뜀 — 2024-41 본문 I·II·IV·V·VI, 목차 Ⅰ~Ⅴ)
-    도 같은 조건(목차 expected 항목 제목 일치)으로 expected로 본다 → "기대 번호 ±1 + 제목 일치". 그 밖의 번호(장 안의
-    `1.` 항목 등)는 승격하지 않는다. 제목 일치는 정상 채택(번호 = 기대)의 조건이 아니다 — 적재 64권 실측에서 채택 장
-    329개 중 46개가 표기 차이로 매칭에 실패(IMPLEMENTATION_NOTES §3 단계①)."""
-    if not toc or expected not in toc or cand_val not in (expected - 1, expected + 1):
-        return False
-    a, b = chapter_title_key(prev_text), chapter_title_key(cand_text)
-    if not a or not b or a == b:
-        return False
-    return _toc_title_match(b, toc[expected])
-
-
-def md_chapter_values(texts: list[str], profile_name: str, toc: dict[int, list[str]] | None) -> list[int | None]:
-    """.md 깊이 1 헤딩 텍스트 열 → 유효 장 번호 열(표면 번호에 R4 승격을 같은 규칙으로 적용). 번호 없는
-    헤딩은 None. toc = toc_chapter_titles 결과. verify C가 목차 번호 집합과 대조할 때 사용."""
-    md_pats = list(relaxed_profile_pats(profile_name))
-    if profile_name == "bare_digit_split":
-        md_pats.append(("bare", BARE_MD_RE))
-    out: list[int | None] = []
-    prev_text, prev_val = "", None
-    for text in texts:
-        v = None
-        for name, pat in md_pats:
-            m = pat.match(text)
-            if m:
-                try:
-                    v = int(m.group(1)) if name == "bare" else profile_value(name, m)
-                except (ValueError, IndexError):
-                    v = None
-                break
-        if v is not None and prev_val is not None and typo_promotable(prev_text, text, v, prev_val + 1, toc):
-            v = prev_val + 1
-        out.append(v)
-        if v is not None:
-            prev_text, prev_val = text, v
-    return out
-
-
-def find_body_start_flat(scans, part) -> int | None:
-    """플랫 폴백용 본문 시작 — 파트 앞의 공백/이미지 전용/앞부속 연속 구간 다음 첫 페이지.
-
-    L1 후보 신호를 요구하지 않는다(장 번호가 없는 문서 대상). extract 폴백과
-    verify.py가 이 함수를 공유해 재현 판정이 어긋날 수 없다(table_covers 전례).
-    """
-    for i in range(part[0], part[1] + 1):
-        s = scans[i]
-        if s.blank or s.image_only or page_is_front(s):
-            continue
-        return i
-    return None
-
-
 @dataclasses.dataclass
 class Heading:
     addr: int                     # body_lines 인덱스
@@ -1279,608 +853,6 @@ def collect_body_lines(scans, part, body_start):
             continue
         for j, ln in enumerate(scan.lines):
             out.append((scan.index, j, ln))
-    return out
-
-
-def _static_guard(ln: Line, rest_len: int) -> str | None:
-    if ln.in_table:
-        return "표 내부"
-    if ln.is_leader:
-        return "리더런"
-    if ln.is_footnote:
-        return "각주"
-    if rest_len > MAX_HEADING_LEN:
-        # R10 조건부 상한: 짧게 끝나고 쪽 본문보다 큰 글자인 줄만 MAX_HEADING_LEN_TITLE까지 허용
-        if rest_len > MAX_HEADING_LEN_TITLE or ln.wide or ln.size_delta < TITLE_SIZE_DELTA:
-            return f"제목 {rest_len}자 초과"
-    return None
-
-
-def divider_list_addrs(body_lines, head_addr: int, start: int, pat, two_line: bool) -> list[int]:
-    """장 구분 페이지의 절 목록(R8, 2026-09-16 — 2024-29·2024-33 실측): 방금 채택한 장 헤딩(head_addr)과 같은
-    페이지의 나머지 줄(start 이후)이 전부 절 제목·뒷부속 표제 꼴이고 페이지가 짧으면 그 줄들은 목차이지 헤딩이
-    아니다 — 종전에는 목록 줄이 빈 절 헤딩이 되고 본문 쪽의 같은 절 제목은 순번 불일치로 기각되어 장 본문이
-    마지막 절 아래로 몰렸고, 목록 끝의 '참고 문헌' 줄이 참고문헌 장을 열어 결론 본문이 요약 제외됐다.
-    기준: 페이지 비어있지 않은 줄 ≤ DIVIDER_MAX_LINES, 전부 ≤ MAX_TITLE_LINE, 표·각주·리더 줄 없음, 목록 줄 ≥ 2,
-    각 목록 줄이 하위 패밀리·참고문헌·부록·L1 패턴 중 하나에 매치(분리형 L1은 다음 제목 줄과 한 단위, 매치 줄
-    바로 뒤 ≤30자 비마커·비불릿 줄 1개는 랩 이어짐으로 허용). 반환 = 헤딩 후보에서 제외할 addr 목록(빈 목록 =
-    구분 페이지 아님). 줄 자체는 build_body가 본문 텍스트로 남긴다(verify 커버리지 검사와 1:1 유지)."""
-    pg = body_lines[head_addr][0]
-    lo = head_addr
-    while lo > 0 and body_lines[lo - 1][0] == pg:
-        lo -= 1
-    hi = start
-    while hi < len(body_lines) and body_lines[hi][0] == pg:
-        hi += 1
-    page = [k for k in range(lo, hi) if body_lines[k][2].text.strip()]
-    if len(page) > DIVIDER_MAX_LINES:
-        return []
-    for k in page:
-        ln = body_lines[k][2]
-        if ln.in_table or ln.is_footnote or ln.is_leader or len(ln.text.strip()) > MAX_TITLE_LINE:
-            return []
-    rest = [k for k in page if k >= start]
-    if len(rest) < 2:
-        return []
-    prev_marker = False
-    idx = 0
-    while idx < len(rest):
-        t = body_lines[rest[idx]][2].text.strip()
-        m = pat.match(t)
-        if m or _match_sub_any(t) or REF_TITLE_RE.match(t) or APPENDIX_RE.match(t):
-            if m and two_line:      # 분리형 L1(번호 단독 줄) + 다음 제목 줄 = 한 단위
-                idx += 1
-            prev_marker = True
-        elif prev_marker and len(t) <= 30 and not BULLET_START_RE.match(t) \
-                and not any(p.match(t) for _, p, _ in PROFILES):
-            prev_marker = False     # 직전 마커 줄의 랩 이어짐 1줄
-        else:
-            return []
-        idx += 1
-    return rest
-
-
-def _two_line_title_addr(body_lines, i: int, consumed, skip_addrs) -> int | None:
-    """분리형 L1(번호 단독 줄 i)의 제목 줄 addr. 기본은 다음 줄(i+1). **R9(c, 2023-07)**: 다음 줄이 하위 헤딩 꼴
-    (`제1절연구의…`)이고 같은 쪽 바로 앞 줄(i-1)이 짧은 비마커·비표·비각주 제목 줄(` 서론`)이면 앞 줄 — 제목이 번호
-    상자 위에 놓인 판형. 둘 다 부적합이면 None(종전 '두줄형 제목 줄 부적합')."""
-    pg = body_lines[i][0]
-    nxt = body_lines[i + 1][2] if i + 1 < len(body_lines) else None
-    nt = nxt.text.strip() if nxt is not None else ""
-    next_ok = bool(nt) and len(nt) <= MAX_TITLE_LINE and not FOOTER_RE.match(nt) \
-        and not LEADER_RE.search(nt) and not nxt.in_table
-    if next_ok and _match_sub_any(nt) and i - 1 >= 0:
-        ppg, _, prev = body_lines[i - 1]
-        pt = prev.text.strip()
-        if ppg == pg and (i - 1) not in consumed and (i - 1) not in skip_addrs and pt \
-                and len(pt) <= MAX_TITLE_LINE and not prev.in_table and not prev.is_leader \
-                and not prev.is_footnote and not FOOTER_RE.match(pt) and not LEADER_RE.search(pt) \
-                and not any(p.match(pt) for _, p, _ in PROFILES) and not _match_sub_any(pt) \
-                and not REF_TITLE_RE.match(pt) and not APPENDIX_RE.match(pt):
-            return i - 1
-    return i + 1 if next_ok else None
-
-
-def _l1_title_text(body_lines, i: int, two_line: bool, consumed, skip_addrs) -> str:
-    """L1 후보 i의 제목 비교용 텍스트(R9 b) — 분리형은 제목 줄을 붙이고, 단줄형은 그대로(랩 결합은 목차 접기의
-    4자 이상 포함 일치로 충분)."""
-    text = body_lines[i][2].text.strip()
-    if two_line:
-        t = _two_line_title_addr(body_lines, i, consumed, skip_addrs)
-        return f"{text} {body_lines[t][2].text.strip()}" if t is not None else text
-    return text
-
-
-def _next_same_value_cand(body_lines, start: int, pat, name: str, value: int, two_line: bool,
-                          consumed, skip_addrs) -> int | None:
-    """start 이후 **처음 나오는** 같은 프로파일 패턴·같은 번호·정적 가드 통과·미소비 L1 후보의 addr(없으면 None).
-    R9 b는 이 첫 후보만 본다 — 목차가 `N.` 항목을 여러 층위에 겹쳐 쓰는 판형(2024-04, 같은 번호 후보 61줄)에서
-    "뒤 어딘가의 일치 후보"는 엉뚱한 줄을 장으로 올리기 때문."""
-    for k in range(start, len(body_lines)):
-        if k in consumed or k in skip_addrs:
-            continue
-        ln = body_lines[k][2]
-        t = ln.text.strip()
-        if not t:
-            continue
-        m = pat.match(t)
-        if not m:
-            continue
-        try:
-            v = profile_value(name, m)
-        except (ValueError, IndexError):
-            continue
-        if v != value or _static_guard(ln, 0 if two_line else len(t[m.end() - 1:])):
-            continue
-        return k
-    return None
-
-
-def walk_l1(body_lines, profile, report_id: str, diag: dict | None = None,
-            no_footer_pages: set | None = None, toc: dict | None = None,
-            warnings: list | None = None):
-    """선택 프로파일로 장 시퀀스 + 뒷부속 감지. (chapters, 소비된 addr 집합, 구분 페이지 제외 addr 집합) 반환.
-    toc = 앞부속 목차 {장 번호: [제목 접기]}(toc_chapter_titles — R4 장 번호 오타 승격 조건, None이면 승격 없음),
-    warnings = 승격 기록 대상(PartResult.warnings)."""
-    name, pat, two_line = profile
-    no_footer_pages = no_footer_pages or set()
-    chapters: list[Heading] = []
-    consumed: set[int] = set()
-    skip_addrs: set[int] = set()   # R8 장 구분 페이지 절 목록 — 헤딩 후보 제외(본문 텍스트로는 유지)
-    expected = 1
-    backmatter = False
-    ref_seen = False
-
-    def log_reject(i, text, reason):
-        if diag is not None:
-            diag.setdefault("l1_rejects", []).append(
-                {"page": body_lines[i][0] + 1, "text": text[:40], "reason": reason})
-
-    i = 0
-    while i < len(body_lines):
-        pg, j, ln = body_lines[i]
-        text = ln.text.strip()
-        if not text or i in consumed or i in skip_addrs:
-            i += 1
-            continue
-
-        # 뒷부속 마커 (장 2개 이상 확보 후부터)
-        if len([c for c in chapters if c.kind == "normal"]) >= 2 and not ln.in_table \
-                and not ln.is_leader and not ln.is_footnote and len(text) <= MAX_HEADING_LEN + 10:
-            if REF_TITLE_RE.match(text):
-                chapters.append(Heading(addr=i, depth=1, hid="", text=re.sub(r"\s+", " ", text),
-                                        kind="references", family="backmatter"))
-                consumed.add(i)
-                backmatter = True
-                ref_seen = True
-                i += 1
-                continue
-            am = APPENDIX_RE.match(text)
-            if am is None and pg in no_footer_pages:
-                # 맨몸 '첨부'는 꼬리말 없는 뒷부속 페이지에서만 (2025-16 p34 vs 2025-32 p49 실측)
-                am = ATTACH_RE.match(text)
-            if am and not (backmatter and chapters and chapters[-1].kind == "appendix"):
-                chapters.append(Heading(addr=i, depth=1, hid="", text=re.sub(r"\s+", " ", text),
-                                        kind="appendix", family="backmatter"))
-                consumed.add(i)
-                backmatter = True
-                i += 1
-                continue
-            # 참고문헌 이후의 무표기 부록(2025-17): 단독 숫자 1 + 제목 줄
-            if ref_seen and chapters[-1].kind == "references" and re.match(r"^1$", text):
-                nxt = body_lines[i + 1][2] if i + 1 < len(body_lines) else None
-                if nxt is not None and nxt.text.strip() and len(nxt.text.strip()) <= MAX_TITLE_LINE:
-                    title = re.sub(r"\s+", " ", nxt.text.strip())
-                    chapters.append(Heading(addr=i, depth=1, hid="", text="부록",
-                                            kind="appendix", family="backmatter",
-                                            extra_addrs=[]))
-                    consumed.add(i)
-                    backmatter = True
-                    i += 1
-                    continue
-
-        if backmatter:
-            i += 1
-            continue
-
-        m = pat.match(text)
-        if m:
-            try:
-                val = profile_value(name, m)
-            except (ValueError, IndexError):
-                i += 1
-                continue
-            guard = _static_guard(ln, 0 if two_line else len(text[m.end() - 1:]))
-            if guard:
-                log_reject(i, text, guard)
-                i += 1
-                continue
-            # R4 승격 예비 판정(제목 비교는 제목 줄을 합친 뒤 typo_promotable에서)
-            promote = val != expected and toc is not None and val in (expected - 1, expected + 1) \
-                and expected in toc and any(c.kind == "normal" for c in chapters)
-            if val != expected and not promote:
-                log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
-                i += 1
-                continue
-            # R9 b(2026-09-18, 2023-05 실측): 번호는 기대와 같은데 제목이 목차와 다르고, 뒤에서 **처음 나오는** 같은 번호
-            # 후보의 제목이 목차와 일치하면 현재 후보는 장 안의 항목(`4. 사업 추진 계획(안)`)으로 보고 기각한다.
-            # 목차 표기 차이만으로는(다음 후보가 없거나 그 후보도 불일치) 아무것도 바뀌지 않는다.
-            if val == expected and toc and expected in toc \
-                    and not _toc_title_match(chapter_title_key(
-                        _l1_title_text(body_lines, i, two_line, consumed, skip_addrs)), toc[expected]):
-                k = _next_same_value_cand(body_lines, i + 1, pat, name, expected, two_line, consumed, skip_addrs)
-                if k is not None and _toc_title_match(chapter_title_key(
-                        _l1_title_text(body_lines, k, two_line, consumed, skip_addrs)), toc[expected]):
-                    log_reject(i, text, f"목차 제목 불일치(다음 같은 번호 후보 p.{body_lines[k][0] + 1} 일치)")
-                    i += 1
-                    continue
-            title_text = text
-            extra = []
-            if two_line:
-                t_addr = _two_line_title_addr(body_lines, i, consumed, skip_addrs)
-                if t_addr is None:
-                    log_reject(i, text, "두줄형 제목 줄 부적합")
-                    i += 1
-                    continue
-                title_text = f"{text} {body_lines[t_addr][2].text.strip()}"
-                extra = [t_addr]
-                if t_addr < i and diag is not None:
-                    diag.setdefault("l1_two_line_prev", []).append({"page": pg + 1, "text": title_text[:40]})
-            else:
-                # 헤딩 랩 결합: 줄이 컬럼 우측 끝까지 차고 다음 줄이 짧은 비마커 줄이면 이어붙임
-                if i + 1 < len(body_lines):
-                    nxt_pg, _, nxt = body_lines[i + 1]
-                    if nxt_pg == pg and ln.x1 > 0 and nxt.text.strip() \
-                            and len(nxt.text.strip()) <= 30 and not nxt.in_table \
-                            and not any(p.match(nxt.text.strip()) for _, p, _ in PROFILES) \
-                            and not _match_sub_any(nxt.text.strip()) \
-                            and not REF_TITLE_RE.match(nxt.text.strip()) \
-                            and not APPENDIX_RE.match(nxt.text.strip()) \
-                            and _is_full_width(ln, body_lines, pg):
-                        title_text = f"{text} {nxt.text.strip()}"
-                        extra = [i + 1]
-            if promote:
-                prev = [c for c in chapters if c.kind == "normal"][-1]
-                clean = re.sub(r"\s+", " ", title_text)
-                if not typo_promotable(prev.text, clean, val, expected, toc):
-                    log_reject(i, text, f"순번 불일치(기대 {expected}, 실제 {val})")
-                    i += 1
-                    continue
-                kind = "skip" if val > expected else "typo"
-                label = "장 번호 건너뜀 보정" if kind == "skip" else "장 번호 오타 승격"
-                if warnings is not None:
-                    warnings.append(f"p.{pg + 1} {label} {val}→{expected}: {clean[:30]}")
-                if diag is not None:
-                    diag.setdefault("l1_promoted", []).append(
-                        {"page": pg + 1, "text": clean[:40], "from": val, "to": expected, "kind": kind})
-                val = expected
-            head_addr = i
-            if extra and extra[0] < i:      # R9 c: 제목 줄이 번호 줄 앞 — 헤딩 단위의 첫 줄을 addr로, 번호 줄은 extra
-                head_addr, extra = extra[0], [i]
-            h = Heading(addr=head_addr, depth=1, hid="", text=re.sub(r"\s+", " ", title_text),
-                        family=name, value=val, extra_addrs=extra)
-            # 장 제목이 참고문헌이면 references 장으로 (2025-02 "6. 참고문헌")
-            if fold(title_text).endswith("참고문헌"):
-                h.kind = "references"
-                ref_seen = True
-                backmatter = True
-            chapters.append(h)
-            consumed.add(h.addr)
-            consumed.update(extra)
-            expected += 1
-            i = max([h.addr, *extra]) + 1
-            if h.kind == "normal":
-                rest = divider_list_addrs(body_lines, h.addr, i, pat, two_line)
-                if rest:
-                    skip_addrs.update(rest)
-                    i = rest[-1] + 1
-                    if diag is not None:
-                        diag.setdefault("divider_pages", []).append(pg + 1)
-                    if warnings is not None:
-                        warnings.append(f"p.{pg + 1} 장 구분 페이지 절 목록 {len(rest)}줄 헤딩 제외")
-            continue
-        i += 1
-    return chapters, consumed, skip_addrs
-
-
-def _match_sub_any(text: str):
-    for fam, pat in SUB_FAMILY_DEFS:
-        m = pat.match(text)
-        if m:
-            return fam, m
-    return None
-
-
-def _is_full_width(ln: Line, body_lines, pg: int) -> bool:
-    xs = [l.x1 for p, _, l in body_lines if p == pg and not l.in_table]
-    if not xs:
-        return False
-    return ln.x1 >= 0.92 * max(xs)
-
-
-def _sub_value(fam: str, m: re.Match):
-    if fam == "jeol":
-        return int(m.group(1))
-    if fam == "num_dot_num":
-        return int(m.group(2))
-    if fam in ("num_dot", "paren_num", "num_paren"):
-        return int(m.group(1))
-    if fam in ("ga_dot", "ga_paren"):
-        ch = m.group(1)
-        if ch not in HANGUL_ORD:
-            return None
-        return HANGUL_ORD.index(ch) + 1
-    return None
-
-
-def toc_sub_title_keys(scans, part, body_start) -> set[str]:
-    """앞부속 목차(toc_pages 1차 ∪ 2차)에서 하위 헤딩 꼴 줄의 제목 접기 집합 — R10 글자 크기 게이트의 면제 근거.
-    표·그림 목차 항목(CAPTION_RE)은 제외."""
-    primary, secondary = toc_pages(scans, part, body_start)
-    keys: set[str] = set()
-    for i in primary + secondary:
-        for ln in scans[i].lines:
-            t = ln.text.strip()
-            if CAPTION_RE.match(t):
-                continue
-            hit = _match_sub_any(t)
-            if hit:
-                k = toc_title_key(t, hit[1])
-                if k:
-                    keys.add(k)
-    return keys
-
-
-def detect_sub_headings(body_lines, chapters, profile_name, report_id, diag=None, skip_addrs=None,
-                        toc_sub=None):
-    """정규 장 내부에서 하위 패밀리 발견(전역 첫 등장 순서) + 부모 범위 단조증가 검증.
-    skip_addrs = walk_l1이 장 구분 페이지 절 목록으로 제외한 addr(R8) — 두 패스 모두 건너뛴다.
-
-    **글자 크기 게이트**(R10, 2026-09-21 — 사용자 제안 "장-절 구조 파악에 글자 크기 고려"): 본문에 인용된 법령 조항·
-    설문 문항·표 조각의 `2. …`/`가. …` 줄이 순번에 맞아 절이 되고 진짜 절이 순번 불일치로 밀려나는 결함(2024-41 II·III장
-    — 진짜 절 `N.` 14.0pt, 인용 법령 항목 9.8~10.0pt = 본문 크기). 코퍼스 전체로는 크기를 1차 기준으로 쓸 수 없어(채택
-    헤딩의 33%가 본문과 같은 크기로 조판) **같은 패밀리 안의 일관성**만 본다: 후보가 그 패밀리의 이미 채택된 헤딩 크기
-    중위보다 SUB_SIZE_GATE_PT 이상 작고 **그 쪽 본문 크기보다 TITLE_SIZE_DELTA 이상 크지 않으면** 기각. 기각한 변형(64권
-    인프로세스 회귀): 중위 −1.0 무조건(2019-54·2021-38·2022-06·2025-29 진짜 헤딩 손실) · 본문 크기를 문서 전체 중위로
-    (2024-37·2022-04 손실) · 3.0pt 이상 무조건(2023-17·2024-01 손실) · 비교 기준을 같은 장 안으로(효과 없음).
-    **목차 면제**: toc_sub(toc_sub_title_keys — 앞부속 목차의 하위 헤딩 꼴 줄 제목 접기)가 있고 후보 제목이 그중 하나와
-    동일·유사도 일치(포함 관계 제외)면 게이트를 통과 — 한 장 안에서 절 제목 크기가 섞여 조판된 2024-37 3장(`1.`·`2.`
-    13.0pt, `3.`·`4.` 본문 크기 10.8~11.0pt, 목차에는 전부 수록). toc_sub=None이면 면제 없음.
-
-    **숫자로 시작하는 절 제목**(R10 ③, 사용자 결정 — 단계별): num_dot 정규식이 후보로 안 보는 `N. 숫자…`(NUM_DOT_DIGIT_RE)
-    줄은 ① 이미 채택된 num_dot 헤딩 크기 중위와 ±0.3pt 이내면(무점 보정과 같은 기준) 후보, ② ①이 아닐 때만(기준 없음
-    또는 크기 다름) 그 쪽 본문보다 TITLE_SIZE_DELTA 이상 크면 후보. 후보가 된 뒤 순번 검사는 그대로(불일치는 기각 기록).
-    2024-35 실측: IV·V·VI장의 진짜 절(`3. 2주기 전문대학 혁신지원사업 성과에 대한 자체평가` 15.7pt)이 전부 빠지고 V장은
-    표 조각 `3. 재정적 안정성과`~`7. 글로벌 연계`(9.2pt)가 그 번호를 차지했다. num_dot이 장 문법인 문서(arabic)는
-    num_dot 패밀리가 금지라 자동 비활성 — 장 판정에는 적용하지 않는다(12권 실측 변화 0)."""
-    skip_addrs = skip_addrs or set()
-    normal_spans = []
-    for ci, ch in enumerate(chapters):
-        if ch.kind != "normal":
-            continue
-        start = ch.addr + 1 + len(ch.extra_addrs)
-        nxt = chapters[ci + 1].addr if ci + 1 < len(chapters) else len(body_lines)
-        normal_spans.append((ci, start, nxt))
-
-    banned = set()
-    if profile_name == "arabic":
-        banned.add("num_dot")          # L1과 동일 패턴 — 모호성 배제
-    if profile_name == "bare_digit_split":
-        return [], {}, {}              # 하위 무표기(실측) — 평탄 유지
-
-    # 1) 패밀리 발견: 값==1(첫 항)로 시작하는 유효 후보의 전역 첫 등장 순서.
-    #    두줄형 한글(2025-12 단독 '가'+제목 줄)도 같은 패스에서 위치 순서로 경쟁시킨다
-    #    — 별도 후행 패스로 돌리면 각주 유래 num_paren 등이 depth 슬롯을 선점한다(실측).
-    family_order = []
-    for ci, start, end in normal_spans:
-        for i in range(start, end):
-            if i in skip_addrs:
-                continue
-            pg, j, ln = body_lines[i]
-            text = ln.text.strip()
-            hit = _match_sub_any(text)
-            if hit:
-                fam, m = hit
-                if fam in banned or fam in family_order:
-                    continue
-                if _sub_value(fam, m) != 1:
-                    continue
-                if _static_guard(ln, len(text[m.end() - 1:])):
-                    continue
-                family_order.append(fam)
-                continue
-            if TWO_LINE_HANGUL not in family_order and text == "가" \
-                    and not ln.in_table and not ln.is_leader and i + 1 < end:
-                nxt = body_lines[i + 1][2]
-                nt = nxt.text.strip()
-                if nt and len(nt) <= MAX_TITLE_LINE and not _match_sub_any(nt) \
-                        and not FOOTER_RE.match(nt) and not LEADER_RE.search(nt):
-                    family_order.append(TWO_LINE_HANGUL)
-
-    depth_of = {fam: idx + 2 for idx, fam in enumerate(family_order) if idx < 3}
-    if diag is not None:
-        diag["family_order"] = family_order
-        diag["family_depths"] = depth_of
-
-    # 2) 구조 워크: 부모 범위 내 1부터 +1 단조 검증
-    headings: list[Heading] = []
-    counters: dict = {}
-    stats = {fam: {"accepted": 0, "rejected": 0} for fam in depth_of}
-
-    def log_reject(fam, i, text, reason):
-        stats[fam]["rejected"] += 1
-        if diag is not None:
-            lst = diag.setdefault("sub_rejects", [])
-            if len(lst) < 200:
-                lst.append({"family": fam, "page": body_lines[i][0] + 1,
-                            "text": text[:40], "reason": reason})
-
-    fam_sizes: dict = {}            # 패밀리 → 채택 헤딩 폰트 크기 목록 (무점 보정 게이트)
-
-    for ci, start, end in normal_spans:
-        chapter = chapters[ci]
-        stack: list[Heading] = []   # 현재 활성 하위 헤딩(얕은→깊은)
-        child_count: dict = {}      # 부모 hid → 자식 수 (서수 경로)
-        i = start
-        while i < end:
-            if i in skip_addrs:
-                i += 1
-                continue
-            pg, j, ln = body_lines[i]
-            text = ln.text.strip()
-            consumed_extra = []
-            fam = None
-            val = None
-            title_text = text
-            is_repair = False
-            hit = _match_sub_any(text)
-            if hit and hit[0] in depth_of:
-                fam, m = hit
-                val = _sub_value(fam, m)
-                if val is None:
-                    i += 1
-                    continue
-                guard = _static_guard(ln, len(text[m.end() - 1:]))
-                if guard:
-                    log_reject(fam, i, text, guard)
-                    i += 1
-                    continue
-                # R10 글자 크기 게이트(docstring) — 같은 패밀리 채택 헤딩보다 작고 쪽 본문 크기인 줄
-                szs = fam_sizes.get(fam)
-                if szs:
-                    med = sorted(szs)[len(szs) // 2]
-                    if med - ln.size >= SUB_SIZE_GATE_PT and ln.size_delta < TITLE_SIZE_DELTA:
-                        if toc_sub and _toc_title_match(fold(text[m.end() - 1:]), toc_sub, contain=False):
-                            stats[fam]["size_toc_exempt"] = stats[fam].get("size_toc_exempt", 0) + 1
-                            if diag is not None:
-                                diag.setdefault("sub_size_exempt", []).append(
-                                    {"family": fam, "page": pg + 1, "text": text[:40]})
-                        else:
-                            stats[fam]["size_rejected"] = stats[fam].get("size_rejected", 0) + 1
-                            log_reject(fam, i, text, f"글자 크기 미달({ln.size} < 패밀리 중위 {med})")
-                            i += 1
-                            continue
-            elif TWO_LINE_HANGUL in depth_of and len(text) == 1 and text in HANGUL_ORD \
-                    and not ln.in_table and not ln.is_leader and i + 1 < end:
-                nxt = body_lines[i + 1][2]
-                nt = nxt.text.strip()
-                if nt and len(nt) <= MAX_TITLE_LINE and not _match_sub_any(nt) \
-                        and not FOOTER_RE.match(nt) and not LEADER_RE.search(nt) \
-                        and not nxt.in_table:
-                    fam = TWO_LINE_HANGUL
-                    val = HANGUL_ORD.index(text) + 1
-                    title_text = f"{text} {nt}"
-                    consumed_extra = [i + 1]
-            elif "num_dot" in depth_of and NUM_DOT_DIGIT_RE.match(text):
-                # R10 ③ 숫자로 시작하는 절 제목(docstring) — ① 채택 헤딩 크기 ±0.3 → ② 쪽 본문보다 큰 글자
-                dm = NUM_DOT_DIGIT_RE.match(text)
-                if not _static_guard(ln, len(text[dm.end():])):
-                    szs = fam_sizes.get("num_dot")
-                    tier = None
-                    if szs and abs(ln.size - sorted(szs)[len(szs) // 2]) <= 0.3:
-                        tier = "family"
-                    elif ln.size_delta >= TITLE_SIZE_DELTA:
-                        tier = "page"
-                    if tier:
-                        fam = "num_dot"
-                        val = int(dm.group(1))
-                        stats[fam]["digit_title"] = stats[fam].get("digit_title", 0) + 1
-                        if diag is not None:
-                            diag.setdefault("sub_digit_titles", []).append(
-                                {"page": pg + 1, "text": text[:40], "tier": tier})
-            elif "num_dot" in depth_of and fam_sizes.get("num_dot"):
-                # 무점 보정(2025-25 "2 법·제도 개선 방향" 실측): 마침표 탈락 헤딩을
-                # 기대 순번 정확 일치 + 채택 헤딩 폰트 중위값 ±0.3에서만 구제
-                dm = re.match(r"^(\d{1,2})\s+[가-힣A-Za-z(]", text)
-                if dm and not _static_guard(ln, len(text[dm.end() - 1:])):
-                    sizes = sorted(fam_sizes["num_dot"])
-                    if abs(ln.size - sizes[len(sizes) // 2]) <= 0.3:
-                        fam = "num_dot"
-                        val = int(dm.group(1))
-                        is_repair = True
-            if fam is None:
-                i += 1
-                continue
-
-            depth = depth_of[fam]
-            # 부모 = 현재 스택에서 depth보다 얕은 가장 깊은 헤딩(없으면 장).
-            # 기각될 수도 있으므로 스택은 채택 시에만 갱신(비파괴 계산).
-            keep = [h for h in stack if h.depth < depth]
-            parent = keep[-1] if keep else chapter
-            key = (fam, parent.hid)
-            expected = counters.get(key, 0) + 1
-            if val != expected:
-                if not is_repair:
-                    log_reject(fam, i, text, f"순번 불일치(부모 {parent.hid}, 기대 {expected}, 실제 {val})")
-                i += 1
-                continue
-            counters[key] = val
-            k = child_count.get(parent.hid, 0) + 1
-            child_count[parent.hid] = k
-            h = Heading(addr=i, depth=depth, hid=f"{parent.hid}s{k}",
-                        text=re.sub(r"\s+", " ", title_text), family=fam, value=val,
-                        extra_addrs=consumed_extra)
-            headings.append(h)
-            stack = keep + [h]
-            stats[fam]["accepted"] += 1
-            fam_sizes.setdefault(fam, []).append(ln.size)
-            if is_repair and diag is not None:
-                diag.setdefault("sub_repairs", []).append(
-                    {"family": fam, "page": pg + 1, "text": text[:40]})
-            i += 1 + len(consumed_extra)
-    return headings, depth_of, stats
-
-
-def detect_structure(scans, part, body_start, cand_profiles, report_id, diag=None, warnings=None):
-    """L1 프로파일 확정(본문 시작 페이지의 1장 후보와 결합) → 장 + 하위 헤딩.
-    warnings = R4 장 번호 오타 승격 기록 대상(verify 재현 호출은 None)."""
-    body_lines = collect_body_lines(scans, part, body_start)
-    no_footer = {s.index for s in scans[body_start:part[1] + 1] if s.footer_arabic is None}
-    ordered = [p for p in PROFILES if p[0] in cand_profiles]
-    chosen = None
-    chapters = consumed = None
-    attempts = {}
-    for profile in ordered:
-        chs, cons, _ = walk_l1(body_lines, profile, report_id, no_footer_pages=no_footer,
-                            toc=toc_chapter_titles(scans, part, body_start, profile[0]))
-        attempts[profile[0]] = len([c for c in chs if c.kind == "normal"])
-        if attempts[profile[0]] >= 2:
-            chosen, chapters, consumed = profile, chs, cons
-            break
-    # 로마자 혼용 우선(R1, 2026-09-09): 순수 로마 프로파일이 장 2개 이상을 잡아 먼저 채택돼도, 혼용 판형
-    # (2024-07: I·II ASCII + Ⅲ 유니코드 + IV·V)은 뒤 장을 놓친다 — roman_mixed가 더 많은 장을 잡으면 그쪽.
-    # 순수 로마 문서는 두 프로파일의 장 수가 같아 무영향.
-    if chosen is not None and chosen[0] in ("roman_unicode", "roman_ascii") and "roman_mixed" in cand_profiles:
-        mixed = next(p for p in PROFILES if p[0] == "roman_mixed")
-        chs, cons, _ = walk_l1(body_lines, mixed, report_id, no_footer_pages=no_footer,
-                            toc=toc_chapter_titles(scans, part, body_start, "roman_mixed"))
-        attempts["roman_mixed"] = len([c for c in chs if c.kind == "normal"])
-        if attempts["roman_mixed"] > len([c for c in chapters if c.kind == "normal"]):
-            chosen, chapters, consumed = mixed, chs, cons
-    if diag is not None:
-        diag["l1_attempts"] = attempts  # 실패(플랫 폴백) 시에도 후보별 정상 장 수를 남긴다
-        primary, secondary = toc_pages(scans, part, body_start)  # R6 육안 확인용(1-based 쪽)
-        diag["toc_pages"] = {"primary": [i + 1 for i in primary], "secondary": [i + 1 for i in secondary]}
-    if chosen is None:
-        return None
-    # 확정 워크 (진단 수집 포함)
-    chapters, consumed, skip_addrs = walk_l1(body_lines, chosen, report_id, diag=diag,
-                                 no_footer_pages=no_footer,
-                                 toc=toc_chapter_titles(scans, part, body_start, chosen[0]),
-                                 warnings=warnings)
-    for idx, ch in enumerate(chapters):
-        ch.hid = f"{report_id}_c{idx + 1}"
-    subs, depth_of, stats = detect_sub_headings(body_lines, chapters, chosen[0], report_id, diag=diag,
-                                                skip_addrs=skip_addrs,
-                                                toc_sub=toc_sub_title_keys(scans, part, body_start))
-    if diag is not None:
-        diag["profile"] = chosen[0]
-        diag["chapters"] = [{"page": body_lines[c.addr][0] + 1, "kind": c.kind,
-                             "id": c.hid, "text": c.text} for c in chapters]
-        diag["sub_stats"] = stats
-    return {"profile": chosen[0], "body_lines": body_lines, "chapters": chapters,
-            "sub_headings": subs, "family_depths": depth_of, "sub_stats": stats}
-
-
-def collect_l1_suspects(scans, part, start, limit=30):
-    """감지 실패 문서의 헤딩 의심 줄 샘플 — 프로파일 승격 판단 재료(진단 전용).
-
-    본문 범위에서 번호 토큰류 줄머리의 짧은 줄을 페이지와 함께 수집한다.
-    표 내부·리더런·각주 줄 제외, 동일 텍스트는 첫 출현만, 최대 limit개.
-    """
-    out, seen = [], set()
-    for pg, _j, ln in collect_body_lines(scans, part, start):
-        t = ln.text.strip()
-        if not t or len(t) > MAX_TITLE_LINE:
-            continue
-        if ln.in_table or ln.is_leader or ln.is_footnote:
-            continue
-        if not L1_SUSPECT_RE.match(t) or t in seen:
-            continue
-        seen.add(t)
-        out.append(f"p.{pg + 1}: {t}")
-        if len(out) >= limit:
-            break
     return out
 
 
@@ -1927,7 +899,9 @@ class PartResult:
     structure: dict | None = None
     markdown: str | None = None
     status: str = "ok"
-    flat: bool = False  # 플랫 청킹 폴백 산출물 (frontmatter 'structure: flat'과 동기)
+    flat: bool = False  # 플랫 청킹 산출물 (frontmatter 'structure: flat'과 동기)
+    structure_tag: str = ""  # 목차 대응 산출물이면 "toc" (frontmatter 'structure: toc')
+    error: str = ""  # 이 문서 처리 중 예외(traceback) — status "error"
     warnings: list = dataclasses.field(default_factory=list)
     stats: dict = dataclasses.field(default_factory=dict)
     unknown_glyphs: dict = dataclasses.field(default_factory=dict)
@@ -2018,13 +992,19 @@ def build_body(scans, part, body_start, structure, result: PartResult,
             continue
 
         # 페이지 항목(줄 + 표)을 y 순서로 인터리브
+        mid = scan.width / 2 if getattr(scan, "two_up", False) else None
+
+        def half_of(x, mid=mid):
+            return 1 if (mid is not None and x >= mid) else 0
+
         items = []
         for j, ln in enumerate(scan.lines):
-            items.append((round(ln.y0, 1), 0, "line", j, ln))
+            items.append((round(ln.y0, 1), 0, "line", j, ln, half_of(ln.x0)))
         for tab in scan.tables:
             if tab.markdown is not None:
-                items.append((round(tab.bbox[1], 1), 1, "table", -1, tab))
-        items.sort(key=lambda it: (it[0], it[1]))
+                items.append((round(tab.bbox[1], 1), 1, "table", -1, tab, half_of(tab.bbox[0])))
+        # 펼침 판형(한 PDF 쪽에 인쇄 두 쪽 — 목차 대응(toclane)이 scan.two_up 표식): 왼쪽 면을 다 읽고 오른쪽 면
+        items.sort(key=lambda it: (it[5], it[0], it[1]))
 
         page_right = max((l.x1 for l in scan.lines if not l.in_table), default=0.0)
         modal_h = None
@@ -2034,7 +1014,7 @@ def build_body(scans, part, body_start, structure, result: PartResult,
         page_tf = None  # 마스킹 안전판용 페이지 국소 표 haystack (지연 계산)
 
         prev_ln: Line | None = None
-        for y, order, kind, j, obj in items:
+        for y, order, kind, j, obj, _half in items:
             if kind == "table":
                 flush_para()
                 n_tables += 1
@@ -2158,35 +1138,33 @@ def build_body(scans, part, body_start, structure, result: PartResult,
 
 
 # ---------------------------------------------------------------------------
-# 플랫 청킹 폴백 (구조 미감지 문서 수용 — 투 레인의 두 번째 레인)
+# 플랫 청킹 (목차 대응이 성립하지 않은 문서를 사람이 수용한 경우 — `--flat`)
 # ---------------------------------------------------------------------------
 
 FLAT_MAX_CHARS = 4000   # mdio.split_units max_chars와 동일 — 청크=유닛 1:1 전제
 FLAT_MIN_CHARS = 200    # split_units min_chars — 미만 꼬리 구간은 직전 구간에 병합
-FLAT_GUARD_CHARS = 400  # 본문 텍스트가 이 미만이면 폴백 포기(전면 이미지 문서 등 — OCR 별도)
+FLAT_GUARD_CHARS = 400  # 본문 텍스트가 이 미만이면 플랫 청킹 불가(전면 이미지 문서 등 — OCR 별도)
 
 
-def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tuple[list[str], int]:
-    """플랫 본문에 합성 구간 헤딩을 삽입 — 문단(빈 줄) 경계 그리디 누적.
-
-    경계는 항상 build_body가 만든 블록(문단·표·캡션·마커) 사이에만 온다.
-    크기 산식은 mdio._span_chars와 동일한 len("\\n".join(...).strip())이라 각 구간이
-    그대로 유닛 1개가 된다(상한 초과 단일 블록과 꼬리 병합 구간만 예외 — leaf 통짜 유닛).
-    헤딩: '# 구간 {k} (p.{a}-{b}) <!-- id: {rid}_c{k} -->' — k는 방출 순번 1..N 연속,
-    페이지는 1-based 인용 라벨(페이지에 걸친 문단은 뒤 페이지로 귀속 — ±1 오차 가능).
-    """
-    blocks: list[tuple[list[str], int]] = []  # (내용 줄들, out 시작 인덱스)
-    i = 0
-    while i < len(out):
+def out_blocks(out: list[str], lo: int = 0, hi: int | None = None) -> list[tuple[list[str], int]]:
+    """build_body 출력 out[lo:hi]의 블록(빈 줄 사이 연속 줄 = 문단·표·캡션·마커) → [(내용 줄들, out 시작 인덱스)]."""
+    hi = len(out) if hi is None else hi
+    blocks: list[tuple[list[str], int]] = []
+    i = lo
+    while i < hi:
         if out[i] == "":
             i += 1
             continue
         j = i
-        while j < len(out) and out[j] != "":
+        while j < hi and out[j] != "":
             j += 1
         blocks.append((out[i:j], i))
         i = j
+    return blocks
 
+
+def page_lookup(page_marks: list):
+    """build_body의 page_marks → out 인덱스의 1-based 쪽 조회 함수."""
     marks_idx = [m[0] for m in page_marks]
     marks_pg = [m[1] for m in page_marks]
 
@@ -2194,10 +1172,36 @@ def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tu
         k = bisect.bisect_right(marks_idx, out_idx) - 1
         return marks_pg[k] if k >= 0 else 1
 
+    return page_of
+
+
+def _chunk_lines(blocks, c: tuple[int, int]) -> list[str]:
+    s, e = c
+    lines_: list[str] = []
+    for bl, _ in blocks[s:e]:
+        if lines_:
+            lines_.append("")
+        lines_.extend(bl)
+    return lines_
+
+
+def chunk_span(blocks, c: tuple[int, int]) -> int:
+    """구간 크기 — mdio._span_chars와 같은 산식."""
+    return len("\n".join(_chunk_lines(blocks, c)).strip())
+
+
+def chunk_page_label(blocks, c: tuple[int, int], page_of) -> str:
+    a = page_of(blocks[c[0]][1])
+    b = page_of(blocks[c[1] - 1][1])
+    return f"p.{a}" if a == b else f"p.{a}-{b}"
+
+
+def greedy_chunks(blocks) -> list[tuple[int, int]]:
+    """블록 경계 그리디 누적 청크(블록 인덱스 반개구간) — 상한 FLAT_MAX_CHARS, 최소 크기 미만 꼬리는 직전에 병합.
+    플랫(chunk_flat)과 목차 대응 산출물의 절 내부 청킹(toclane.chunk_sections)이 같이 쓴다."""
     def span(lines_: list[str]) -> int:
         return len("\n".join(lines_).strip())
 
-    # 그리디 청크 경계 (블록 인덱스 반개구간)
     chunks: list[tuple[int, int]] = []
     cur_start = 0
     cur_lines: list[str] = []
@@ -2210,29 +1214,32 @@ def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tu
             cur_lines = cand
     if cur_lines:
         chunks.append((cur_start, len(blocks)))
-
-    def chunk_lines(c: tuple[int, int]) -> list[str]:
-        s, e = c
-        lines_: list[str] = []
-        for bl, _ in blocks[s:e]:
-            if lines_:
-                lines_.append("")
-            lines_.extend(bl)
-        return lines_
-
     # 꼬리 구간이 최소 크기 미만이면 직전 구간에 병합 (200자 미만 유닛 스킵 방지)
-    if len(chunks) >= 2 and span(chunk_lines(chunks[-1])) < FLAT_MIN_CHARS:
+    if len(chunks) >= 2 and chunk_span(blocks, chunks[-1]) < FLAT_MIN_CHARS:
         chunks[-2:] = [(chunks[-2][0], chunks[-1][1])]
+    return chunks
+
+
+def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tuple[list[str], int]:
+    """플랫 본문에 합성 구간 헤딩을 삽입 — 문단(빈 줄) 경계 그리디 누적.
+
+    경계는 항상 build_body가 만든 블록(문단·표·캡션·마커) 사이에만 온다.
+    크기 산식은 mdio._span_chars와 동일한 len("\\n".join(...).strip())이라 각 구간이
+    그대로 유닛 1개가 된다(상한 초과 단일 블록과 꼬리 병합 구간만 예외 — leaf 통짜 유닛).
+    헤딩: '# 구간 {k} (p.{a}-{b}) <!-- id: {rid}_c{k} -->' — k는 방출 순번 1..N 연속,
+    페이지는 1-based 인용 라벨(페이지에 걸친 문단은 뒤 페이지로 귀속 — ±1 오차 가능).
+    """
+    blocks = out_blocks(out)
+    page_of = page_lookup(page_marks)
+    chunks = greedy_chunks(blocks)
 
     result_lines: list[str] = []
     for k, c in enumerate(chunks, 1):
         s, e = c
-        sp = span(chunk_lines(c))
+        sp = chunk_span(blocks, c)
         if sp > FLAT_MAX_CHARS:
             warnings.append(f"플랫 구간 {k} 크기 {sp}자 > {FLAT_MAX_CHARS} — 단일 블록 초과/꼬리 병합")
-        a = page_of(blocks[s][1])
-        b = page_of(blocks[e - 1][1])
-        label = f"p.{a}" if a == b else f"p.{a}-{b}"
+        label = chunk_page_label(blocks, c, page_of)
         result_lines.append(f"# 구간 {k} ({label}) <!-- id: {rid}_c{k} -->")
         result_lines.append("")
         for bl, _ in blocks[s:e]:
@@ -2243,52 +1250,30 @@ def chunk_flat(out: list[str], page_marks: list, rid: str, warnings: list) -> tu
     return result_lines, len(chunks)
 
 
-def _reset_footnote_flags(scans, part) -> None:
-    """플랫 폴백 직전 초기화 — L1 경로에서 이미 찍힌 각주/드롭 마킹을 걷어내
-    verify.py의 재현(플랫 body 범위 기준 마킹만 수행)과 동일 상태에서 다시 마킹한다."""
-    for s in scans[part[0]:part[1] + 1]:
-        s.dropped = False
-        for ln in s.lines:
-            ln.is_footnote = False
-
-
-def flat_fallback(r: PartResult, scans, part, rid: str, path: str, forced: bool = False) -> bool:
-    """구조 미감지 파트의 플랫 청킹 폴백. 성공 시 r.markdown까지 채우고 True.
-
-    forced=True는 --lane flat(감지 생략 강제) — 경고 문구만 다르고 로직 동일.
-    """
-    flat_start = find_body_start_flat(scans, part)
-    if flat_start is None:
-        return False
-    tmp_warn: list[str] = []
-    _reset_footnote_flags(scans, part)
-    mark_footnotes(scans, (flat_start, part[1]))
-    mark_colophon_pages(scans, part, tmp_warn)
-    for w in tmp_warn:
-        if w not in r.warnings:
-            r.warnings.append(w)
-    structure = {"body_lines": collect_body_lines(scans, part, flat_start),
+def flat_part(r: PartResult, scans, part, rid: str, path: str, body_start: int) -> None:
+    """문서 하나를 플랫으로 — 판독의 본문 시작(body_start)부터 구간 청킹해 r.markdown까지 채운다.
+    본문 텍스트가 FLAT_GUARD_CHARS 미만이면 skipped_flat_guard. verify가 같은 본문 범위·표식으로 재현한다."""
+    mark_footnotes(scans, (body_start, part[1]))
+    mark_colophon_pages(scans, part, r.warnings)
+    structure = {"body_lines": collect_body_lines(scans, part, body_start),
                  "chapters": [], "sub_headings": []}
     page_marks: list = []
-    body = build_body(scans, part, flat_start, structure, r, page_marks=page_marks)
+    body = build_body(scans, part, body_start, structure, r, page_marks=page_marks)
+    diag = r.stats.setdefault("diag", {})
+    diag["body_start_page"] = body_start + 1
+    diag["lane"] = "flat"
+    r.body_start = body_start
     real = "\n".join(l for l in body if not l.startswith("<!--")).strip()
     if len(real) < FLAT_GUARD_CHARS:
-        r.warnings.append(f"본문 텍스트 {len(real)}자 < {FLAT_GUARD_CHARS} — 플랫 폴백 포기(이미지 위주 문서? OCR 별도)")
-        return False
+        r.status = "skipped_flat_guard"
+        r.warnings.append(f"본문 텍스트 {len(real)}자 < {FLAT_GUARD_CHARS} — 플랫 청킹 불가(이미지 위주 문서? OCR 별도)")
+        return
     body, n_chunks = chunk_flat(body, page_marks, rid, r.warnings)
     r.flat = True
-    r.body_start = flat_start
-    diag = r.stats.setdefault("diag", {})
-    diag["body_start_page"] = flat_start + 1
-    diag["profile"] = "flat"
     r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
     r.stats["headings"] = n_chunks
     r.stats["chapters"] = n_chunks
-    if forced:
-        r.warnings.append(f"구조 감지 생략(--lane flat) — 플랫 청킹 적용 (구간 {n_chunks}개)")
-    else:
-        r.warnings.append(f"장-절 구조 미감지 — 플랫 청킹 폴백 적용 (구간 {n_chunks}개)")
-    return True
+    r.warnings.append(f"플랫 청킹 적용 (구간 {n_chunks}개)")
 
 
 # ---------------------------------------------------------------------------
@@ -2323,7 +1308,9 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
         lines.append('abstract: ""')
     lines.append(f"source_pdf: {yaml_str(source_pdf)}")
     if result.flat:
-        lines.append("structure: flat")  # 플랫 청킹 폴백 표식 — verify·status가 이 키로 분기
+        lines.append("structure: flat")  # 플랫 청킹 표식 — verify·status가 이 키로 분기
+    elif result.structure_tag:
+        lines.append(f"structure: {result.structure_tag}")  # 목차 대응 산출물(toc) — verify가 이 키로 분기
     if result.n_parts > 1:
         lines.append(f'pdf_pages: "{result.part_range[0] + 1}-{result.part_range[1] + 1}"')
     # 스탬프 1단 — rid는 등록부 조회(rid_for) 성공으로만 얻으므로 등록은 확인된 사실
@@ -2340,15 +1327,18 @@ def render_markdown(result: PartResult, source_pdf: str, body: list[str]) -> str
 # 파일 단위 처리
 # ---------------------------------------------------------------------------
 
-def process_pdf(path: str, lane: str = "auto"):
-    """PDF 1개 → PartResult 목록(합본이면 여러 개). lane: auto|structured|flat (--lane).
+def process_pdf(path: str, *, flat_rids=frozenset(), only=None):
+    """PDF 1개 → 처리한 문서의 PartResult 목록. only = 처리할 rid 집합(None이면 전부),
+    flat_rids = 플랫으로 뽑을 rid 집합(나머지는 목차 대응).
 
-    파트 분할은 여기서 하지 않는다(2026-09-08) — 등록부의 파트 행(rid, pages)을 그대로 쓴다.
-    register가 경량 스캔으로 detect_parts를 돌려 행을 만들고, verify가 전체 스캔으로 대조한다.
+    문서 범위는 등록부 행(rid, pages)을 그대로 쓴다 — 범위의 원천은 판독 파일이고 둘의 일치는 등록부
+    조회(parts_for)가 보장한다. 한 문서의 예외는 그 문서만 status "error"로 남긴다.
     """
     reg_parts = parts_for(path)
     if not reg_parts:  # 프리플라이트가 막으므로 방어용
         raise ValueError(f"미등록 PDF — {rid_reason(path)}: {Path(path).name}")
+    import toclane  # tocparse가 이 모듈을 import하므로 지연 import(순환 회피)
+    data = toclane.load_docread(path)
 
     doc = pymupdf.open(path)
     try:
@@ -2359,65 +1349,28 @@ def process_pdf(path: str, lane: str = "auto"):
     parts = [(rid, rng or (0, len(scans) - 1)) for rid, rng in reg_parts]
     results = []
     for pi, (rid, part) in enumerate(parts):
+        if only is not None and rid not in only:
+            continue
         r = PartResult(report_id=rid, part_index=pi, n_parts=len(parts), part_range=part)
         r.stats["diag"] = {}
-        diag = r.stats["diag"]
-
-        meta = parse_abstract(scans, part)
-        fallback_institution(scans, part, meta)
-        fallback_title(scans, part, meta)
-        r.meta = meta
-        r.warnings.extend(meta.warnings)
-
-        body_start, cand_profiles, structure = None, [], None
-        if lane != "flat":
-            body_start, cand_profiles = find_body_start(scans, part)
-            if body_start is not None:
-                r.body_start = body_start
-                diag["body_start_page"] = body_start + 1
-                diag["candidate_profiles"] = cand_profiles
-
-                mark_footnotes(scans, (body_start, part[1]))
-                mark_colophon_pages(scans, part, r.warnings)
-
-                structure = detect_structure(scans, part, body_start, cand_profiles, rid, diag=diag,
-                                             warnings=r.warnings)
-
-        if structure is None:
-            if lane != "flat":
-                # 감지 실패 — 승격 판단 재료(헤딩 의심 줄 샘플)를 폴백 여부와 무관하게 남긴다
-                sus_start = body_start if body_start is not None else find_body_start_flat(scans, part)
-                if sus_start is not None:
-                    diag["l1_suspects"] = collect_l1_suspects(scans, part, sus_start)
-            # 투 레인: 구조 미감지 → 플랫 청킹 폴백(--lane structured는 억제).
-            # 폴백조차 불가하면 종전대로 시끄럽게 스킵.
-            if lane == "structured":
-                r.warnings.append("플랫 폴백 억제(--lane structured) — 승격 검토 대상")
-                fell_back = False
+        try:
+            meta = parse_abstract(scans, part)
+            fallback_institution(scans, part, meta)
+            fallback_title(scans, part, meta)
+            r.meta = meta
+            r.warnings.extend(meta.warnings)
+            docd = toclane.pick_document(data, part) if data else None
+            if docd is None:  # 등록 뒤 PDF나 판독 파일이 바뀐 경우
+                r.status = "skipped_no_docread"
+                r.warnings.append(f"판독 파일에 쪽 범위 {part[0] + 1}-{part[1] + 1}인 문서 없음 — 행 삭제 후 재등록 필요")
+            elif rid in flat_rids:
+                flat_part(r, scans, part, rid, path, toclane.body_start_of(docd, part))
             else:
-                fell_back = flat_fallback(r, scans, part, rid, path, forced=(lane == "flat"))
-            if not fell_back:
-                if lane == "flat":
-                    if find_body_start_flat(scans, part) is None:
-                        r.status = "skipped_no_body_start"
-                        r.warnings.append("본문 시작 페이지를 찾지 못함")
-                    else:
-                        r.status = "skipped_flat_guard"  # 400자 가드 — 경고는 flat_fallback이 기록
-                elif body_start is None:
-                    r.status = "skipped_no_body_start"
-                    r.warnings.append("본문 시작 페이지를 찾지 못함")
-                else:
-                    r.status = "skipped_no_profile"
-                    r.warnings.append(f"L1 프로파일 검증 실패(후보: {cand_profiles})")
-                results.append(r)
-                continue
-        else:
-            r.structure = structure
-            body = build_body(scans, part, body_start, structure, r)
-            r.markdown = render_markdown(r, f"pdfs/{Path(path).name}", body)
-            r.stats["headings"] = len(structure["chapters"]) + len(structure["sub_headings"])
-            r.stats["chapters"] = len(structure["chapters"])
-        r.stats["footer_runs"] = summarize_footers(scans, part)
+                toclane.process_part(r, scans, part, rid, path, docd)
+            r.stats["footer_runs"] = summarize_footers(scans, part)
+        except Exception:
+            r.status = "error"
+            r.error = traceback.format_exc(limit=5)
         results.append(r)
     return results
 
@@ -2458,47 +1411,75 @@ def summarize_footers(scans, part) -> list[str]:
 # CLI
 # ---------------------------------------------------------------------------
 
-def scan_report(results, path) -> dict:
-    """--scan 진단 덤프(파일 1개분)."""
-    out = {"file": Path(path).name, "parts": []}
-    for r in results:
-        diag = r.stats.get("diag", {})
-        meta = r.meta
-        out["parts"].append({
-            "report_id": r.report_id,
-            "status": r.status,
-            "range": [r.part_range[0] + 1, r.part_range[1] + 1],
-            "footer_runs": r.stats.get("footer_runs", []),
-            "abstract_page": (meta.abstract_page + 1) if meta and meta.abstract_page is not None else None,
-            "meta": {
-                "title": (meta.title[:60] if meta else ""),
-                "title_en": (meta.title_en[:60] if meta else ""),
-                "lead_researcher": meta.lead_researcher if meta else "",
-                "institution": meta.institution if meta else "",
-                "keywords_ko": meta.keywords_ko if meta else [],
-                "keywords_en": meta.keywords_en if meta else [],
-                "abstract_chars": len(meta.abstract) if meta else 0,
-            },
-            "body_start_page": diag.get("body_start_page"),
-            "candidate_profiles": diag.get("candidate_profiles"),
-            "profile": diag.get("profile"),
-            "l1_attempts": diag.get("l1_attempts"),
-            "l1_suspects": diag.get("l1_suspects"),
-            "toc_pages": diag.get("toc_pages"),
-            "divider_pages": diag.get("divider_pages"),
-            "chapters": diag.get("chapters"),
-            "family_order": diag.get("family_order"),
-            "family_depths": diag.get("family_depths"),
-            "sub_stats": diag.get("sub_stats"),
-            "l1_rejects": diag.get("l1_rejects", [])[:30],
-            "sub_rejects": diag.get("sub_rejects", [])[:60],
-            "tables": r.stats.get("tables"),
-            "masked_lines": r.stats.get("masked_lines"),
-            "image_only_pages": r.image_only_pages,
-            "unknown_glyphs": r.unknown_glyphs,
-            "warnings": r.warnings,
-        })
-    return out
+def part_entry(r: PartResult, path) -> dict:
+    """문서 1개의 로그·진단 항목(로그와 --scan이 같은 꼴을 쓴다)."""
+    diag = r.stats.get("diag", {})
+    meta = r.meta
+    return {
+        "file": Path(path).name,
+        "report_id": r.report_id,
+        "status": r.status,
+        "lane": diag.get("lane"),
+        "flat": r.flat,
+        "at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "part_range": [r.part_range[0] + 1, r.part_range[1] + 1],
+        "body_start": diag.get("body_start_page"),
+        "chapters": r.stats.get("chapters"),
+        "headings": r.stats.get("headings"),
+        "tables": r.stats.get("tables"),
+        "masked_lines": r.stats.get("masked_lines"),
+        "recovered_lines": r.stats.get("recovered_lines"),
+        "image_only_pages": r.image_only_pages,
+        "unknown_glyphs": r.unknown_glyphs,
+        "footer_runs": r.stats.get("footer_runs", []),
+        "meta": {
+            "title": (meta.title[:60] if meta else ""),
+            "lead_researcher": meta.lead_researcher if meta else "",
+            "institution": meta.institution if meta else "",
+            "abstract_chars": len(meta.abstract) if meta else 0,
+        },
+        "toc_lane": diag.get("toc_lane"),
+        "warnings": r.warnings,
+        "error": r.error or None,
+    }
+
+
+def merge_log(log_path: Path, new_entries: list[dict]) -> None:
+    """로그를 문서별 마지막 결과로 병합 — 이번 실행이 다룬 (파일, rid)만 교체한다. 파일 단위 항목(rid 없음:
+    미등록·중복·파일 오류)은 그 파일의 문서 항목을 대신하고, 문서 항목이 생기면 파일 단위 항목은 지운다.
+    등록부에서 사라진 rid·없어진 PDF의 항목은 정리한다."""
+    from registry import norm_name, rid_file_map
+    old: list[dict] = []
+    if log_path.is_file():
+        try:
+            data = json.loads(log_path.read_text(encoding="utf-8"))
+            if data.get("mode") == "extract":
+                old = [e for e in data.get("files", []) if e.get("file")]
+        except (OSError, ValueError):
+            old = []
+    file_level = {e["file"] for e in new_entries if not e.get("report_id")}
+    part_level = {e["file"] for e in new_entries if e.get("report_id")}
+    new_keys = {(e["file"], e.get("report_id") or "") for e in new_entries}
+    rid_file = rid_file_map()
+    kept = []
+    for e in old:
+        f, rid = e["file"], e.get("report_id") or ""
+        if (f, rid) in new_keys or f in file_level or (not rid and f in part_level):
+            continue
+        if rid and rid_file.get(rid) != norm_name(f):
+            continue
+        if not rid and not Path(e.get("path") or "").is_file():
+            continue
+        kept.append(e)
+    out = sorted(kept + new_entries, key=lambda e: (e["file"], e.get("report_id") or ""))
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = log_path.with_suffix(log_path.suffix + ".tmp")
+    tmp.write_text(json.dumps({
+        "run_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "mode": "extract",
+        "files": out,
+    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(log_path)
 
 
 def main() -> None:
@@ -2508,16 +1489,17 @@ def main() -> None:
     except Exception:
         pass
 
-    parser = argparse.ArgumentParser(description="PDF에서 계층 구조 .md를 추출한다.")
+    parser = argparse.ArgumentParser(description="PDF에서 계층 구조 .md를 추출한다(목차 대응; --flat = 구간 청킹).")
     parser.add_argument("pdf", nargs="+", help="변환할 PDF 파일 경로 (pdfs/*.pdf — 자체 글롭 확장)")
     parser.add_argument("-o", "--out-dir", default="reports", help="출력 디렉터리 (기본: reports)")
     parser.add_argument("--log", default="logs/extract_log.json", help="로그 경로 (기본: logs/extract_log.json)")
-    parser.add_argument("--scan", action="store_true", help="진단 모드: md 미작성, 감지 결과만 stdout에 덤프")
+    parser.add_argument("--rid", action="append", default=[], metavar="RID",
+                        help="이 문서만 처리(반복 가능) — 합본의 한 문서만 다시 뽑을 때. 없으면 PDF의 모든 문서")
+    parser.add_argument("--flat", action="store_true",
+                        help="처리 대상 문서를 플랫(구간 청킹)으로 추출 — 목차 대응이 성립하지 않은 문서를 수용할 때")
+    parser.add_argument("--scan", action="store_true", help="진단 모드: md·로그 미작성, 결과만 stdout에 덤프")
     parser.add_argument("--force", action="store_true",
-                        help="출력 .md가 이미 있어도 재추출·덮어쓰기 (annotate 요약 블록 소실 주의)")
-    parser.add_argument("--lane", choices=["auto", "structured", "flat"], default="auto",
-                        help="레인 수동 지정: structured=플랫 폴백 억제(감지 실패 시 시끄럽게 스킵), "
-                             "flat=구조 감지 생략·곧장 플랫 청킹 (기본 auto=자동 분기)")
+                        help="처리 대상 문서의 .md가 이미 있어도 재추출·덮어쓰기 (annotate 요약 블록·검증 스탬프 소실)")
     args = parser.parse_args()
 
     # PowerShell은 글롭을 확장하지 않으므로 자체 확장
@@ -2531,14 +1513,12 @@ def main() -> None:
             paths.append(p)
     if not paths:
         print("입력 PDF가 없습니다.", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
 
-    # 중복·충돌 프리플라이트(2026-09): 배치 전체의 rid를 먼저 유도해 같은 rid로
-    # 모이는 파일을 걸러낸다 — 크기까지 동일하면 중복 다운로드 의심(사전순 첫 파일만
-    # 진행), 크기가 다르면 진짜 충돌(전원 스킵·파일명 조정 필요). --scan은 진단
-    # 모드이므로 경고만 남기고 전부 처리한다.
-    # 등록부 게이트(2026-09-04): rid는 report_ids.tsv 조회만 — 미등록은 --scan에서도
-    # 스킵한다(rid 없이는 출력 파일명·헤딩 ID를 만들 수 없음). 사람이 표에 기입 후 재실행.
+    # 등록부 게이트: rid는 report_ids.tsv 조회만 — 미등록(공란·판독 불일치 포함)은 --scan에서도 스킵.
+    # 중복·충돌 프리플라이트: 배치 안에서 같은 rid로 모이는 파일 — 크기까지 같으면 중복 다운로드 의심
+    # (사전순 첫 파일만 진행), 다르면 진짜 충돌(전원 스킵). --scan은 경고만 남기고 전부 처리한다.
+    only = set(args.rid) or None
     by_rid: dict[str, list[str]] = {}
     dropped: dict[str, dict] = {}
     for path in paths:
@@ -2550,80 +1530,63 @@ def main() -> None:
             continue
         for rid, _rng in parts:
             by_rid.setdefault(rid, []).append(path)
+    if only is not None and only - set(by_rid):
+        print("주어진 PDF에 없는 rid: " + ", ".join(sorted(only - set(by_rid))), file=sys.stderr)
+        sys.exit(2)
     for rid, group in sorted(by_rid.items()):
         if len(group) < 2:
             continue
         group = sorted(group)
         if len({Path(p).stat().st_size for p in group}) == 1:
             for p in group[1:]:
-                dropped[p] = {"status": "skipped_duplicate", "report_id": rid,
+                dropped[p] = {"status": "skipped_duplicate", "report_id_dup": rid,
                               "duplicate_of": Path(group[0]).name}
             print(f"[중복] {rid}: 동일 크기 파일 {len(group)}개 — "
                   f"'{Path(group[0]).name}'만 진행, 나머지는 삭제 권장", file=sys.stderr)
         else:
             for p in group:
-                dropped[p] = {"status": "skipped_id_collision", "report_id": rid}
+                dropped[p] = {"status": "skipped_id_collision", "report_id_dup": rid}
             print(f"[충돌] {rid}: 서로 다른 파일 {len(group)}개가 같은 report_id로 유도 — "
                   "파일명 조정 필요, 전원 스킵", file=sys.stderr)
 
     log_entries = []
     scan_dump = []
     all_ok = True
+    now = datetime.datetime.now().isoformat(timespec="seconds")
 
     for path in paths:
         drop = dropped.get(path)
         if drop is not None and (not args.scan or drop["status"] == "skipped_unregistered"):
-            all_ok = False
-            log_entries.append({"file": Path(path).name, **drop})
+            if only is None or drop["status"] != "skipped_unregistered":
+                all_ok = False
+                log_entries.append({"file": Path(path).name, "path": str(path), "at": now, **drop})
             continue
 
-        # 재실행 가드: 기존 출력이 있으면 스캔 비용 없이 스킵 (--scan/--force 제외)
-        rids = [rid for rid, _ in parts_for(path)]
-        base_id = rids[0]
+        targets = [rid for rid, _ in parts_for(path) if only is None or rid in only]
+        if not targets:
+            continue
+        # 재실행 가드: .md가 이미 있는 문서는 문서 단위로 건너뛴다 (--scan/--force 제외) — 로그는 건드리지 않는다
         if not args.scan and not args.force:
-            existing = find_existing_outputs(Path(args.out_dir), rids)
-            if existing:
-                log_entries.append({"file": Path(path).name, "report_id": base_id,
-                                    "status": "skipped_exists",
-                                    "existing": [p.name for p in existing]})
-                print(f"[skip] {base_id}: 기존 출력 {len(existing)}개 존재 — 재추출은 --force",
-                      file=sys.stderr)
+            existing = [rid for rid in targets if (Path(args.out_dir) / f"{rid}.md").exists()]
+            for rid in existing:
+                print(f"[skip] {rid}: 기존 출력 존재 — 재추출은 --force", file=sys.stderr)
+            targets = [rid for rid in targets if rid not in existing]
+            if not targets:
                 continue
 
         try:
-            results = process_pdf(path, lane=args.lane)
+            results = process_pdf(path, flat_rids=set(targets) if args.flat else frozenset(), only=set(targets))
         except Exception:
             all_ok = False
-            log_entries.append({"file": Path(path).name, "status": "error",
+            log_entries.append({"file": Path(path).name, "path": str(path), "at": now, "status": "error",
                                 "error": traceback.format_exc(limit=5)})
             print(f"[error] {Path(path).name}", file=sys.stderr)
             continue
 
-        if args.scan:
-            scan_dump.append(scan_report(results, path))
         for r in results:
-            entry = {
-                "file": Path(path).name,
-                "report_id": r.report_id,
-                "status": r.status,
-                "flat": r.flat,
-                "part_range": [r.part_range[0] + 1, r.part_range[1] + 1],
-                "profile": r.stats.get("diag", {}).get("profile"),
-                "family_depths": r.stats.get("diag", {}).get("family_depths"),
-                "body_start": r.stats.get("diag", {}).get("body_start_page"),
-                "chapters": r.stats.get("chapters"),
-                "headings": r.stats.get("headings"),
-                "tables": r.stats.get("tables"),
-                "masked_lines": r.stats.get("masked_lines"),
-                "recovered_lines": r.stats.get("recovered_lines"),
-                "image_only_pages": r.image_only_pages,
-                "unknown_glyphs": r.unknown_glyphs,
-                "l1_attempts": r.stats.get("diag", {}).get("l1_attempts"),
-                "l1_suspects": r.stats.get("diag", {}).get("l1_suspects"),
-                "toc_pages": r.stats.get("diag", {}).get("toc_pages"),
-                "divider_pages": r.stats.get("diag", {}).get("divider_pages"),
-                "warnings": r.warnings,
-            }
+            entry = part_entry(r, path)
+            if args.scan:
+                scan_dump.append(entry)
             log_entries.append(entry)
             if r.status != "ok":
                 all_ok = False
@@ -2631,24 +1594,17 @@ def main() -> None:
                 out_path = Path(args.out_dir) / f"{r.report_id}.md"
                 out_path.parent.mkdir(parents=True, exist_ok=True)
                 out_path.write_text(r.markdown, encoding="utf-8", newline="\n")
-            tag = "scan" if args.scan else ("ok" if r.status == "ok" else r.status)
-            print(f"[{tag}] {r.report_id}: profile={entry['profile']} "
+            tag = "scan" if args.scan else r.status
+            print(f"[{tag}] {r.report_id}: lane={entry['lane']} "
                   f"chapters={entry['chapters']} headings={entry['headings']} "
                   f"body_start=p{entry['body_start']}", file=sys.stderr)
 
     if args.scan:
         print(json.dumps(scan_dump, ensure_ascii=False, indent=1))
+    else:
+        merge_log(Path(args.log), log_entries)
 
-    log_path = Path(args.log)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text(json.dumps({
-        "run_at": datetime.datetime.now().isoformat(timespec="seconds"),
-        "mode": "scan" if args.scan else "extract",
-        "lane": args.lane,
-        "files": log_entries,
-    }, ensure_ascii=False, indent=1), encoding="utf-8")
-
-    sys.exit(0 if all_ok else 2)
+    sys.exit(0 if all_ok else 1)
 
 
 if __name__ == "__main__":

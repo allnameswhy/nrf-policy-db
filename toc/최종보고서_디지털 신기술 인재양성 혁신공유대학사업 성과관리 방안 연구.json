@@ -1,0 +1,484 @@
+{
+ "file": "최종보고서_디지털 신기술 인재양성 혁신공유대학사업 성과관리 방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 229,
+ "documents": [
+  {
+   "pages": [
+    1,
+    157
+   ],
+   "kind": "main",
+   "title": "디지털 신기술 인재양성 혁신공유대학사업 성과관리 방안 연구",
+   "body_start": 9,
+   "back_start": 157,
+   "toc_pages": [
+    4,
+    5
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "요약 (Summary)",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "연구과제 개요",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "연구의 배경",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "연구의 목적 및 주요내용",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "컨소시엄별 사업추진체계 분석 및 개선방안",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "컨소시엄별 사업추진체계 분석",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "디지털 혁신공유대학 사업내용 분석",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "분야별 사업단 추진체계 분석",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "컨소시엄별 사업추진체계 개선 방안",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "사업단 사업추진체계 개선방안",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "대내·외 연계 사업추진체계 개선방안",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "신기술 분야별 우수사례 발굴·확산 방안",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "타 재정지원사업 우수사례 발굴 및 확산사례 분석",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "타 재정지원사업 우수사례 발굴사례 분석",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "타 재정지원사업 우수사례 확산사례 분석",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "혁신공유대학 우수사례 발굴 및 확산방안 제언",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "혁신공유대학 우수사례 발굴방안",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "혁신공유대학 우수사례 확산방안",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "성과평가 개선 및 연차/단계평가 추진방안",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "성과평가지표(핵심/자율지표) 분석 및 개선방안",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "성과관리방향",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "핵심성과지표 분석",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "핵심성과지표 정의 및 작성양식(안) 개선",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "자율성과지표 분석",
+     "page": 110,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "연차평가 기본계획 추진방향(안)",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기본계획",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "평가위원회 구성, 평가절차 및 방향",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "평가지표 및 평가내용",
+     "page": 124,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "연차평가 사업계획서 작성양식(안)",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "단계평가 기본계획 및 추진방향(안)",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기본계획",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "평가위원회 구성, 평가절차 및 방향",
+     "page": 129,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "평가지표 및 평가내용",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VI.",
+     "title": "사업성과 제고 및 활성화 방안",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절.",
+     "title": "가칭 산업교육협의회 구성 및 운영방안(안)",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절.",
+     "title": "컨설팅단 구성 및 운영 방안",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절.",
+     "title": "타 재정지원사업과의 연계 등을 통한 사업성과 활성화 방안",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절.",
+     "title": "산업교육센터 연계 및 활성화를 통한 사업성과 극대화",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제5절.",
+     "title": "사업성과 활성화를 위한 협의체 및 컨소시엄 등 의견",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제6절.",
+     "title": "디지털 신기술 인재양성 혁신공유대학 통합 허브 LMS 플랫폼 운영",
+     "page": 153,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 155,
+     "kind": "back"
+    }
+   ]
+  },
+  {
+   "pages": [
+    158,
+    229
+   ],
+   "kind": "appendix",
+   "title": "연차평가 사업계획서 작성 양식(안)",
+   "body_start": 169,
+   "back_start": null,
+   "toc_pages": [
+    166,
+    167,
+    168
+   ],
+   "boundary_reason": "p.158 [별첨] 표지 쪽 뒤로 꼬리말 번호가 다시 매겨져(p.160=3, p.162=5 …) 본편 155쪽에서 이어지지 않으므로 별도 부록 문서로 나눈다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "",
+     "title": "【 사 업 개 요 】",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "사업추진 비전 및 추진체계",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업 목표설정의 적정성",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인재양성 목표의 적절성",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "조직 운영계획의 적정성",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "주관·참여대학의 역량 및 의지",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "2차년도 사업추진 목표 및 추진체계의 적절성",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "사업추진 내용",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-1.",
+     "title": "교육과정 구성·운영",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "2차년도 교육과정·교과목 개발 및 운영 계획",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-2.",
+     "title": "교육과정 질 제고",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "교원 확보 및 활용 실적의 적정성",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "교육 컨텐츠 확보 실적의 적정성",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "교육 인프라 확보 계획의 적정성",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "2차년도 교육과정 질 제고 추진계획",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-3.",
+     "title": "학사 관리",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-4.",
+     "title": "교원·학생 참여 지원",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-5.",
+     "title": "사업성과 공유",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "예산 배분 및 집행계획",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업비 집행의 적절성",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "2차년도 예산 배분 계획의 적정성",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "컨설팅 결과 반영 사항",
+     "page": 69,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

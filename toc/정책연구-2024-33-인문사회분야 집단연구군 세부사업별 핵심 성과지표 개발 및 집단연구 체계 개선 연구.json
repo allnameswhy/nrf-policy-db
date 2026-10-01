@@ -1,0 +1,242 @@
+{
+ "file": "정책연구-2024-33-인문사회분야 집단연구군 세부사업별 핵심 성과지표 개발 및 집단연구 체계 개선 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 269,
+ "documents": [
+  {
+   "pages": [
+    1,
+    269
+   ],
+   "kind": "main",
+   "title": "인문사회분야 집단연구군 세부사업별 핵심 성과지표 개발 및 집단연구 체계 개선 연구",
+   "body_start": 29,
+   "back_start": 260,
+   "toc_pages": [
+    19,
+    20
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "",
+     "title": "요약문",
+     "page": null,
+     "kind": "front"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서 론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성 및 목적",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 내용",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구 방법",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "인문사회분야 집단연구지원사업 현황 분석",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "인문사회연구소지원사업",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인문한국플러스(HK+)지원사업",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사회과학연구(SSK)지원사업",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "글로벌인문사회융합연구지원사업",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "비교 분석 및 시사점",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "국내외 사례 조사",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "국내 사례",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "해외 사례",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "소결 및 시사점",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "인문사회분야 집단연구지원사업 연구성과 분석",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "분석 개요",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인문사회연구소지원사업 분석",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "인문한국플러스(HK+)지원사업 분석",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "사회과학연구지원사업 분석",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "글로벌인문사회융합연구지원사업 분석",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "소결 및 시사점",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "인문사회분야 집단연구지원사업 책임자 인식 조사",
+     "page": 157,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "조사 개요",
+     "page": 159,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "조사 결과",
+     "page": 162,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "소결 및 시사점",
+     "page": 192,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "결론",
+     "page": 199,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구결과 요약",
+     "page": 201,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인문사회분야 집단연구지원사업 개선방안",
+     "page": 208,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 232,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록]",
+     "title": "설문지",
+     "page": 235,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

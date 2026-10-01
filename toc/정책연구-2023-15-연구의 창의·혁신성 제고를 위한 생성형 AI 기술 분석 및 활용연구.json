@@ -1,0 +1,277 @@
+{
+ "file": "정책연구-2023-15-연구의 창의·혁신성 제고를 위한 생성형 AI 기술 분석 및 활용연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 70,
+ "documents": [
+  {
+   "pages": [
+    1,
+    70
+   ],
+   "kind": "main",
+   "title": "연구의 창의·혁신성 제고를 위한 생성형 AI 기술 분석 및 활용연구",
+   "body_start": 15,
+   "back_start": 68,
+   "toc_pages": [
+    10,
+    11
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "정책연구 개요",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "정책연구 요약",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "생성형 AI 기술의 이해",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "대규모 언어 모델(LLM)",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "Large Language Model의 역량",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "GPT4-turbo",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "PaLM(Pathways Language Model)-2",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4)",
+     "title": "Gemini",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(2)",
+     "title": "Large Language Model의 scale과 성능",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "Emergent ability",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "Inverse scaling",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "대규모 언어모델의 한계",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(3)",
+     "title": "주요 LLM의 장·단점",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "LLM의 분류",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "LLM별 특징",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "LLM을 활용한 추론 기술",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "추론 고도화를 위한 LLM의 노력",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "생각의 사슬(Chain-of-thoughts)을 활용한 추론 고도화",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "생각의 나무(Tree-of-thoughts)을 활용한 추론 다양화 및 고도화",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "자체 보정(Self-Refinement)을 결합한 모델의 활용",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "4.",
+     "title": "창의성 확장을 위한 생성형 AI 활용 방안",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "생성형 AI의 창의성",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "생성형 AI의 창작물의 창의성",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "계산 창의성과 창의적 책임",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(2)",
+     "title": "창의적인 업무 과정(Creative Working Process) 제안",
+     "page": 40,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1)",
+     "title": "아이디어 도출 및 기획(Ideation & Planning)",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2)",
+     "title": "추천 후보 대상의 생성(Candidate Generation)",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3)",
+     "title": "창의적 결과물 평가(Evaluation)",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4)",
+     "title": "결과물 보정(Refinement) & 휴먼 피드백(Human Feedback)",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "5.",
+     "title": "연구를 위한 LLM 창의성 활용 사례",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "과학 연구에서의 GPT4의 활용",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(2)",
+     "title": "LLM의 과학 분야 활용 분석",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(3)",
+     "title": "ViT을 이용한 컴퓨터 비전 연구에서의 활용",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "6.",
+     "title": "결론 및 시사점",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(1)",
+     "title": "결론",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "(2)",
+     "title": "후속 연구 제안",
+     "page": 65,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

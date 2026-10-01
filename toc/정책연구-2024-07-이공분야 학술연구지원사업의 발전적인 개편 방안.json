@@ -1,0 +1,361 @@
+{
+ "file": "정책연구-2024-07-이공분야 학술연구지원사업의 발전적인 개편 방안.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 193,
+ "documents": [
+  {
+   "pages": [
+    1,
+    193
+   ],
+   "kind": "main",
+   "title": "이공분야 학술연구지원사업의 발전적인 개편 방안",
+   "body_start": 26,
+   "back_start": 185,
+   "toc_pages": [
+    20,
+    21
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "연구배경: 정부 R&D 정책 전환과 예산 개편",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "연구목적: 혁신적 기초연구 지원 및 선도형 연구생태계 조성",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구추진전략 및 방법",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "기초연구지원 근거 및 체계 분석",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "과학정책적으로 바라보는 기초연구",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 개념 및 역할",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구 지원의 과학정책적 근거",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "새로운 기초연구의 성과 측정과 평가",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 전통적인 성과 측정",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 성과에 대한 정보이론적 접근",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기초연구 지원의 새로운 근거",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "연구지원에서의 다양성과 지속성→연구 생태계",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "연구 생태계→12대 국가전략기술",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "인류 지식의 확장과 인재 양성",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "예측 불가능성과 다양한 혁신",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "글로벌 경쟁력 강화와 삶의 질 향상",
+     "page": 59,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "해외 주요국 기초연구 지원사례 분석",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "선도형 연구생태계",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "방향이 설정되지 않은 기초연구",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구 지원에서의 블록펀딩",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "해외 사례의 시사점",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "교육부 기초과학 연구지원사업 현황 및 분석",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "교육부 학문균형발전지원",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "학문균형발전지원 기존 사업 현황",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "문제 및 개선점",
+     "page": 100,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "개선안 도출",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "교육부 대학연구기반 구축 지원",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "대학중점연구소지원 기존 사업 현황",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "문제 및 개선점",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "개선안 도출",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초과학 연구역량 강화(연구장비) 기존 사업 현황",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "문제 및 개선점",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "개선안 도출",
+     "page": 136,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "기초연구지원체계 개선안",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "선도형 연구생태계와 혁신전략기술",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "중장기 관점에서 선도형 연구생태계 확립",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 역할: 선도형 연구생태계 조성",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "선도형 연구생태계와 기초연구의 다양성",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "선도형 연구생태계 조성과 혁신",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 다양성 확립",
+     "page": 144,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기초연구의 지속성",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 이익: 정보이론적 관점에서",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "기초연구의 지속성",
+     "page": 147,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "선도형 연구생태계를 위한 기초연구 지원사업 방향",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "학문균형발전",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "",
+     "title": "대학연구기반구축",
+     "page": 151,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

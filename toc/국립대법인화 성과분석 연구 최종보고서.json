@@ -1,0 +1,410 @@
+{
+ "file": "국립대법인화 성과분석 연구 최종보고서.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 163,
+ "documents": [
+  {
+   "pages": [
+    1,
+    163
+   ],
+   "kind": "main",
+   "title": "국립대 법인화 성과분석 연구",
+   "body_start": 13,
+   "back_start": 157,
+   "toc_pages": [
+    9,
+    10
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "국립대학 법인화 이전의 논쟁",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "법인화 논쟁의 역사적 전개",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "국립대 법인화 정책의 배경 및 경과",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "국립대 법인화 추진배경",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "서울대 법인화 추진의 필요성",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "서울대 법인화 추진경과",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "서울대 법인화 법률 및 시행령 내용",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "법인화 추진과정 중 쟁점",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "거버넌스",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "대학의 자율성",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "재정의 안정적 확보",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "기초학문의 위축과 상업화",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "해외 사례",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "법인화의 기대효과, 그리고 불확실성",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "소결",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "법인화 이후의 변화: 예산, 평가, 지배구조",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "예산과 평가",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "분석개요",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "예산 실집행률 분석",
+     "page": 43,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "국립대학법인 평가의 환류 – 서울대학교를 중심으로",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "지배구조",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "법인 대학의 이사회 지배구조에 대한 추가 논의",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "정부부처 인사 선임의 장단점",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "법인 대학 이사의 자격 요건",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "이사회가 해야 할 일과 정관 등에의 반영",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "소결",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "법인화 성과와 관련한 양적 분석",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "예산 규모",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "교육에 대한 기여",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구에 대한 기여",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "소결",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "서울대학교 내부 구성원 인식조사 (FGI)",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "조사 개요",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "서울대 법인화 이후 변화",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "법인화에 대한 전반적 평가",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "법인화에 따른 긍정적 변화",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "법인화에 따른 부정적 변화",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "서울대 법인화의 성과와 한계",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "교육영역의 성과와 한계",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "연구영역의 성과와 한계",
+     "page": 118,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "사회공헌영역의 성과와 한계",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "운영체제 측면: 재정, 조직, 인사, 거버넌스의 성과와 한계",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "서울대, 국립대학법인, 국립대의 중장기적 발전방향",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "서울대 발전 전망 및 발전방향",
+     "page": 127,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "국립대 중장기 발전방향/서울대 법인화의 시사점",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "소결",
+     "page": 129,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "결론: 법인화 성과개선을 위한 제언",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "총론",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "개선 과제",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "목표 및 계획 설정",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "실효성 있는 평가",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "행정체제의 개선",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구의 한계 및 향후과제",
+     "page": 144,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고 문헌",
+     "page": 145,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

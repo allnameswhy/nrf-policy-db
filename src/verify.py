@@ -30,9 +30,10 @@ build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
                    표 내부 줄은 전역 포함 → 페이지 국소 table_covers 순으로 판정
                    (find_tables 행렬 단계 소실 검출 — 실측 4권 21건 부류).
                    재스캔 표 markdown/caption 포함, 이미지 전용 구간 마커도 검사.
-  C 목차 대조      (풀 검사 전용) 앞부속 목차(리더런 페이지 + 목차 표제 페이지·이어짐,
-                   국문 우선 2단 — extract.toc_pages, R6 2026-09-11)와 장 대조 — 제목
-                   포함(경고), 장 번호 커버(문법 미감지·헤딩 오탐 검출, FAIL)
+  C 구조 재현      (풀 검사 전용) 판독 파일(toc/*.json)로 extract와 같은 함수
+                   (toclane.build_structure)를 돌려 목차 대응을 재현하고 .md 헤딩과
+                   1:1(깊이·텍스트·ID·순서)인지 본다. 절 내부 청킹의 합성 구간 헤딩은
+                   빼고 대조하되, 하위 헤딩 없는 목차 헤딩 바로 아래에만 올 수 있다.
   D 품질 판정      (LLM — 유일한 비결정론 검사, annotate 호출 레이어 재사용)
                    유닛 요약을 자기 근거 본문과 1:1 대조. 용도(검색·발견) 기준:
                    핵심 주제·키워드 부재=FAIL(누락) / 본문에 없는 사실=FAIL(할루시
@@ -62,12 +63,14 @@ build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
                    --accept RID:HID): 그 유닛은 판정을 생략하고 PASS(판정자 human)로
                    캐시에 정착한다(수동 표식·streak 소거).
 
-플랫 문서(frontmatter 'structure: flat' — extract 플랫 폴백 산출물): 풀 검사에서
-find_body_start/detect_structure 재현 대신 extract와 공유하는 find_body_start_flat로
-body 범위를 재현해 B를 동일하게 실행한다. A는 합성 '구간 N (p.a-b)' 헤딩 전용
-검사로 바뀌고(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수 2→1) C는 생략하되, L1 구조
-신호(find_body_start 성공)가 있으면 경고한다(구조 문서가 폴백 또는 --lane flat 강제로
-플랫 처리된 의심 — 레인 정합 안전망).
+문서 종류는 frontmatter `structure` 키로 가른다. `toc`(목차 대응 산출물) = A·B·C.
+`flat`(사람이 플랫으로 수용한 문서) = 판독의 본문 시작으로 body 범위를 재현해 B를 동일하게
+실행하고, A는 합성 '구간 N (p.a-b)' 헤딩 전용 검사(비구간 헤딩·하위 헤딩 = FAIL, 최소 장 수
+2→1), C는 없다. 키가 없는 .md는 2026-10-01 이전의 본문 문법 추출 산출물 — 풀 검사는 구조를
+재현할 수단이 없어 "재추출 필요" FAIL만 내고 **스탬프는 건드리지 않는다**(스탬프 기반 일반
+실행은 그대로 통과 — 재적재 전까지 적재 상태 유지).
+합본 분할은 판독 파일이 원천이고, 등록부 행의 쪽 범위가 판독과 같은지는 등록부 조회
+(registry.toc_problem)가 본다 — 어긋나면 미등록 FAIL.
 비표준(수동 기입) rid 스템도 검사 대상에 포함되며 year 대조는 표준형 stem에서만 수행한다.
 
 스탬프 기록(검사 아님 — 최종 단계): 통과 상태에 맞는 스탬프를 이중 가드(스탬프 외
@@ -101,48 +104,29 @@ import pymupdf
 import judgecache
 import mdio
 from extract import (
-    BARE_MD_RE,
-    CAPTION_RE,
-    PROFILES,
     TEMPLATE_FOLD,
-    detect_structure,
-    find_body_start,
-    find_body_start_flat,
     fold,
     fold_g,
     mark_colophon_pages,
     mark_footnotes,
-    md_chapter_values,
     page_table_fold,
-    profile_value,
-    detect_parts,
-    relaxed_profile_pats,
     scan_document,
     table_covers,
-    toc_chapter_titles,
-    toc_pages,
 )
 from registry import STEM_RE, parts_for, rid_for, rid_reason
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 NRF_STEM_RE = STEM_RE  # 표준형 stem YYYY-NN[-b][-vN](registry) — year 대조는 이 형식에서만
-FLAT_HEADING_RE = re.compile(r"^구간 \d+ \(p\.\d+(?:-\d+)?\)$")  # extract 플랫 폴백의 합성 헤딩 제목
+FLAT_HEADING_RE = re.compile(r"^구간 \d+ \(p\.\d+(?:-\d+)?\)$")  # extract 플랫 청킹의 합성 헤딩 제목
+LEGACY_FAIL = "옛 추출 방식 산출물(structure 표식 없음) — 재추출 필요"
 FM_KEY_RE = re.compile(r"^([a-z_]+):(.*)$")
 RAW_BULLET_RE = re.compile(r"^\s*[□○ㅇ❍◉▸▪‣∙•Ÿ](\s|$)")
 UNESCAPED_PIPE = re.compile(r"(?<!\\)\|")
-CANON_RE = re.compile(r"[^0-9A-Za-z가-힣]")
 
 REQUIRED_KEYS = ("report_id", "title", "title_en", "year", "lead_researcher",
                  "institution", "keywords_ko", "keywords_en", "abstract", "source_pdf")
-# 목차 줄은 두줄형 표기가 한 줄로 합쳐져 있어 완화 패턴으로 장 번호를 수집한다
-PROFILE_PAT = {name: pat for name, pat, _ in PROFILES}
 DRIFT_MISS_RATIO = 0.05  # 미스율이 이보다 크면 개별 소실이 아니라 버전 드리프트로 요약
-
-
-def canon(s: str) -> str:
-    """숫자·영문·한글만 남기는 정규화 — 목차의 점·리더런·괄호·개행을 무력화."""
-    return CANON_RE.sub("", s or "")
 
 
 @dataclasses.dataclass
@@ -191,8 +175,8 @@ def check_frontmatter(rep: Report, raw: dict, st, stem: str, part, n_parts: int)
         if y and not re.fullmatch(r"\d{4}", y):
             rep.fails.append(f"year({y}) — 비표준(수동) rid는 4자리 연도 또는 공란이어야 함")
     sv = raw.get("structure")
-    if sv is not None and sv != "flat":
-        rep.fails.append(f"structure 키 값 위반: {sv} (허용: flat)")
+    if sv is not None and sv not in ("flat", "toc"):
+        rep.fails.append(f"structure 키 값 위반: {sv} (허용: flat, toc)")
     if not mdio._unquote(raw.get("title", "")):
         rep.warns.append("title 공란(결측 허용 규약 — 확인 권장)")
     if part is None:
@@ -351,113 +335,7 @@ def check_image_markers(rep: Report, scans, part, body_start, md_line_set: set) 
 
 
 # ---------------------------------------------------------------------------
-# C. 목차 대조 (신규 문법 미감지·헤딩 오탐 안전망)
-# ---------------------------------------------------------------------------
-
-def _title_variants(text: str) -> list[str]:
-    """장 제목의 canon 변형들 — 원문 그대로 + 선두 번호 토큰 제거형.
-
-    목차와 본문의 번호 표기가 다르면(Ⅱ↔II) canon에 남는 번호 문자가 어긋나므로
-    토큰 제거형으로도 대조한다. 4자 미만 변형은 우연 일치가 흔해 버린다.
-    """
-    vs = {canon(text)}
-    for pat in PROFILE_PAT.values():
-        m = pat.match(text)
-        if m:
-            vs.add(canon(text[m.end() - 1:]))
-    m = BARE_MD_RE.match(text)
-    if m:
-        vs.add(canon(text[m.end() - 1:]))
-    return [v for v in vs if len(v) >= 4]
-
-
-# 목차 항목의 영문 뒷부속 표제(리더런이 있는 영문 CONTENTS 페이지는 1차 목차에 함께 들어온다 — 2024-29 `IX. Appendix`)
-TOC_BACKMATTER_EN_RE = re.compile(r"^(appendix|appendices|references|bibliography|attachments?)$", re.I)
-
-
-def toc_key_is_backmatter(key: str) -> bool:
-    """목차 제목 접기가 부록·참고문헌·첨부류인가 — .md 쪽 예외(mdio.is_excluded_chapter) + 영문 표제."""
-    return mdio.is_excluded_chapter(key) or bool(TOC_BACKMATTER_EN_RE.match(re.sub(r"[^0-9A-Za-z가-힣]", "", key)))
-
-
-def toc_backmatter_numbers(toc: dict, values) -> list:
-    """values 중 목차 제목 접기가 비어있지 않고 **전부** 뒷부속 꼴(부록·참고문헌·첨부, 국·영문)인 번호 (R8, 2026-09-17).
-    "목차에만 있는 장 번호"(over)에만 적용한다 — 2024-29 `IX. 부 록`/`IX. Appendix`(본문은 `부록. 설문지` 뒷부속 장).
-    .md 헤딩이 그 번호를 정상 장으로 갖고 있으면(2024-08 `7. 부록 …`류 번호 달린 뒷부속 장) 대조에서 빼지 않는다 —
-    1차 구현이 목차 집합 전체에서 뺐다가 그런 번호가 "목차에서 확인 안 되는 장 번호"로 뒤집혀 새 FAIL을 낸 회귀 실측.
-    R4 승격 입력(md_chapter_values의 toc)은 전체 사전 그대로 — extract와 같은 해석."""
-    out = []
-    for v in values:
-        ks = [k for k in toc.get(v, []) if k]
-        if ks and all(toc_key_is_backmatter(k) for k in ks):
-            out.append(v)
-    return sorted(out)
-
-
-def check_toc(rep: Report, scans, part, body_start, profile: str | None, roots) -> None:
-    # R6(2026-09-11): 목차 페이지 = 리더런 페이지 ∪ 목차 표제 페이지·이어짐(extract.toc_pages). 제목 방향(a)은
-    # 경고라 1차·2차를 모두 보고, 번호 방향(b)은 toc_chapter_titles의 국문 우선 2단 규칙을 그대로 쓴다.
-    primary, secondary = toc_pages(scans, part, body_start)
-    toc_idx = sorted(set(primary) | set(secondary))
-    rep.stats["toc_pages"] = [i + 1 for i in toc_idx]
-    toc_scans = [scans[i] for i in toc_idx]
-    if not toc_scans:
-        rep.notes.append("목차 페이지 미발견 — 목차 대조 생략")
-        return
-    depth1 = [h for h in roots if h.depth == 1]
-    # (a) 제목 방향: 목차 전문 canon에 장 제목(변형 포함)이 부분열로 포함되는가 (경고).
-    #     참고문헌·부록은 목차 미표기가 관행이라 제외(2025-13·25 실측).
-    toc_canon = canon(" ".join(ln.text for s in toc_scans for ln in s.lines))
-    unmatched = []
-    for h in depth1:
-        if mdio.is_excluded_chapter(h.text):
-            continue
-        vs = _title_variants(h.text)
-        if vs and not any(v in toc_canon for v in vs):
-            unmatched.append(h.text)
-    if unmatched:
-        rep.warns.append(f"목차에서 못 찾은 장 제목 {len(unmatched)}/{len(depth1)}(표기 차이?): "
-                         + "; ".join(t[:24] for t in unmatched[:3]))
-    if profile is None:
-        rep.notes.append("프로파일 미확정 — 목차 번호 대조 생략")
-        return
-    # (b) 번호 방향: .md 헤딩 번호 집합 ↔ 목차 번호 집합 대칭 비교. 목차 수집·표면 번호 해석·R4 장 번호
-    #     오타 승격(직전 장과 같은 번호·다른 제목·목차에 다음 번호 → 다음 서수)은 extract와 같은 함수
-    #     (toc_chapter_values·md_chapter_values)를 써서 두 쪽이 어긋나지 않는다.
-    toc = toc_chapter_titles(scans, part, body_start, profile)
-    toc_values = set(toc)
-    md_num: dict[int, object] = {}  # 유효 번호 → 헤딩 (번호 달린 참고문헌 장도 포함)
-    for h, v in zip(depth1, md_chapter_values([h.text for h in depth1], profile, toc)):
-        if v is not None:
-            md_num.setdefault(v, h)
-    rep.stats["toc_values"] = sorted(toc_values)
-    rep.stats["md_chapter_values"] = sorted(md_num)
-    if not toc_values:
-        rep.notes.append("목차에서 장 번호 미수집 — 번호 대조 생략")
-        return
-    if not md_num:
-        rep.notes.append("헤딩에서 장 번호 미추출 — 번호 대조 생략")
-        return
-    missing = sorted(v for v, h in md_num.items()
-                     if v not in toc_values and not mdio.is_excluded_chapter(h.text))
-    over = sorted(v for v in toc_values if v not in md_num)
-    excluded = toc_backmatter_numbers(toc, over)     # R8: 목차에만 있는 번호 중 뒷부속 표제는 제외
-    if excluded:
-        rep.stats["toc_excluded"] = excluded
-        over = [v for v in over if v not in excluded]
-    if missing:
-        rep.fails.append(f"목차에서 확인 안 되는 장 번호 {missing} — 헤딩 오탐 의심")
-    if over:
-        msg = f"목차에만 있는 장 번호 {over} — extract가 못 본 장(문법 미감지) 의심"
-        if relaxed_profile_pats(profile)[0][0] == "arabic":
-            # 아라비아 목차는 하위 항목 번호("1. …")와 장 번호가 구분 불가 — 육안 확인 유도
-            rep.warns.append(msg + " (하위 항목 번호 혼입 가능 — --scan 육안 확인)")
-        else:
-            rep.fails.append(msg)
-
-
-# ---------------------------------------------------------------------------
-# 커버리지·스탬프 기록 (검사 아님 — 최종 단계)
+# 커버리지 · 스탬프
 # ---------------------------------------------------------------------------
 
 def annotate_complete(st) -> bool:
@@ -861,7 +739,71 @@ def _verdict_desc(hid: str, v: dict, lmap: dict[str, int]) -> str:
 # 파트 단위 결정론 검사 (스탬프 기록은 main의 최종 단계)
 # ---------------------------------------------------------------------------
 
-def check_full(rep: Report, md_path: Path, scans, part, n_parts: int, stem: str, args):
+def _docread_doc(rep: Report, pdf_path: str, part):
+    """이 문서의 판독(toc/*.json의 문서 항목). 없으면 FAIL을 남기고 None."""
+    import toclane
+    data = toclane.load_docread(pdf_path)
+    docd = toclane.pick_document(data, part) if data else None
+    if docd is None:
+        rep.fails.append("판독 파일에 이 문서의 쪽 범위가 없음(toc/*.json — PDF 또는 판독이 바뀜) — 재등록·재추출 필요")
+    return docd
+
+
+def check_toc_lane(rep: Report, st, scans, part, stem: str, pdf_path: str, args) -> None:
+    """목차 대응 산출물(`structure: toc`) 풀 검사 — 판독 파일(toc/*.json)로 extract와 같은 함수
+    (toclane.build_structure)를 돌려 구조를 재현하고, .md 헤딩과 1:1(깊이·텍스트·ID·순서)인지 본다.
+    B 손실 전수 대조는 동일 실행."""
+    import toclane
+    docd = _docread_doc(rep, pdf_path, part)
+    if docd is None:
+        return
+    structure, body_start, info = toclane.build_structure(scans, part, docd, stem, [])
+    if structure is None:
+        rep.fails.append(f"목차 대응 재현 실패({info.get('reason')}) — 드리프트 의심")
+        return
+    expect = [(h.depth, h.text, h.hid) for h in structure["ordered"]]
+    if structure["preamble"]:
+        line = toclane.preamble_heading(stem, structure["preamble"])
+        m = mdio.HEADING_RE.match(line)
+        expect.insert(0, (1, m.group(2), m.group(3)))
+    # 절 내부 청킹의 합성 구간 헤딩(toclane.chunk_sections)은 목차 대응과 무관 — 빼고 대조하되, 구간 헤딩은
+    # 하위 헤딩이 없는 목차 헤딩 바로 아래에만, 그 자식 전부로만 올 수 있다(서수·ID 형식은 check_headings가 본다)
+    actual = []
+
+    def walk(h, parent, excluded):
+        if parent is not None and toclane.CHUNK_RE.match(h.text):
+            if h.children:
+                rep.fails.append(f"구간 헤딩 아래 하위 헤딩 존재: {h.hid}")
+            return
+        actual.append((h.depth, h.text, h.hid))
+        chunk_kids = [c for c in h.children if toclane.CHUNK_RE.match(c.text)]
+        if chunk_kids and len(chunk_kids) != len(h.children):
+            rep.fails.append(f"구간 헤딩이 목차 헤딩과 섞임: {h.hid}")
+        if chunk_kids and excluded:
+            rep.fails.append(f"참고문헌·부록 장에 구간 헤딩: {h.hid}")
+        for c in h.children:
+            walk(c, h, excluded)
+
+    for r in st.roots:
+        walk(r, None, r.depth == 1 and mdio.is_excluded_chapter(r.text))
+    if expect != actual:
+        diff = next((i for i, (a, b) in enumerate(zip(expect, actual)) if a != b), min(len(expect), len(actual)))
+        ex = expect[diff] if diff < len(expect) else None
+        ac = actual[diff] if diff < len(actual) else None
+        rep.fails.append(f"목차 대응 헤딩 ≠ .md 헤딩 (재현 {len(expect)}개, .md {len(actual)}개; 첫 차이 #{diff + 1}: "
+                         f"재현 {ex} / .md {ac})")
+    rep.stats["toc_lane"] = {"entries": info.get("targets"), "anchored": info.get("anchored"),
+                             "unanchored": len(info.get("unanchored", [])),
+                             "chunk_headings": sum(1 for h in mdio.iter_headings(st.roots)) - len(actual)}
+    if info.get("unanchored"):
+        rep.warns.append(f"목차 항목 미대응 {len(info['unanchored'])}건: " + "; ".join(info["unanchored"][:5]))
+    md_fold = fold_g("\n".join(st.base))
+    check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
+    check_tables_in_md(rep, scans, part, body_start, md_fold)
+    check_image_markers(rep, scans, part, body_start, set(st.base))
+
+
+def check_full(rep: Report, md_path: Path, scans, part, n_parts: int, stem: str, args, pdf_path: str = ""):
     """풀 검사 A~C — PDF 재스캔 대조 포함. 반환: ReportState 또는 None(파싱 실패)."""
     try:
         st = mdio.load_report(md_path, min_chars=args.min_chars, max_chars=args.max_chars)
@@ -875,41 +817,28 @@ def check_full(rep: Report, md_path: Path, scans, part, n_parts: int, stem: str,
     check_body_text(rep, st.base)
 
     if not fatal:
-        if flat:
-            # 플랫 레인: 구조 재현 대신 extract 폴백과 동일한 body 범위 함수를 공유,
-            # 핵심 안전망인 B 손실 전수 대조는 동일하게 실행한다(C 목차 대조는 생략).
-            body_start = find_body_start_flat(scans, part)
-            if body_start is None:
-                rep.fails.append("플랫 본문 시작 재현 실패 — 드리프트 의심")
-            else:
+        if raw.get("structure") == "toc":
+            check_toc_lane(rep, st, scans, part, stem, pdf_path, args)
+        elif flat:
+            # 플랫: 판독의 본문 시작으로 extract.flat_part와 같은 body 범위·표식을 재현해 B 손실 전수 대조
+            import toclane
+            docd = _docread_doc(rep, pdf_path, part)
+            if docd is not None:
+                body_start = toclane.body_start_of(docd, part)
                 mark_footnotes(scans, (body_start, part[1]))
                 mark_colophon_pages(scans, part, [])
                 md_fold = fold_g("\n".join(st.base))
                 check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
                 check_tables_in_md(rep, scans, part, body_start, md_fold)
                 check_image_markers(rep, scans, part, body_start, set(st.base))
-                # 레인 정합 안전망: 플랫 body 시작은 표지에서 잡히는 게 보통이라
-                # "body_start 앞 목차 페이지" 검사는 사문(실측 2025-02) — L1 신호 유무로 판별한다.
-                sb_probe, _ = find_body_start(scans, part)
-                if sb_probe is not None:
-                    rep.warns.append("플랫 문서인데 L1 구조 신호 존재 — 구조 문서가 폴백/강제(--lane flat)로 플랫 처리됐을 가능성(--scan 확인)")
-        else:
-            body_start, cands = find_body_start(scans, part)
-            if body_start is None:
-                rep.fails.append("본문 시작 페이지 재현 실패 — 드리프트 의심")
-            else:
-                mark_footnotes(scans, (body_start, part[1]))
-                mark_colophon_pages(scans, part, [])
-                structure = detect_structure(scans, part, body_start, cands, stem)
-                if structure is None:
-                    rep.fails.append("L1 구조 재현 실패 — 드리프트 의심")
-                md_fold = fold_g("\n".join(st.base))
-                check_coverage(rep, scans, part, body_start, md_fold, args.misses_cap)
-                check_tables_in_md(rep, scans, part, body_start, md_fold)
-                check_image_markers(rep, scans, part, body_start, set(st.base))
-                check_toc(rep, scans, part, body_start,
-                          structure["profile"] if structure else None, st.roots)
+        else:  # main이 걸러 주므로 방어용
+            rep.fails.append(LEGACY_FAIL)
     return st
+
+
+def _read_fm(md_path: Path):
+    lines = md_path.read_text(encoding="utf-8").split("\n")
+    return lines, mdio.parse_frontmatter(lines).end_line
 
 
 def check_md_only(rep: Report, md_path: Path, stem: str, args):
@@ -1065,24 +994,22 @@ def main() -> None:
             scans = scan_document(doc)
         finally:
             doc.close()
-        # 파트 범위는 등록부(register의 경량 스캔)가 정한다 — 여기서는 전체 스캔으로 같은 규칙
-        # (detect_parts)을 재현해 등록부와 대조하는 것이 안전망(2026-09-08).
+        # 문서 범위는 등록부 행 — 판독 파일의 문서 범위와 같다는 것은 위 등록부 조회(rid_for → toc_problem)가 보장한다
         reg = parts_for(pdf_path)
         n = len(scans)
         expected = {rid: (rng or (0, n - 1)) for rid, rng in reg}
-        detected = detect_parts(scans)
-        if [rng for rng in expected.values()] != detected:
-            fmt = lambda rs: ", ".join(f"{a + 1}-{b + 1}" for a, b in rs)  # noqa: E731
-            for _stem, _mp, rep in members:
-                rep.fails.append(f"등록부 파트 범위 ≠ PDF 재스캔 분할 — 재등록 필요 "
-                                 f"(등록부 {fmt(expected.values())}, 재스캔 {fmt(detected)})")
-            continue
         for stem, mp, rep in sorted(members):
             if stem not in expected:
                 rep.fails.append(
                     f"등록부 파트 목록({sorted(expected)})에 없는 .md {stem} — 재등록 또는 .md 삭제")
                 continue
-            states[stem] = (rep, mp, check_full(rep, mp, scans, expected[stem], len(expected), stem, args))
+            if fm_raw(*_read_fm(mp)).get("structure") not in ("toc", "flat"):
+                # 2026-10-01 이전 산출물 — 구조를 재현할 수단이 없다. states에 넣지 않아 스탬프를 회수하지 않는다
+                # (회수하면 build_db가 적재본을 DB에서 뺀다 — 재적재 전까지 적재 상태 유지)
+                rep.fails.append(LEGACY_FAIL)
+                continue
+            states[stem] = (rep, mp, check_full(rep, mp, scans, expected[stem], len(expected), stem, args,
+                                                pdf_path))
 
     # ---- D 품질 판정 대상 선정 ----
     cands: list[str] = []

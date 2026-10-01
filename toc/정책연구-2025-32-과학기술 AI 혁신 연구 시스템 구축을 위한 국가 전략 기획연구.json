@@ -1,0 +1,368 @@
+{
+ "file": "정책연구-2025-32-과학기술 AI 혁신 연구 시스템 구축을 위한 국가 전략 기획연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 200,
+ "documents": [
+  {
+   "pages": [
+    1,
+    200
+   ],
+   "kind": "main",
+   "title": "과학기술 AI 혁신 연구 시스템 구축을 위한 국가 전략 기획연구",
+   "body_start": 10,
+   "back_start": 197,
+   "toc_pages": [
+    8,
+    9
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "연구 개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "연구 목표 및 범위",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "국내외 현황 조사",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "주요국 과학기술AI 정책 동향 조사·분석",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "과학기술 AI 관련 글로벌 기술·산업 동향 분석",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "과학기술 AI 관련 국내 동향 분석",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절",
+     "title": "국내 과학기술 AI 관련 기술·산업 동향 분석",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제5절",
+     "title": "국내외 동향 분석 시사점 도출",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "전략 수립",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "전략 목표 설정 지원",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "도메인 분야별 전략 도출",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "수학 AI",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "바이오 A",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "지구과학 AI",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "재료·화학 AI",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "반도체·디스플레이 AI",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "이차전지 AI",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "에너지·거대화학 AI",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "8.",
+     "title": "도메인 분야별 기획안 종합(요약)",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "과학기술xAI 국가전략(안) 도출",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "추진 배경",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "국내외 동향",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "비전 및 추진 전략",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "추진 과제",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "과학기술AI x FM개발 사업 기획 지원",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "기획 방향 설계",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기본 방향 설계",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "기획보고서 서식 구성",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "기획보고서 초안 검토를 위한 체크 포인트 구성",
+     "page": 133,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "과학기술AI x 바이오 파운데이션모델 개발",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기획보고서 초안 작성 가이드",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "관련 동향 분석",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "과학기술AI x 지구과학 파운데이션모델 개발",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기획보고서 내용 보완 지원",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "예산 논리 보완",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "기획보고서 최종안 검토 및 수정",
+     "page": 165,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절",
+     "title": "과학기술AI x 수학 파운데이션모델 개발",
+     "page": 173,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "성과 목표(안) 도출",
+     "page": 173,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "기획보고서 최종안 보완",
+     "page": 174,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "예산 논리 보완",
+     "page": 182,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "TF 및 기획위원회 운영",
+     "page": 183,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "과학기술AI 전략 수립을 위한 TF 운영",
+     "page": 183,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "과학기술AI x 파운데이션모델 개발 사업 기획위원회 운영",
+     "page": 184,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "과학기술AI x 바이오 파운데이션모델 개발",
+     "page": 184,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "과학기술AI x 지구과학 파운데이션모델 개발",
+     "page": 185,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "과학기술AI x 수학 파운데이션모델 개발",
+     "page": 186,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "약어 해설",
+     "page": 188,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고 문헌",
+     "page": 190,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

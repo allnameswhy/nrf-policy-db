@@ -11,20 +11,18 @@
   현황판 새로고침으로 감지): 캐시가 불일치를 가리키면 질의를 409로 차단하고 첫 페이지에
   배너를 띄운다(--allow-stale로만 강행). setup_auth는 기동 시 1회.
 - 동시 질의 상한 `--concurrency`(기본 1) — 초과는 409 즉시 거부(대기 큐 없음).
-- /admin = DB 관리 페이지(2026-09 카드 재설계): **문제 카드 + 일괄 해결** —
-  derive_cards가 현황(status.collect_status)·extract 로그에서 파일별 문제 카드를
-  도출한다(신규 PDF 레인 선택, 감지 실패 승격 여부, --force 재추출 포함 여부 등
-  결정 컨트롤 포함 — 실행 버튼은 카드에 없음). [일괄 해결]은 derive_plan의 **누적
-  파이프라인**(단계별 대상 파일이 하류로 누적: promote/extract{결정 파일} →
-  verify{+unverified·register} → annotate{+요약 잔여} → verify{+품질 대기} → build_db →
-  build_index)을 단일 job 큐로 순차 실행한다. 단계 사이마다 collect_status를 재계산해
-  **탈락 파일은 버리고 생존 파일만 다음 단계로 데려간다**(stage_targets — 로그 포맷이
-  아니라 상태·스탬프 기준), 하드 스톱은 verify·promote의 exit 2(사용 오류·인증·한도 =
-  공통 장애)만 — extract·annotate의 exit 2는 파일 단위 실패 포함이라 계속. promote(코드
-  수정)·--force(요약·스탬프 소실)가 포함된 해결은 루프백 요청만 허용. 출력은 서버
-  버퍼(단일 job)에 쌓고 브라우저가 폴링하므로 새로고침·이탈에도 작업은 계속되고
-  재접속된다. 질의↔DB 작업은 상호 배제(409). 완료 기록은 결과 박스의 [확인(닫기)]
-  ack로 닫는다(진행 중 작업 복원은 그대로).
+- /admin = DB 관리 페이지(2026-09 카드 재설계, 2026-10-01 목차 대응 일원화): **문제 카드 + 일괄 해결** —
+  derive_cards가 현황(status.collect_status)·extract 로그(문서별 마지막 결과)에서 문제 카드를 도출한다
+  (등록 대기·신규 PDF 포함 여부, **목차 대응 불성립 문서의 플랫 수용 여부(문서별)**, --force 재추출 포함
+  여부 — 실행 버튼은 카드에 없음). [일괄 해결]은 derive_plan의 **누적 파이프라인**(register{등록 대기} →
+  extract{포함 파일의 미추출 문서 — 실행 직전 확정} → extract --flat{수용한 문서} → verify{+unverified·register}
+  → annotate{+요약 잔여} → verify{+품질 대기} → build_db → build_index)을 단일 job 큐로 순차 실행한다.
+  단계 사이마다 collect_status를 재계산해 **탈락 파일은 버리고 생존 파일만 다음 단계로 데려간다**
+  (stage_targets — 로그 포맷이 아니라 상태·스탬프 기준). 하드 스톱은 exit 2(사용 오류·인증·한도 = 공통
+  장애)인 register·extract·verify — annotate의 exit 2는 파일 단위 실패 포함이라 계속. --force(요약·스탬프
+  소실)가 포함된 해결은 루프백 요청만 허용. 출력은 서버 버퍼(단일 job)에 쌓고 브라우저가 폴링하므로
+  새로고침·이탈에도 작업은 계속되고 재접속된다. 질의↔DB 작업은 상호 배제(409). 완료 기록은 결과 박스의
+  [확인(닫기)] ack로 닫는다(진행 중 작업 복원은 그대로).
 - /browse = 자료 현황 페이지(2026-09): 보고서별 현황판 표(행 클릭 → 그 보고서의
   카탈로그 요약(master_index와 동일 소스 규칙: 보고서 요약 블록 단독) + 저자 초록
   병기 + 목차·요약을 오른쪽 뷰어에 로드) — reports.db 읽기 전용 + .md frontmatter 조회.
@@ -38,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import datetime
 import json
 import os
 import socket
@@ -66,8 +65,8 @@ BROWSE_HTML = REPO_ROOT / "web" / "browse.html"
 PING_INTERVAL = 15  # 무이벤트 keep-alive 초 — LAN에서도 사실상 보험
 SUBPROC_LINE_LIMIT = 1 << 20  # readline 상한 — 기본 64KB로는 긴 진단 줄이 끊길 수 있음
 
-# 일괄 해결 큐의 단계 순서 = 표준 절차(CLAUDE.md): register(관리번호 등록, 2026-09-04)
-# → promote/extract → verify(추출 검증) → annotate(요약 생성) → verify2(요약 품질 검증)
+# 일괄 해결 큐의 단계 순서 = 표준 절차(CLAUDE.md): register(판독 + 관리번호 등록)
+# → extract → verify(추출 검증) → annotate(요약 생성) → verify2(요약 품질 검증)
 # → build_db → build_index. verify2도 CLI는 verify.py — 스탬프 분기가 검사 범위를 고른다.
 STAGE_LABELS = {"register": "관리번호 등록", "verify": "추출 검증", "annotate": "요약 생성",
                 "verify2": "요약 품질 검증", "build_db": "DB 동기화", "build_index": "카탈로그 재생성"}
@@ -88,15 +87,19 @@ def stage_argv(stage: dict, targets: list[str]) -> list[str]:
     step = stage["step"]
     if step == "register":
         return [py, "src/register.py", *(f"pdfs/{f}" for f in targets)]
-    if step == "promote":
-        return [py, "src/promote.py", f"pdfs/{targets[0]}"]
-    if step == "extract":
-        argv = [py, "src/extract.py", *(f"pdfs/{f}" for f in targets), "--lane", stage["lane"]]
+    if step == "extract":  # targets = rid — 그 문서만(--rid), 파일은 등록부에서 되찾는다
+        rid_file = registry.rid_file_map()
+        files = sorted({rid_file[r] for r in targets})
+        argv = [py, "src/extract.py", *(f"pdfs/{f}" for f in files)]
+        for r in targets:
+            argv += ["--rid", r]
+        if stage.get("flat"):
+            argv.append("--flat")
         if stage.get("force"):
             argv.append("--force")
         return argv
     if step in ("verify", "verify2"):
-        return [py, "src/verify.py", *targets]  # base id는 verify가 합본 파트로 확장
+        return [py, "src/verify.py", *targets]  # .md 스템(rid)을 정확히 전달
     if step == "annotate":
         return [py, "src/annotate.py", *(f"reports/{rid}.md" for rid in targets)]
     if step == "build_db":
@@ -296,32 +299,84 @@ def needs_verify(r) -> bool:
     (verified_register만 없음 — verify가 PDF 재스캔·LLM 없이 스탬프만 채운다)."""
     return r.verify in NEEDS_VERIFY or REGISTER_NOTE in r.notes
 REEXTRACT_NOTE = "PDF가 .md보다 최신"
-PROMOTABLE = ("skipped_no_profile", "skipped_no_body_start")  # 감지 실패 = 승격 결정 대상
+# 목차 대응 불성립 = 플랫 수용 결정 대상(사용자 결정 2026-10-01): 목차 항목을 본문 줄에 대응시키지
+# 못했거나(skipped_toc_anchor) 판독에 목차 항목이 없다(skipped_no_toc). 결정 단위 = 문서(rid).
+TOC_INVIABLE = ("skipped_toc_anchor", "skipped_no_toc")
+TOC_UNANCHORED_SHOWN = 30  # 불성립 카드에 싣는 미대응 목차 항목 수 상한
 
 
-def read_extract_log() -> dict[str, dict]:
-    """마지막 extract 로그의 비정상 엔트리 {PDF 파일명: 요약} — 감지 실패·오류 카드 재료.
-
-    l1_attempts·l1_suspects는 extract가 감지 실패 시 남기는 승격 판단 재료다.
-    """
+def read_extract_log() -> dict:
+    """extract 로그(문서별 마지막 결과의 병합 보관) → {"rids": {rid: 항목}, "files": {파일명: 항목}}.
+    성공 항목은 싣지 않는다. files = 문서로 풀리지 않는 파일 단위 실패(중복·충돌·파일 오류).
+    불성립 기록보다 판독 파일이 새로우면(재판독) 그 기록은 무효 — 다시 추출 대상으로 돌아간다."""
+    out: dict = {"rids": {}, "files": {}}
     try:
         data = json.loads((REPO_ROOT / "logs" / "extract_log.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return {}
+        return out
     if data.get("mode") != "extract":
-        return {}
-    out: dict[str, dict] = {}
+        return out
     for e in data.get("files", []):
         status = str(e.get("status", ""))
-        if status in ("ok", "skipped_exists") or not e.get("file"):
+        fname = str(e.get("file") or "")
+        if status in ("ok", "skipped_exists", "skipped_unregistered") or not fname:
             continue
-        out[str(e["file"])] = {
-            "status": status,
-            "l1_attempts": e.get("l1_attempts") or {},
-            "l1_suspects": e.get("l1_suspects") or [],
-            "error": str(e.get("error"))[:2000] if e.get("error") else None,
-        }
+        item = {"status": status, "file": fname, "at": e.get("at") or "",
+                "error": str(e.get("error"))[:2000] if e.get("error") else None}
+        rid = e.get("report_id")
+        if not rid:
+            out["files"][fname] = item
+            continue
+        if status in TOC_INVIABLE:
+            try:
+                read_at = datetime.datetime.fromtimestamp(registry.toc_path(fname).stat().st_mtime)
+                if item["at"] and read_at > datetime.datetime.fromisoformat(item["at"]):
+                    continue
+            except (OSError, ValueError):
+                pass
+            tl = e.get("toc_lane") or {}
+            item["toc"] = {"entries": tl.get("targets"), "anchored": tl.get("anchored"),
+                           "rate_depth12": tl.get("rate_depth12"), "depth1_anchored": tl.get("depth1_anchored"),
+                           "unanchored": (tl.get("unanchored") or [])[:TOC_UNANCHORED_SHOWN],
+                           "unanchored_total": len(tl.get("unanchored") or [])}
+        out["rids"][str(rid)] = item
     return out
+
+
+def read_docread_failures() -> dict[str, str]:
+    """마지막 판독 로그에서 실패한 PDF {파일명: 사유} — 등록 대기 카드에 보여 준다."""
+    try:
+        data = json.loads((REPO_ROOT / "logs" / "docread_log.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for e in data.get("files", []):
+        if e.get("status") in ("docread_failed", "error"):
+            why = e.get("error") or "; ".join(str(v) for vs in (e.get("violations") or [])[-1:] for v in vs)
+            out[registry.norm_name(e.get("file", ""))] = str(why)[:600]
+    return out
+
+
+def toc_fail_card(rid: str, fname: str, e: dict, has_md: bool) -> dict:
+    """목차 대응 불성립 카드(문서 단위) — 플랫 수용 / 보류(기본). has_md면 플랫 수용이 그 .md를
+    덮어쓰는 재추출(--force)이 된다."""
+    no_toc = e["status"] == "skipped_no_toc"
+    detail = ("판독 결과에 목차 항목이 없어 목차로 헤딩을 정할 수 없는 문서입니다."
+              if no_toc else
+              "목차 항목을 본문 줄에 충분히 대응시키지 못했습니다(장·절 대응률 90% 미만 또는 대응된 장 2개 미만 —"
+              " 장 제목이 이미지로만 있거나 목차와 본문의 문구가 다른 문서).")
+    detail += (" 플랫 수용 = 이 문서만 구조 없이 구간 청킹으로 추출합니다(같은 PDF의 다른 문서는 그대로)."
+               " 판단이 어려우면 보류하세요(이번 해결에서 제외).")
+    if has_md:
+        detail += (f" 이미 추출된 reports/{rid}.md가 있습니다 — 보류하면 그대로 두고, 플랫 수용을 고르면 덮어써서"
+                   " 기존 요약·검증 스탬프가 소실되고 요약 재생성에 LLM 사용량이 듭니다(서버를 띄운 기기에서만).")
+    return {
+        "kind": "toc_fail", "severity": "warn", "files": [rid, fname],
+        "title": f"{'목차 없음' if no_toc else '목차 대응 불성립'} — {rid}",
+        "detail": detail,
+        "control": {"type": "toc_fail", "rid": rid, "pdf": fname, "default": "skip", "force": has_md},
+        "extra": {"toc": dict(e.get("toc") or {}, no_toc=no_toc)},
+    }
 
 
 def rows_by_file(st, rid_file: dict[str, str]) -> dict[str, list]:
@@ -341,8 +396,9 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
                  reg_rows: list | None = None) -> list[dict]:
     """현황 + extract 로그 → 문제 카드 목록. 카드는 표시 + 결정 컨트롤(실행 버튼 없음).
 
-    control.type: lane(레인 라디오 — 항상 포함) / lane_opt(포함 체크 + 레인, 기본 포함) /
-    detect(승격·플랫 수용·보류 라디오, 기본 보류) / force(--force 재추출 포함 체크, 기본 제외).
+    control.type: include(이번 해결에 포함 체크, 기본 포함 — 키 = 파일명) / toc_fail(플랫 수용·보류 라디오,
+    기본 보류 — 키 = rid, control.force가 참이면 플랫 수용이 기존 .md를 덮어쓰는 재추출) /
+    force(--force 재추출 포함 체크, 기본 제외 — 키 = 파일명).
     derive_plan이 이 control들과 클라이언트 decisions를 대조해 일괄 해결 계획을 만든다.
     """
     if rid_file is None or reg_rows is None:
@@ -362,22 +418,28 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
             "control": None,
         })
 
-    # 관리번호 등록(2026-09-04, v4 2026-09-08): rid는 report_ids.tsv 조회만. 표에 없는 PDF는
-    # register 단계가 표지에서 읽어 등록한 뒤 곧장 추출(lane 결정 카드). 표에 있으나 공란인
-    # 행(번호 충돌·표지 번호 없음·합본 파트)은 **가족 카드** — 같은 번호의 행을 전부 모아
-    # 사람이 한 번에 배정(등록·추출된 행도 편집 가능, 저장 = register.set_family). 기입 전에는
-    # 그 파일이 어느 단계도 지나지 못한다. 표에만 있는 파일은 정리 안내(행 삭제 버튼).
+    # 등록(2026-09-04, v4 2026-09-08, 판독 2026-10-01): rid는 report_ids.tsv 조회만. 표에 없는 PDF는
+    # register 단계가 판독(LLM 1회 — 문서 범위·목차)하고 표지에서 번호를 읽어 등록한 뒤 곧장 추출한다.
+    # 판독 파일만 없는 등록 파일도 같은 단계가 채운다. 표에 있으나 공란인 행(번호 충돌·표지 번호 없음·
+    # 합본 파트)은 **가족 카드** — 같은 번호의 행을 전부 모아 사람이 한 번에 배정(저장 = register.set_family).
+    # 쪽 범위가 판독과 다른 파일·표에만 있는 파일은 행 삭제 버튼 카드.
     manual_pending = set()
+    read_fail = read_docread_failures()
     for fname, reason in st.unregistered:
-        if reason.startswith("report_ids.tsv에 없음"):
+        new_file = reason.startswith("report_ids.tsv에 없음")
+        if new_file or reason.startswith(registry.TOC_MISSING):
+            failed = read_fail.get(fname)
             cards.append({
                 "kind": "register", "severity": "warn", "files": [fname],
-                "title": f"관리번호 등록 대기 — {fname}",
-                "detail": "표지에 인쇄된 관리번호(정책연구 YYYY-NN)를 읽어 report_ids.tsv에"
-                          " 등록한 뒤 곧장 추출합니다(LLM 사용 없음 — 합본이면 파트마다 행)."
-                          " 같은 번호가 이미 있거나 표지에서 못 읽으면 공란으로 남아 [기입 필요]"
-                          " 가족 카드로 돌아옵니다. 레인을 고르세요.",
-                "control": {"type": "lane", "pdf": fname, "default": "structured"},
+                "title": f"{'등록 대기' if new_file else '판독 필요'} — {fname}",
+                "detail": ("PDF를 한 번 판독(LLM 1회 — 합본 분할·본문 경계·목차 항목, 1~2분)한 뒤 표지에 인쇄된"
+                           " 관리번호(정책연구 YYYY-NN)를 읽어 report_ids.tsv에 등록하고 곧장 추출합니다. 같은"
+                           " 번호가 이미 있거나 표지에서 못 읽으면 공란으로 남아 [기입 필요] 가족 카드로 돌아옵니다."
+                           if new_file else
+                           "등록은 돼 있으나 판독 파일(toc/)이 없습니다 — PDF를 한 번 판독(LLM 1회)해 채웁니다."
+                           " 판독이 정한 문서 범위가 등록부와 다르면 행 삭제 후 재등록 카드로 돌아옵니다.")
+                          + (f" 지난 판독은 실패했습니다: {failed}" if failed else ""),
+                "control": {"type": "include", "pdf": fname, "default": True},
             })
         else:
             manual_pending.add(fname)
@@ -401,7 +463,8 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
         cards.append({
             "kind": "register_broken", "severity": "err", "files": [fname],
             "title": f"등록부 행 정리 필요 — {fname}",
-            "detail": reason + " — 이 파일의 행을 지우고(아래 버튼 또는 register.py --drop) 다시 등록하세요.",
+            "detail": reason + " — 이 파일의 행을 지우고(아래 버튼 또는 register.py --drop) 다시 등록하세요."
+                      " 다시 등록하면 관리번호를 손으로 기입했던 행은 다시 기입해야 합니다.",
             "control": None,
         })
     held = registry.held_names(REPO_ROOT / "pdfs")
@@ -417,53 +480,61 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
             "control": None,
         })
 
+    # 추출 대기 문서(등록됐고 .md 없음) — 파일별로 묶되, 불성립·본문 부족 문서는 문서별 카드로 뺀다
+    xr, xf = xlog.get("rids", {}), xlog.get("files", {})
     new_by_file: dict[str, list[str]] = {}
     for b in st.new_pdfs:
         fname = name_of.get(b)
         if fname:  # 없으면 이론상 불가 — new_pdfs는 pdfs/에서 파생
             new_by_file.setdefault(fname, []).append(b)
     for fname, rids in sorted(new_by_file.items()):
-        e = xlog.get(fname)
-        if e is None:
-            cards.append({
-                "kind": "new_pdf", "severity": "warn", "files": [fname] if len(rids) == 1 else rids,
-                "title": f"신규 PDF — {fname}",
-                "detail": "추출 대기 중입니다. 레인을 고르세요 — structured: 기존 정책보고서류"
-                          "(장·절 문법 감지, 실패하면 감지 실패 카드로 전환), flat: 타 기관·"
-                          "발표자료·백서류(구조 없이 구간 청킹)."
-                          + (f" 합본 {len(rids)}파트({', '.join(rids)})를 한 번에 추출합니다." if len(rids) > 1 else ""),
-                "control": {"type": "lane", "pdf": fname, "default": "structured"},
-            })
-        elif e["status"] in PROMOTABLE:
-            cards.append({
-                "kind": "detect_fail", "severity": "warn", "files": [fname],
-                "title": f"장·절 구조 감지 실패 — {fname}",
-                "detail": "기존 문법에 맞지 않는 문서입니다. 승격 = 에이전트가 extract.py에"
-                          " 이 문서의 문법 규칙을 추가하고 추출·검증·전체 회귀 대조까지 수행"
-                          "합니다(수 분 소요 · LLM 사용량 소모 · 서버를 띄운 기기에서만)."
-                          " 플랫 수용 = 구조 없이 구간 청킹으로 추출합니다."
-                          " 판단이 어려우면 보류하세요(이번 해결에서 제외).",
-                "control": {"type": "detect", "pdf": fname, "default": "skip"},
-                "extra": {"l1_attempts": e["l1_attempts"], "l1_suspects": e["l1_suspects"]},
-            })
-        elif e["status"] in ("skipped_duplicate", "skipped_id_collision"):
+        fe = xf.get(registry.norm_name(fname)) or xf.get(fname)
+        if fe and fe["status"] in ("skipped_duplicate", "skipped_id_collision"):
             continue  # 위 dup_id 카드가 안내 — 파일 정리 전 재시도는 무의미
-        elif e["status"] == "skipped_flat_guard":
-            cards.append({
-                "kind": "flat_guard", "severity": "warn", "files": [fname],
-                "title": f"본문 부족 — {fname}",
-                "detail": "본문 텍스트가 400자 미만(이미지 위주 문서)이라 플랫 청킹도 불가"
-                          "합니다. OCR은 별도 과제 — 보류하거나 pdfs/에서 빼 두세요.",
-                "control": None,
-            })
-        else:  # error 등 — 문법 문제가 아니라 코드/파일 문제
+        pending, errors = [], []
+        for rid in rids:
+            e = xr.get(rid)
+            if e is None:
+                pending.append(rid)
+            elif e["status"] in TOC_INVIABLE:
+                cards.append(toc_fail_card(rid, fname, e, False))
+            elif e["status"] == "skipped_flat_guard":
+                cards.append({
+                    "kind": "flat_guard", "severity": "warn", "files": [rid, fname],
+                    "title": f"본문 부족 — {rid}",
+                    "detail": "본문 텍스트가 400자 미만(이미지 위주 문서)이라 플랫 청킹도 불가"
+                              "합니다. OCR은 별도 과제 — 보류하거나 pdfs/에서 빼 두세요.",
+                    "control": None,
+                })
+            elif e["status"] == "skipped_no_docread":
+                cards.append({
+                    "kind": "register_broken", "severity": "err", "files": [fname],
+                    "title": f"판독과 PDF가 맞지 않음 — {fname}",
+                    "detail": "등록 뒤 PDF 또는 판독 파일이 바뀌어 이 문서의 쪽 범위를 판독에서 찾지 못했습니다."
+                              " 행을 지우고(아래 버튼) 다시 등록하세요 — PDF를 교체했다면 먼저"
+                              " python src/docread.py --force로 재판독해야 합니다.",
+                    "control": None,
+                })
+            else:  # error — 코드/파일 문제, 다시 시도 대상
+                errors.append((rid, e))
+        if fe and fe["status"] == "error":
+            errors.append(("", fe))
+        if errors:
             cards.append({
                 "kind": "extract_error", "severity": "err", "files": [fname],
                 "title": f"추출 오류 — {fname}",
-                "detail": "지난 추출에서 오류가 났습니다(문법 문제가 아니라 코드/파일 문제)."
-                          " 포함하면 이번 해결에서 다시 시도합니다.",
-                "control": {"type": "lane_opt", "pdf": fname, "default": "structured"},
-                "extra": {"error": e["error"] or ""},
+                "detail": "지난 추출에서 오류가 났습니다(코드/파일 문제). 포함하면 이번 해결에서 다시 시도합니다.",
+                "control": {"type": "include", "pdf": fname, "default": True},
+                "extra": {"error": "\n".join(f"[{rid or fname}] {e['error'] or ''}" for rid, e in errors)},
+            })
+        elif pending:
+            cards.append({
+                "kind": "new_pdf", "severity": "warn", "files": [fname] if len(rids) == 1 else pending,
+                "title": f"신규 PDF — {fname}",
+                "detail": "추출 대기 중입니다(목차 대응 추출 — 대응이 성립하지 않는 문서는 추출 뒤 플랫 수용 여부를"
+                          " 묻는 카드로 돌아옵니다)."
+                          + (f" 합본 {len(pending)}문서({', '.join(pending)})를 한 번에 추출합니다." if len(pending) > 1 else ""),
+                "control": {"type": "include", "pdf": fname, "default": True},
             })
 
     known_files = set(name_of.values())
@@ -484,7 +555,6 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
                 "extra": {"errors": [n for r in parse_fail for n in r.notes[:1]]},
             })
             continue
-        lane = "flat" if any("플랫 구조" in n for r in rs for n in r.notes) else "structured"
         cards.append({
             "kind": "reextract", "severity": "err" if parse_fail else "warn",
             "files": files,
@@ -496,9 +566,17 @@ def derive_cards(st, pdf_names: dict, xlog: dict, rid_file: dict | None = None,
                       + "포함하면 --force 재추출부터 검증·요약 재생성·DB 반영까지 다시"
                         " 돌립니다. 기존 요약·검증 스탬프가 소실되고 요약 재생성에 LLM"
                         " 사용량이 듭니다 — 기본 제외.",
-            "control": {"type": "force", "pdf": b, "lane": lane, "default": False},
+            "control": {"type": "force", "pdf": b, "default": False},
             "extra": {"errors": [n for r in parse_fail for n in r.notes[:1]]},
         })
+
+    # 목차 대응 불성립인데 .md가 이미 있는 문서(종전 산출물 위에 재추출을 시도한 경우) — 추출 대기 갈래에
+    # 잡히지 않으므로 여기서 카드로. 이미 플랫인 .md는 더 물을 것이 없다.
+    for r in st.rows:
+        e = xr.get(r.report_id)
+        if (e and e["status"] in TOC_INVIABLE and r.extracted == "완료"
+                and not any("플랫 구조" in n for n in r.notes) and rid_file.get(r.report_id) in known_files):
+            cards.append(toc_fail_card(r.report_id, rid_file[r.report_id], e, True))
 
     unverified = [r.report_id for r in st.rows if r.extracted == "완료" and needs_verify(r)]
     if unverified:
@@ -579,70 +657,76 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict, rid_file: dict
                 reg_rows: list | None = None) -> tuple[list[dict], list[str]]:
     """카드 결정값(decisions) → 하류 누적 실행 계획. 반환 (stages, errors).
 
-    단계별 대상 집합이 하류로 누적된다 — 이번에 추출·재추출되는 파일은 이후 전 단계가
-    필요하므로: extract{결정 파일} → verify{+unverified·register} → annotate{+요약 잔여} →
-    verify2{+품질 대기} → build_db → build_index. verify·annotate·verify2의 실제 대상은
-    실행 직전 stage_targets가 상태 기준으로 다시 거른다(중도 탈락 처리). 대상 집합의 단위는
-    **원본 PDF 파일명**(file_key — 합본 파트가 한 단위, 2026-09-08; 등록부에 없는 스템은 스템).
-    decisions = {"pdfs": {파일명: structured|flat|promote|skip}, "force": [파일명…]}.
+    decisions = {"pdfs": {파일명: run|skip}, "flat": [rid…], "force": [파일명…]}.
+    - 포함 파일(등록 대기·신규·추출 오류 카드): register(등록 대기분) → extract. 추출 대상 문서는 **실행 직전**에
+      정한다(extract_targets — 그 파일의 등록부 rid 중 .md 없는 것, 불성립 카드에 걸린 rid 제외).
+    - 불성립 카드에서 플랫 수용한 rid: `extract --flat --rid`(그 문서만). .md가 이미 있으면 --force 묶음.
+      수용하지 않은(보류) 불성립 rid는 어느 추출에도 넣지 않는다.
+    - 재추출 선택 파일: 그 파일의 추출된 문서를 --force로 — 플랫 .md는 플랫으로, 나머지는 목차 대응으로.
+    하류: verify{+unverified·register} → annotate{+요약 잔여} → verify2{+품질 대기} → build_db → build_index.
+    verify·annotate·verify2의 실제 대상은 실행 직전 stage_targets가 상태 기준으로 다시 거른다(중도 탈락 처리).
+    하류 대상 집합의 단위는 **원본 PDF 파일명**(file_key — 합본 문서들이 한 단위).
     """
     if rid_file is None or reg_rows is None:
         rid_file, reg_rows = registry_view()
     cards = derive_cards(st, pdf_names, xlog, rid_file, reg_rows)
-    ctls = {c["control"]["pdf"]: c["control"] for c in cards if c.get("control")}
+    file_ctls = {c["control"]["pdf"]: c["control"] for c in cards
+                 if c.get("control") and c["control"]["type"] in ("include", "force")}
+    toc_ctls = {c["control"]["rid"]: c["control"] for c in cards
+                if c.get("control") and c["control"]["type"] == "toc_fail"}
     reg_files = {c["control"]["pdf"] for c in cards if c["kind"] == "register"}
     pdf_dec = decisions.get("pdfs") or {}
+    flat_sel = decisions.get("flat") or []
     force_sel = decisions.get("force") or []
-    if not isinstance(pdf_dec, dict) or not isinstance(force_sel, list):
+    if not isinstance(pdf_dec, dict) or not isinstance(flat_sel, list) or not isinstance(force_sel, list):
         return [], ["decisions 형식 오류"]
-    allowed = {"lane": {"structured", "flat", "skip"},
-               "lane_opt": {"structured", "flat", "skip"},
-               "detect": {"promote", "flat", "skip"}}
     errors: list[str] = []
     for f, mode in pdf_dec.items():
-        con = ctls.get(f)
-        if not con or con["type"] == "force":
+        con = file_ctls.get(f)
+        if not con or con["type"] != "include":
             errors.append(f"결정 대상이 아닌 파일: {f}")
-        elif mode not in allowed[con["type"]]:
+        elif mode not in ("run", "skip"):
             errors.append(f"허용되지 않는 결정({mode}): {f}")
+    for rid in flat_sel:
+        if rid not in toc_ctls:
+            errors.append(f"플랫 수용 대상이 아닌 문서: {rid}")
     for f in force_sel:
-        con = ctls.get(f)
+        con = file_ctls.get(f)
         if not con or con["type"] != "force":
             errors.append(f"재추출 대상이 아닌 파일: {f}")
     if errors:
         return [], errors
 
-    promotes: list[str] = []
-    groups: dict[tuple[str, bool], list[str]] = {}  # (lane, force) → 파일명들
-    for con in ctls.values():
-        f = con["pdf"]
-        if con["type"] == "force":
-            if f in force_sel:
-                groups.setdefault((con["lane"], True), []).append(f)
-            continue
-        mode = pdf_dec.get(f, con["default"])
-        if mode == "skip":
-            continue
-        if mode == "promote":
-            promotes.append(f)
-        else:
-            groups.setdefault((mode, False), []).append(f)
+    run_files = sorted(f for f, con in file_ctls.items()
+                       if con["type"] == "include" and pdf_dec.get(f, "run" if con["default"] else "skip") == "run")
+    held = set(toc_ctls)  # 불성립 카드에 걸린 문서 — 플랫 수용분만 플랫 단계로, 나머지는 보류
+    flat_new = sorted(r for r in flat_sel if not toc_ctls[r]["force"])
+    flat_force = {r for r in flat_sel if toc_ctls[r]["force"]}
+    toc_force: set[str] = set()
+    grouped = rows_by_file(st, rid_file)
+    for f in force_sel:
+        for r in grouped.get(f, []):
+            if r.extracted == "추출 필요" or r.report_id in held:
+                continue
+            (flat_force if any("플랫 구조" in n for n in r.notes) else toc_force).add(r.report_id)
 
     stages: list[dict] = []
-    regs = sorted(f for fs in groups.values() for f in fs if f in reg_files)
-    if regs:  # 0단계 — 등록 못 한 파일은 extract 프리플라이트가 skipped_unregistered로 탈락시킨다
-        stages.append({"step": "register", "label": f"관리번호 등록 — {len(regs)}건",
+    regs = [f for f in run_files if f in reg_files]
+    if regs:  # 0단계 — 판독(LLM) + 등록. 등록 못 한 파일은 추출 대상 확정에서 탈락
+        stages.append({"step": "register", "label": f"판독·관리번호 등록 — {len(regs)}건",
                        "pdfs": regs, "files": regs})
-    for f in sorted(promotes):
-        stages.append({"step": "promote", "label": f"프로파일 승격 — {f}",
-                       "pdf": f, "files": [f]})
-    for (lane, force), fs in sorted(groups.items()):
-        label = ("재추출 --force" if force else "추출") + f" — {lane} {len(fs)}건"
-        stages.append({"step": "extract", "label": label, "lane": lane, "force": force,
-                       "pdfs": sorted(fs), "files": sorted(fs)})
+    if run_files:
+        stages.append({"step": "extract", "label": f"추출 — {len(run_files)}개 파일", "flat": False, "force": False,
+                       "pdfs": run_files, "rids": [], "exclude": sorted(held), "files": run_files})
+    for flat, force, rids in ((False, True, sorted(toc_force)), (True, False, flat_new),
+                              (True, True, sorted(flat_force))):
+        if rids:
+            label = ("플랫 " if flat else "") + ("재추출 --force" if force else "추출") + f" — {len(rids)}개 문서"
+            stages.append({"step": "extract", "label": label, "flat": flat, "force": force,
+                           "pdfs": [], "rids": rids, "exclude": [], "files": rids})
 
-    # 단위 = PDF 파일명. 미등록 파일(register 대상)은 run_job_queue가 등록 직후 하류에 보탠다
-    entered = set(promotes) | {f for fs in groups.values() for f in fs}
+    # 하류 단위 = PDF 파일명. 미등록 파일(register 대상)은 run_job_queue가 등록 직후 하류에 보탠다
+    entered = set(run_files) | {file_key(r, rid_file) for r in (toc_force | flat_force | set(flat_new))}
     v1 = entered | {file_key(r.report_id, rid_file) for r in st.rows
                     if r.extracted == "완료" and needs_verify(r)}
     an = v1 | {file_key(r.report_id, rid_file) for r in st.rows if r.remaining > 0}
@@ -658,6 +742,22 @@ def derive_plan(st, pdf_names: dict, xlog: dict, decisions: dict, rid_file: dict
     if content or st.artifacts[1][1]:
         stages.append({"step": "build_index", "label": STAGE_LABELS["build_index"], "files": []})
     return stages, []
+
+
+def extract_targets(stage: dict) -> tuple[list[str], list[str]]:
+    """추출 단계의 실행 직전 대상 — (rid 목록, 탈락 파일). 계획에 고정된 rid(stage["rids"]) + 포함 파일
+    (stage["pdfs"])의 등록부 rid 중 .md가 없는 것(불성립 카드에 걸린 rid 제외). 등록부를 지나지 못한 파일은 탈락."""
+    rids = [r for r in stage.get("rids", []) if r in registry.rid_file_map()]
+    dropped: list[str] = []
+    exclude = set(stage.get("exclude", []))
+    for f in stage.get("pdfs", []):
+        parts = registry.parts_for(REPO_ROOT / "pdfs" / f) if (REPO_ROOT / "pdfs" / f).is_file() else []
+        if not parts:
+            dropped.append(f)
+            continue
+        rids += [rid for rid, _rng in parts
+                 if rid not in exclude and rid not in rids and not (REPO_ROOT / "reports" / f"{rid}.md").exists()]
+    return rids, dropped
 
 
 def stage_targets(step: str, st, bases: list[str], rid_file: dict[str, str]) -> tuple[list[str], list[str]]:
@@ -748,7 +848,7 @@ async def run_job_queue(state, job: dict) -> None:
     """계획된 단계 큐를 순차 실행 — 탈락 파일은 버리고 생존 파일만 끝까지 데려간다.
 
     단계 exit≠0이어도 큐를 세우지 않는다: 다음 단계 직전 collect_status를 재계산해
-    stage_targets가 생존 파일만 데려간다. 예외 = verify·promote의 exit 2(사용 오류·
+    stage_targets가 생존 파일만 데려간다. 예외 = register·extract·verify의 exit 2(사용 오류·
     인증·한도)는 전 파일 공통 장애라 하드 스톱. 취소(cancel)는 현재 단계 종료 후
     잔여 단계를 건너뛴다.
     품질 FAIL 루프(2026-09-09): verify2(요약 품질 검증)가 exit 1이고 그 대상 파일에
@@ -772,14 +872,14 @@ async def run_job_queue(state, job: dict) -> None:
                 if dropped:
                     job["lines"].append(f"[serve] 이전 단계 미통과로 제외 {len(dropped)}건: "
                                         + ", ".join(dropped))
-            elif stg["step"] in ("extract", "register"):
+            elif stg["step"] == "register":
                 targets = [f for f in stg["pdfs"] if (REPO_ROOT / "pdfs" / f).is_file()]
                 stg["dropped"] = sorted(set(stg["pdfs"]) - set(targets))
-            elif stg["step"] == "promote":
-                if (REPO_ROOT / "pdfs" / stg["pdf"]).is_file():
-                    targets = [stg["pdf"]]
-                else:
-                    stg["dropped"] = [stg["pdf"]]
+            elif stg["step"] == "extract":
+                targets, stg["dropped"] = extract_targets(stg)
+                if stg["dropped"]:
+                    job["lines"].append(f"[serve] 등록을 지나지 못해 제외 {len(stg['dropped'])}건: "
+                                        + ", ".join(stg["dropped"]))
             if stg["step"] not in ("build_db", "build_index") and not targets:
                 stg["skipped"] = True
                 job["lines"].append(f"[serve] ── 단계 {i + 1}/{n}: {stg['label']} — 대상 없음, 생략")
@@ -792,17 +892,18 @@ async def run_job_queue(state, job: dict) -> None:
             code = await _stream_subprocess(state, job, argv)
             stg["code"] = code
             if stg["step"] == "register":
-                # 방금 등록된 파일을 하류 단계(verify·annotate·verify2)의 대상에 보탠다(단위 =
-                # 파일명). 파트 하나라도 못 채운 파일은 rid None → 자연 탈락(가족 카드로).
+                # 방금 등록된 파일을 하류 단계(verify·annotate·verify2)의 대상에 보탠다(단위 = 파일명).
+                # 추출 단계는 실행 직전에 등록부를 다시 읽는다(extract_targets). 파트 하나라도 못 채운 파일은
+                # rid None → 자연 탈락(가족 카드로).
                 new_keys = sorted(f for f in targets if registry.rid_for(REPO_ROOT / "pdfs" / f))
                 for later in job["stages"][i + 1:]:
                     if "bases" in later and new_keys:
                         later["bases"] = sorted(set(later["bases"]) | set(new_keys))
                         later["files"] = later["bases"]
-            # exit 2의 의미가 CLI마다 다르다: verify·promote는 사용 오류·인증·한도(공통
-            # 장애)지만 extract·annotate는 "일부 파일 실패"를 포함 — 후자는 세우지 않고
-            # 상태 기준 탈락 처리(stage_targets)로 생존 파일을 계속 데려간다.
-            if code == 2 and stg["step"] in ("verify", "verify2", "promote"):
+            # exit 2 = 사용 오류·인증·사용량 한도(공통 장애) — register·extract·verify는 세운다(1 = 일부
+            # 파일·문서 실패라 계속). annotate는 exit 2가 "일부 파일 실패"를 포함하므로 세우지 않고 상태 기준
+            # 탈락 처리(stage_targets)로 생존 파일을 계속 데려간다.
+            if code == 2 and stg["step"] in ("register", "extract", "verify", "verify2"):
                 job["code"] = 2
                 job["lines"].append("[serve] 종료 코드 2(사용 오류·인증·사용량 한도) — "
                                     "공통 장애로 보고 남은 단계를 중단합니다.")
@@ -870,12 +971,12 @@ async def api_admin_resolve(request):
         return JSONResponse(
             {"error": "질의가 진행 중입니다 — 완료 후 DB 작업을 실행하세요."}, status_code=409
         )
-    if any(s["step"] == "promote" or s.get("force") for s in stages):
-        # 코드 수정(promote)·요약 소실(--force)을 수반하는 해결은 서버 기동 기기에서만
+    if any(s.get("force") for s in stages):
+        # 요약 소실(--force)을 수반하는 해결은 서버 기동 기기에서만
         client_host = request.client.host if request.client else ""
         if client_host not in ("127.0.0.1", "::1"):
             return JSONResponse(
-                {"error": "프로파일 승격·--force 재추출이 포함된 해결은 서버를 띄운 기기의"
+                {"error": "--force 재추출(기존 .md 덮어쓰기)이 포함된 해결은 서버를 띄운 기기의"
                           " 브라우저에서만 실행할 수 있습니다."}, status_code=403)
     state.job_seq += 1
     job = {

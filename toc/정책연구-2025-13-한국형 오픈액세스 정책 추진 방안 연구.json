@@ -1,0 +1,1043 @@
+{
+ "file": "정책연구-2025-13-한국형 오픈액세스 정책 추진 방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 240,
+ "documents": [
+  {
+   "pages": [
+    1,
+    240
+   ],
+   "kind": "main",
+   "title": "한국형 오픈액세스 정책 추진 방안 연구",
+   "body_start": 35,
+   "back_start": 203,
+   "toc_pages": [
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "",
+     "title": "요약문",
+     "page": null,
+     "kind": "front"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "SUMMARY",
+     "page": null,
+     "kind": "front"
+    },
+    {
+     "depth": 1,
+     "label": "제1장",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "연구의 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "오픈액세스 개요와 주요 이슈",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "오픈액세스의 개념과 유형",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "오픈액세스의 발전 과정과 주요 이슈",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "오픈액세스 의무화 정책 확산",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "오픈액세스 전환계약의 글로벌 확산",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "연구자 주도 학술생태계 복원을 위한 다이아몬드 오픈액세스 등장",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "오픈 사이언스의 핵심 구현 수단으로써 오픈액세스",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "연구 내용 및 방법",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "연구의 내용",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "연구의 방법",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제2장",
+     "title": "글로벌 오픈액세스 정책 구성요소 분석",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "국내외 주요국의 오픈액세스 정책 문서 조사",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "글로벌 오픈액세스 정책 문서의 핵심 내용",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "글로벌 오픈액세스 정책 문서의 선정",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "글로벌 오픈액세스 정책 문서 목차의 구조적 비교",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "글로벌 오픈액세스 정책 문서의 핵심 내용",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "시사점",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "오픈액세스 정책의 주요 구성요소 도출",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "오픈액세스 정책의 구성요소 분석",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "분석 방법 및 대상",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "오픈액세스 정책의 구성요소 범주화",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "오픈액세스 정책의 주요 구성요소 도출",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "요약 및 시사점",
+     "page": 42,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제3장",
+     "title": "오픈액세스 관련 법제도 현황 및 개정안 제안",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "해외 오픈액세스 법제 현황",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "미국",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "OA 정책의 채택 - 2008년 OSTP 메모",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "연방정부 OA 법률안",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "주정부 OA 법률",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "OA 정책의 업데이트 - 2022년 Nelson Memo",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "마.",
+     "title": "NIH",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "EU",
+     "page": 49,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "Plan S",
+     "page": 50,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "영국",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "독일",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "저작권법 개정과 OA 권리",
+     "page": 51,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "연구데이터법 제정 추진",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "6.",
+     "title": "호주",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "7.",
+     "title": "일본",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "국내 오픈액세스 관련 법령 분석",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국내 오픈액세스 법제 현황",
+     "page": 55,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "오픈액세스 관련 국내 현행 법령 분석",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "국가연구개발혁신법 및 하위 법령",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "과학기술기본법 및 하위 법령",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "연구성과평가법 및 하위 법령",
+     "page": 60,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "학술진흥법 및 하위 법령",
+     "page": 61,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "오픈액세스 관련 법령 개정안",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "기본 방향",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "하위법령의 개정에 의한 오픈액세스 도입 방안",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "법률 및 하위법령의 개정에 의한 오픈액세스 도입 방안",
+     "page": 65,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "구체적 법령 개정안",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "오픈액세스의 대상인 연구성과물의 정의",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "오픈액세스 정책의 근거가 될 수 있는 규정",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "오픈액세스 학술지 ‘출판비용 지원’ 및 ‘오픈액세스 전환 지원’에 관한 규정",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "리포지터리 설치 및 운영에 관한 규정",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "마.",
+     "title": "오픈액세스 관련 ‘제재’에 관한 규정",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "바.",
+     "title": "협약에 관한 규정",
+     "page": 72,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제4장",
+     "title": "한국형 오픈액세스 정책 모형 개발",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "이해집단별 인식 조사",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "각 집단별 응답 결과",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "연구자 응답 결과",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "학술지편집인 응답 결과",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "사서 응답 결과",
+     "page": 82,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "종합 논의",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "각 집단별 응답 결과 논의",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "종합 결론",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "경제사회적 가치평가 및 국내 OA전환비용 분석",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "오픈액세스 경제사회적 가치평가 선행연구 검토",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "오픈액세스를 통한 연구개발 비용 절감 및 효율성 향상",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "오픈액세스를 통한 혁신 강화",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "오픈액세스를 통한 경제 성장 영향",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "오픈액세스 전환계약을 통한 경제적 영향력 평가",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "우리나라 주요 연구기관의 OA 전환비용 분석",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "국내 주요 연구기관 데이터 수집 및 분석 방법론",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "국내 주요 연구기관의 주요 출판사 저널 구독 및 논문 출판 현황",
+     "page": 98,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "국내 주요 기관의 시나리오별 OA 전환 비용 분석",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제3절",
+     "title": "오픈액세스 정책 모형 개발",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "한국형 오픈액세스 정책의 구성 요소",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "개요",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "한국형 오픈액세스 정책 구성 요소별 주요 내용",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "한국형 오픈액세스 정책 형식(안)",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "정책 개요",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "적용대상물",
+     "page": 110,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "의무화",
+     "page": 110,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "지원",
+     "page": 111,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "마.",
+     "title": "집행",
+     "page": 113,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "바.",
+     "title": "권리",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "소결",
+     "page": 114,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제4절",
+     "title": "한국연구재단 사업관리지침 분석 및 개정안",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "개요",
+     "page": 115,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "한국연구재단 사업별 지침 분석",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "학술지 지원사업 - 인문·사회·예술·체육 및 복합학 분야",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "학술연구지원사업 - 이공분야",
+     "page": 125,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "기초연구사업",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "분석 결과 요약",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "주요 시사점",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제5장",
+     "title": "오픈액세스 전환 추진 전략 및 조직 구성안",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "단계별 로드맵에 따른 오픈액세스 전환 추진 전략",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "오픈액세스 전환 로드맵",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "단기 계획: 정책 기반 마련 및 시범 적용 (2026~2027)",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "중기 계획: 제도 안착 및 과도기 운영 (2028~2030)",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "장기 계획: 개방적 학술연구 생태계 완성 (2031~)",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "부문별 오픈액세스 전환 추진 전략",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "오픈액세스 전환 법적 및 제도적 기반 구축",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "국가 차원 오픈액세스 정책 추진 사업 운영",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "국가 오픈액세스 인프라 구축",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "국가 오픈액세스 전환 추진을 위한 조직 구성",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "국내외 유사 조직 벤치마킹",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "독일 DEAL consortium",
+     "page": 148,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "영국: Jisc (Joint Information Systems Committee)",
+     "page": 149,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "다.",
+     "title": "프랑스: Couperin(Consortium universitaire de publications numériques)",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "라.",
+     "title": "아일랜드: IReL 및 NORF",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "마.",
+     "title": "오스트리아: KEMÖ 및 FWF 기반 협력체계",
+     "page": 151,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "바.",
+     "title": "스웨덴: 국립도서관 운영 Bibsam 컨소시엄과 대학총장협의회 협력 모델",
+     "page": 154,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "사.",
+     "title": "노르웨이: Sikt (통합 서비스 기구)",
+     "page": 154,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "아.",
+     "title": "미국 캘리포니아: 주 단위 통합협상단 운영",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "자.",
+     "title": "오하이오: OhioLINK (오하이오주 교육부 산하 거버넌스)",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "차.",
+     "title": "캐나다의 다차원 거버넌스",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "카.",
+     "title": "라틴 아메리카 대륙 차원의 협력 조직",
+     "page": 157,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "타.",
+     "title": "중앙 정부 주도의 중국 오픈액세스 추진 거버넌스",
+     "page": 158,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "파.",
+     "title": "하향식 오픈액세스 정책 추진에 따른 일본 전환계약 신규 조직 구성",
+     "page": 158,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "하.",
+     "title": "한국: NST 컨소시엄",
+     "page": 159,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "주요 실행 주체간 역할분담 및 협력체 구성안 도출",
+     "page": 160,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "가.",
+     "title": "범부처 OA 전환 거버넌스 체계 구축",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "나.",
+     "title": "국가 차원 공동대응 전략 수립 및 실천을 위한 협력체 기반 운영 조직 구성안",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "제6장",
+     "title": "결론 및 정책 제언",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제1절",
+     "title": "결론",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "글로벌 오픈액세스 정책 구성요소 제시",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "한국형 오픈액세스 정책 추진 방향 수립",
+     "page": 163,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "오픈액세스 관련 법제도 개정(안) 제안",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "국내 OA 추진 현황, 인식, 비용 진단",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "5.",
+     "title": "국가 OA 전환 로드맵 및 거버넌스·조직·실행(안) 제시",
+     "page": 165,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "제2절",
+     "title": "정책적 제언",
+     "page": 166,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "1.",
+     "title": "오픈액세스 법령 정비",
+     "page": 166,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "2.",
+     "title": "오픈액세스 전환 추진 조직 구성",
+     "page": 167,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "3.",
+     "title": "오픈액세스 정책의 지속적인 모니터링",
+     "page": 167,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "4.",
+     "title": "오픈액세스 지원 사업",
+     "page": 167,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 169,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 174,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "이해집단별 설문지",
+     "page": 174,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "실무 간담회 및 포럼 개최 내역",
+     "page": 189,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

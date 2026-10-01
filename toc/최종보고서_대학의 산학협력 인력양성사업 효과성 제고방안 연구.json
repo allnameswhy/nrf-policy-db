@@ -1,0 +1,558 @@
+{
+ "file": "최종보고서_대학의 산학협력 인력양성사업 효과성 제고방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 193,
+ "documents": [
+  {
+   "pages": [
+    1,
+    193
+   ],
+   "kind": "main",
+   "title": "대학의 산학협력 인력양성사업 효과성 제고방안 연구",
+   "body_start": 25,
+   "back_start": 191,
+   "toc_pages": [
+    18,
+    19,
+    20
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구의 내용과 방법",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연구의 내용",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "연구의 방법",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "산학협력 인력양성 교육 개념정리 및 제도 분석",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "개념정립과 특성",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "계약학과",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "주문식 교육과정",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "법 제도 분석",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "계약학과",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "주문식 교육과정",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "산학협력 인력양성 교육 운영 현황 및 평가",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "계약학과",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "계약학과 운영현황",
+     "page": 44,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "사례분석",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "조기취업형 계약학과",
+     "page": 54,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "일학습병행제 계약학과",
+     "page": 58,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "중소기업 계약학과",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "계약학과 교육과정 문제점 분석 및 개선 의견 수렴",
+     "page": 66,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "주문식 교육과정",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전체 운영현황",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "전문대학 주문식 교육과정 운영현황",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "대학 주문식 교육과정 운영현황",
+     "page": 84,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "주문식 교육과정 사례분석",
+     "page": 93,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "주문식 교육과정의 문제점 분석 및 개선 의견 수렴",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "현장실습",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "현장실습 운영현황",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "현장실습 운영 평가",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습 운영실태",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "산학협력 인력양성 교육 개선 방안",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "산학협력 인력양성 교육 제도 관련 개선 방안",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "계약학과 운영 법·제도 개선",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "조기취업형 계약학과 개선방안",
+     "page": 119,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "일학습병행제 계약학과 개선방안",
+     "page": 120,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "계약학과 신고제 개선방안",
+     "page": 120,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(4)",
+     "title": "채용조건형 계약학과 산업체 참여 확대방안",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(5)",
+     "title": "사전 채용 약정을 통한 인재상 미스매치 해소",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(6)",
+     "title": "산업 현장의 조기 진출을 위한 계약학과 조기 졸업제 도입",
+     "page": 122,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "주문식 교육과정 운영 법·제도 개선",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "주문식 교육과정의 정의 수립",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "주문식 교육과정의 운영 기준 수립",
+     "page": 123,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "효과성 분석을 위한 주문식 교육과정 현황 조사 개선",
+     "page": 124,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습 운영 법·제도 개선",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "표준화된 운영기준 마련",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "상위 법령 위임에 따른 행정규칙 등의 개정",
+     "page": 128,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "정부 부처별 재정지원사업 개선",
+     "page": 130,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(4)",
+     "title": "국고지원비 지급 기준 및 방식 개선",
+     "page": 132,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(5)",
+     "title": "현장실습 유관 법령의 개선",
+     "page": 133,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "산학협력 인력양성 교육 운영 관련 개선 방안",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "계약학과",
+     "page": 135,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "산학 연계 인력양성을 위한 계약학과 표준교육운영 모델 개발",
+     "page": 136,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "계약학과 학사 운영 체제의 유연화",
+     "page": 136,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "계약학과 운영의 질적 관리를 위한 체계적인 교육관리 시스템 구축",
+     "page": 136,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "주문식 교육과정",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "나노디그리 과정과 연계한 사회맞춤형 인재양성 효과성 제고",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "산업군 및 산업연합체 주문식 교육과정 요청 확대",
+     "page": 137,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(3)",
+     "title": "미래산업 대응 인재양성을 위한 정부재정지원 목적사업 확대",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습 :「현장실습 인증제」도입",
+     "page": 139,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "산학협력 인력양성 교육 문화 인식 측면 개선방안",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "산학협력 마일리지 제도 개선",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "대학과 산업간의 연결성 강화를 위한 공유 교육 모델 추진",
+     "page": 149,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "현장실습 기업 참여 활성화를 위한 지원제도 개선",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(1)",
+     "title": "현장실습지원비에 대한 세액공제 도입",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 4,
+     "label": "(2)",
+     "title": "현장실습 활성화 및 고도화를 위한 대학주도 협회 설립",
+     "page": 153,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "거버넌스 측면 개선방안",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "범 정부 산학협력 인력양성 사업 위원회 구축을 통한 국가재정지원사업 체계 고도화 추진",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "국가 산학협력 인력양성 플랫폼 구축 및 연구력 제고",
+     "page": 156,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "권역별 산학협력교육거점센터 운영 (확산/협력 측면)",
+     "page": 158,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "대학의 산학협력 문화·인식 및 전문성 제고",
+     "page": 160,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "결론 및 제언",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "요약",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "제언",
+     "page": 164,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "【참고문헌】",
+     "page": 167,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

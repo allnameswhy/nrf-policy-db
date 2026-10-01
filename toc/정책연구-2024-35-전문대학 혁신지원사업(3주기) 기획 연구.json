@@ -1,0 +1,818 @@
+{
+ "file": "정책연구-2024-35-전문대학 혁신지원사업(3주기) 기획 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 353,
+ "documents": [
+  {
+   "pages": [
+    1,
+    353
+   ],
+   "kind": "main",
+   "title": "전문대학 혁신지원사업(3주기) 기획 연구",
+   "body_start": 27,
+   "back_start": 317,
+   "toc_pages": [
+    14,
+    15,
+    16,
+    17
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연구의 동기 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "연구의 필요성",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구내용 및 범위",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "추진전략 및 방법",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "추진전략 및 체계",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "추진방법",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "기대성과 및 활용방안",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "고등직업교육 대내·외 환경 분석",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "고등직업교육의 환경 변화와 정책 수요",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "환경 변화",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "정책 수요",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "고등(직업)교육 재정지원 구조 분석",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "고등직업교육 재정지원 정책 현황",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "고등교육 재정지원 현황 분석",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "고등직업교육 재정지원정책의 주요 쟁점분석",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "고등교육기관 현황 분석",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "고등교육기관 일반 현황",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "고등교육기관 재정 현황 및 사립 전문대학 재정진단",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "요약 및 시사점",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "전문대학 재정지원사업 현황 및 성과 분석",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "전문대학 주요 재정지원사업 현황",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문대학 대상 정부재정지원 총괄",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "전문대학 일반재정지원사업 정책 및 현황 분석",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "일반대학 일반재정지원사업 정책 및 현황 분석",
+     "page": 83,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "전문대학 특수목적지원사업 정책 현황 분석",
+     "page": 85,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "전문대학 주요 재정지원사업 성과 분석",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문대학 일반재정지원사업 성과 분석",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "전문대학 특수목적지원사업 성과 분석",
+     "page": 97,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "요약 및 시사점",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "타 재정지원사업 대비 혁신지원사업의 강점",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재정지원사업의 성과 유지 방안",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "RISE 체계 시행에 따라 예상되는 변화",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "2주기 전문대학 혁신지원사업 성과 분석",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "2주기 전문대학 혁신지원사업 개요",
+     "page": 105,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "연차별 주요 기본계획 변경사항",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "2주기 전문대학 혁신지원사업 성과분석",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "성과지표 성과분석",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "재정투자 분석",
+     "page": 134,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "적정규모화 추진 및 성과",
+     "page": 140,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교육혁신 전략 계획 및 추진 분석",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "2주기 전문대학 혁신지원사업 우수사례 분석",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "교육혁신",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "산학협력혁신",
+     "page": 161,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "기타혁신",
+     "page": 168,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "대학 공공성 및 사회적 가치 실현",
+     "page": 175,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "요약 및 시사점",
+     "page": 183,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "3주기 전문대학 혁신지원사업 방향 수립을 위한 설문조사 및 자문 결과",
+     "page": 187,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설문조사 개요",
+     "page": 187,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "설문조사 목적",
+     "page": 187,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "설문조사 방법 및 응답 결과",
+     "page": 187,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "설문조사 내용 및 활용",
+     "page": 188,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "2주기 참여대학 대상 설문 내용",
+     "page": 188,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "2주기 미참여대학 대상 설문 내용",
+     "page": 188,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "점수 산출 방법",
+     "page": 188,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "미참여대학 설문조사 결과",
+     "page": 190,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "2주기 전문대학 혁신지원사업 성과에 대한 자체평가",
+     "page": 191,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "사업 운영 전반 성과 및 자체평가",
+     "page": 191,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교육혁신 분야 성과 및 자체평가",
+     "page": 193,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "산학협력혁신 분야 성과 및 자체평가",
+     "page": 194,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "기타혁신 분야 성과 및 자체평가",
+     "page": 195,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "대학 공공성 및 사회적 가치 실현",
+     "page": 196,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "3주기 전문대학 혁신지원사업의 지속성장을 위한 제안 사항",
+     "page": 198,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "사업 운영 전반",
+     "page": 198,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교육혁신 영역",
+     "page": 200,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "산학협력혁신 영역",
+     "page": 201,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "기타혁신 영역",
+     "page": 202,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "대학 공공성 및 사회적 가치실현 영역",
+     "page": 204,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "바.",
+     "title": "사업성과 평가 영역",
+     "page": 205,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "사.",
+     "title": "기타 사항",
+     "page": 212,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "3주기 전문대학 혁신지원사업 방향수립을 위한 전문가 자문",
+     "page": 218,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문가 자문 개요",
+     "page": 218,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "전문가 1차 자문 결과 (혁신지원사업발전협의회 자문단)",
+     "page": 219,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "전문가 2차 자문 결과 (전문대학 교무·입학처장 협의회 위원)",
+     "page": 224,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "3개년(‘24~’26) 교육혁신을 위한 대학별 성과 및 계획",
+     "page": 228,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "3개년(‘24~’26) 교육혁신 계획 개요",
+     "page": 228,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교육혁신 계획 설문 개요",
+     "page": 228,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "교육혁신 계획 설문 결과",
+     "page": 230,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "요약 및 시사점",
+     "page": 241,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "2주기 전문대학 혁신지원사업 성과에 대한 자체평가",
+     "page": 241,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "3주기 전문대학 혁신지원사업의 지속성장을 위한 제안사항",
+     "page": 242,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "3주기 전문대학 혁신지원사업 방향수립을 위한 전문가 자문",
+     "page": 243,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "3개년(’24~’26) 교육혁신을 위한 대학별 성과 및 계획",
+     "page": 244,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VI.",
+     "title": "3주기 전문대학 혁신지원사업 추진 계획(안)",
+     "page": 247,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "3주기 전문대학 혁신지원사업 설계 방향",
+     "page": 247,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "고등교육 정책 방향에 따른 사업 기획",
+     "page": 247,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "RISE 체계에서의 전문대학의 역할",
+     "page": 248,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "RISE 체계에서 전문대학의 경쟁력 강화를 지원하는 혁신지원사업",
+     "page": 250,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교육혁신 전략의 지속 추진을 위한 사업 기획",
+     "page": 251,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "신규 참여대학의 성공적 안착을 위한 사업 지원",
+     "page": 252,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "3주기 사업의 비전 및 주요 추진전략",
+     "page": 253,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "3주기 전문대학 혁신지원사업 비전과 사업목표",
+     "page": 254,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "사업 추진전략",
+     "page": 254,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사업 세부 추진 및 운영 계획(안)",
+     "page": 256,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문대학 혁신지원사업 성과평가 설계 선행연구 분석",
+     "page": 256,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "사업비 배분 방식",
+     "page": 258,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "사업 및 성과관리 방안",
+     "page": 265,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VII.",
+     "title": "결론 및 제언",
+     "page": 269,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "요약",
+     "page": 269,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문대학 재정지원사업의 성과 분석",
+     "page": 269,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "전문대학 혁신지원사업의 주요 성과 및 시사점",
+     "page": 270,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "3주기 사업 추진을 위한 방향성",
+     "page": 271,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "정책 제언 및 결론",
+     "page": 273,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "전문대학 혁신지원사업의 개선 방향",
+     "page": 273,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "고등직업교육 혁신 전략",
+     "page": 274,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "결론",
+     "page": 275,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 277,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 279,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "A1.",
+     "title": "대학정보공시 관련 각종 표",
+     "page": 279,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "A2.",
+     "title": "사립전문대학 재정진단 결과",
+     "page": 281,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "A3.",
+     "title": "참여대학 대상 설문지",
+     "page": 285,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "A4.",
+     "title": "참여대학 설문조사 결과 raw data",
+     "page": 295,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

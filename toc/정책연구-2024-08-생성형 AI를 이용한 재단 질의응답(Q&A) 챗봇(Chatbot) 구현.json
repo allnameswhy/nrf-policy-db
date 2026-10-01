@@ -1,0 +1,262 @@
+{
+ "file": "정책연구-2024-08-생성형 AI를 이용한 재단 질의응답(Q&A) 챗봇(Chatbot) 구현.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 81,
+ "documents": [
+  {
+   "pages": [
+    1,
+    81
+   ],
+   "kind": "main",
+   "title": "생성형 AI를 이용한 재단 질의응답(Q&A) 챗봇(Chatbot) 구현 - 검색증강생성(RAG) 기술 활용 중심으로",
+   "body_start": 9,
+   "back_start": 39,
+   "toc_pages": [
+    7
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "1.",
+     "title": "서론",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "2.",
+     "title": "개발된 SW의 사용법",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.1.",
+     "title": "사용법",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.2.",
+     "title": "테스트 결과",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "3.",
+     "title": "데이터 전처리 방법",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.1.",
+     "title": "개요",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.2.",
+     "title": "데이터 변환 과정",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.3.",
+     "title": "의미 단위 분할과 요약(Semantic Chunking)",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.4.",
+     "title": "규정의 영어번역 및 프롬프트",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.5.",
+     "title": "의미단위 분할과 요약 생성을 위한 GPT-4o 프롬프트",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.6.",
+     "title": "FAQ 파일 추가 또는 생성방법",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "4.",
+     "title": "검색(Retrieval) 성능 향상",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.1.",
+     "title": "개요",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.2.",
+     "title": "평가 데이터",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.3.",
+     "title": "임베딩 벡터 기반 탐색 성능",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.4.",
+     "title": "생성형 AI 기반 ReRANK 방법의 성능평가",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.5.",
+     "title": "LlamaIndex 기반 BM25 및 하이브리드 검색기 구현",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.6.",
+     "title": "영어 번역문을 이용한 BM25 성능 향상",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "5.",
+     "title": "프로토타입 소프트웨어 설명",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.1.",
+     "title": "개요",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.2.",
+     "title": "프로그램 실행 절차",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.3.",
+     "title": "SW의 내부 설명",
+     "page": 34,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "6.",
+     "title": "결론 및 향후 연구 방향",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.1.",
+     "title": "결론",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.2.",
+     "title": "향후 연구 방향",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "7.",
+     "title": "참고문헌",
+     "page": 39,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "8.",
+     "title": "부록",
+     "page": 40,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.1.",
+     "title": "40개 평가용 질문",
+     "page": 40,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.2.",
+     "title": "LlamaIndex를 이용한 네가지 Retriever의 구현",
+     "page": 47,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.3.",
+     "title": "quest_kwd_gen_new.py (전처리 SW)",
+     "page": 51,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.4.",
+     "title": "faq_embedding_update.py",
+     "page": 57,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.5.",
+     "title": "st_hybrid_nrf.py",
+     "page": 61,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "8.6.",
+     "title": "Integrated_functions.py",
+     "page": 69,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "9.",
+     "title": "안내문",
+     "page": 81,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

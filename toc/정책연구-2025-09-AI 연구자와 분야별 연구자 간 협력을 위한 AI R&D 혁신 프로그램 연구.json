@@ -1,0 +1,115 @@
+{
+ "file": "정책연구-2025-09-AI 연구자와 분야별 연구자 간 협력을 위한 AI R&D 혁신 프로그램 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 79,
+ "documents": [
+  {
+   "pages": [
+    1,
+    79
+   ],
+   "kind": "main",
+   "title": "AI 연구자와 분야별 연구자간 협력을 위한 AI R&D 혁신 프로그램 연구",
+   "body_start": 10,
+   "back_start": 45,
+   "toc_pages": [
+    9
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "사업개요",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "환경분석",
+     "page": 10,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "비전 및 추진전략",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "세부 추진 방향",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "AI 모델 개발 및 적용",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "R&D 성과 및 효율성 혁신",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "학계 검증·데이터 공유 성과 확산",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "성과 목표 측정 방법",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "선정계획 및 평가 방식",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "기대효과",
+     "page": 33,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 36,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임 1 :",
+     "title": "AI+S&T 혁신 기술개발 신규사업 과제(안)",
+     "page": 38,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "붙임 2 :",
+     "title": "AI+S&T 혁신 기술개발 신규사업 후보 과제(안) - 총괄표",
+     "page": 63,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

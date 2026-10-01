@@ -1,0 +1,347 @@
+{
+ "file": "정책연구-2024-29-고등직업교육거점지구 사업(HiVE) 종합성과 분석 및 백서 발간.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 688,
+ "documents": [
+  {
+   "pages": [
+    1,
+    688
+   ],
+   "kind": "main",
+   "title": "고등직업교육거점지구 사업(HiVE) 종합성과 분석 및 백서 발간",
+   "body_start": 37,
+   "back_start": 489,
+   "toc_pages": [
+    27,
+    28
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서 론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 개요 및 범위",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "기대 효과 및 활용 방안",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "데이터 수집 및 분석 방법과 내용",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "데이터 수집",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "양적·질적 성과 종합 분석 및 평가 모델 개발",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "고등직업교육거점지구 사업(HiVE) 개요 및 추진 내용",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업 배경 및 필요성",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "사업 목적 및 목표",
+     "page": 24,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "사업 추진 체계",
+     "page": 27,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "사업 주요 내용 및 추진 과정",
+     "page": 38,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "사업 핵심 성과지표 기반 RISE 연계 시사점",
+     "page": 53,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "전문대학 재정지원사업 개요 및 HiVE 사업의 차별성",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "전문대학 재정지원사업 개요 및 추진 현황",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "전문대학 혁신지원사업",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "마이스터대 지원사업",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "신산업분야 특화 선도전문대학 지원사업",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "전문대학 LINC 3.0 사업",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "지자체-대학 협력기반 지역혁신사업 (RIS)",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7.",
+     "title": "지방대학 활성화 지원사업",
+     "page": 112,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8.",
+     "title": "대학 평생교육체제 지원 사업(LiFE 2.0)",
+     "page": 116,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "9.",
+     "title": "HiVE사업-타 전문대학 재정지원사업간 차별성 분석",
+     "page": 121,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "V.",
+     "title": "HiVE 사업 성과 평가 및 효과성 분석",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "HiVE 사업 양적 성과분석",
+     "page": 141,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "HiVE 사업 만족도 조사 (핵심 성과지표 연계) 분석",
+     "page": 207,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "HiVE 사업 추가 만족도 설문 분석",
+     "page": 224,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "HiVE 사업 심층 인터뷰 (FGI)",
+     "page": 256,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "HiVE 사업 우수사례 도출",
+     "page": 321,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VI.",
+     "title": "HiVE 사업 인지도 및 선행 정책연구 분석",
+     "page": 353,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "HiVE 사업 관련 언론보도 분석",
+     "page": 353,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "HiVE 사업 관련 기존 선행 정책연구 및 이슈페이퍼 분석",
+     "page": 367,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "시사점",
+     "page": 402,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VII.",
+     "title": "개선점 분석",
+     "page": 413,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "사업 운영 상의 개선점",
+     "page": 413,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "재정 집행 상의 개선점",
+     "page": 420,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "성과 평가 상의 개선점",
+     "page": 422,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "VIII.",
+     "title": "결론 및 제언",
+     "page": 427,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "종합 요약",
+     "page": 427,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "고등직업교육 해외 동향 분석",
+     "page": 431,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "결론 및 제언 - 문제점 해결방안 및 향후 정책방향",
+     "page": 435,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고 문헌",
+     "page": 451,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "IX.",
+     "title": "부 록",
+     "page": 455,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설문 조사 문항 및 분석 보고서",
+     "page": 455,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "심층 인터뷰 (FGI) 사전 의견 조사지",
+     "page": 503,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "17개 시도별 RISE 계획과 연계 가능한 HiVE 대표사례 기반 모델 제안",
+     "page": 507,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,199 @@
+{
+ "file": "정책연구-2024-41-국내 소재 고등외국교육기관과 국내외·대학 및 산업체·지역사회와의 연계 협력 강화 방안.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 139,
+ "documents": [
+  {
+   "pages": [
+    1,
+    139
+   ],
+   "kind": "main",
+   "title": "국내 소재 고등외국교육기관과 국내·외 대학 및 산업체·지역사회와의 연계 협력 강화 방안",
+   "body_start": 21,
+   "back_start": 130,
+   "toc_pages": [
+    16
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 내용 및 범위",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구 방법",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "고등외국교육기관 연계·협력 실태 및 문제점 분석",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "여건 분석",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "인천 소재 고등외국교육기관 개요",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "고등외국교육기관의 산학연협력 실태 및 문제점",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "소결",
+     "page": 35,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "국내 소재 고등외국교육기관 연계·협력 요구 분석",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "개요",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "고등외국교육기관 이해관계자 FGI 결과 분석",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "소결",
+     "page": 64,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "해외 주요국 사례 분석",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "Monash University in Indonesia",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "Heriot-Watt University in Malysia",
+     "page": 74,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "NYU Abu Dhabi",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "TUM in Singapore",
+     "page": 85,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "Temple University in Japan",
+     "page": 89,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "소결",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "국내 소재 고등외국교육기관 연계·협력 활성화 방안",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "산학연 연계·협력의 문제점 요약",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "산·학·연 활성화를 위한 추진 과제",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "문제점 및 방안 종합 정리",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 108,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

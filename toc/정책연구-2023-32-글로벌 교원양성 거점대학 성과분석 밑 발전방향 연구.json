@@ -1,0 +1,214 @@
+{
+ "file": "정책연구-2023-32-글로벌 교원양성 거점대학 성과분석 밑 발전방향 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 143,
+ "documents": [
+  {
+   "pages": [
+    1,
+    143
+   ],
+   "kind": "main",
+   "title": "글로벌 교원양성 거점대학 성과분석 및 발전방향 연구",
+   "body_start": 26,
+   "back_start": 135,
+   "toc_pages": [
+    19,
+    20
+   ],
+   "boundary_reason": "PDF 첫 문서로 표지(1쪽)에서 시작한다. 26쪽의 꼬리말 번호 1은 앞부속(요약문·목차)이 따로 번호를 매긴 뒤 본문이 1쪽부터 다시 시작한 것이라 같은 문서다. 부록의 꼬리말 번호는 본편에서 이어진다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "연구의 필요성 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구의 목적",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구내용 및 방법",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "GTU 사업의 현황",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "GTU 사업의 개요",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "GTU 사업의 현황",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "GTU 사업의 성과지표 진단 및 성과관리 체계 분석",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "GTU 사업의 성과지표 진단",
+     "page": 16,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "GTU 사업에 적용 가능한 성과관리 체계 탐색 및 적용",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "GTU 사업의 성과분석",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "GTU 사업성과의 정량적 추세 분석",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "DEA를 이용한 성과분석",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "GTU 사업에 대한 성과분석",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "결론",
+     "page": 52,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "GTU 사업의 성공 요인 및 한계점 분석",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "GTU 사업 분석을 위한 설문 조사 개요",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "설문의 정량적 분석 결과",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "설문조사 정성적 분석 결과",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "우수 성과 및 대표 성과",
+     "page": 91,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "GTU 사업의 시사점과 발전 방향",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "GTU 사업성과 미래 발전 방안",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "GTU 사업성과 내재화 방안",
+     "page": 108,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "GTU 사업성과 공유 및 확산 방안",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 110,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부록",
+     "page": 112,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "안내문",
+     "page": 118,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

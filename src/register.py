@@ -1,14 +1,16 @@
-"""관리번호 등록부 생성 — 파이프라인 1단계 (LLM 0).
+"""관리번호 등록부 생성 — 파이프라인 1단계 (판독 파일이 없는 PDF마다 LLM 판독 1회).
 
 PDF 표지에 인쇄된 관리번호(`정책연구 YYYY-NN`)를 읽어 `report_ids.tsv`에 기입한다.
-이후 모든 단계(extract·verify·promote·status·serve)는 이 표만 읽는다(`src/registry.py`) —
+이후 모든 단계(extract·verify·status·serve)는 이 표만 읽는다(`src/registry.py`) —
 표에 없거나 rid가 공란인 행이 하나라도 있는 PDF는 어느 단계도 지나지 못하므로, 표지에서 못
 읽은 문서는 이 도구가 출력하는 「사람이 고칠 것」 목록(또는 /admin 가족 카드)을 보고 사람이
 기입한다(`--set` / /admin 입력칸 — 표 파일 손편집 금지).
 
 rid 부여 규칙(v4, 2026-09-08 사용자 결정 — 파일명 번호는 rid에 쓰지 않고 힌트로만):
- 0) 합본 분할: 경량 전체 스캔(extract.scan_document(tables=False))으로 detect_parts를 돌려
-    파트마다 행(pages 열)을 만든다 — 등록 단위 = 문서, 파트도 각자 rid(`_NN` 접미 폐지).
+ 0) 합본 분할: 판독 파일 `toc/{PDF stem}.json`(src/docread.py — PDF당 LLM 1회로 문서 범위·본문 경계·목차
+    항목을 읽어 저장)의 문서 범위마다 행(pages 열)을 만든다 — 등록 단위 = 문서, 파트도 각자 rid.
+    판독 파일이 없는 PDF는 이 도구가 판독부터 채운다(이미 있으면 다시 읽지 않는다 — 재판독은 docread --force).
+    행의 쪽 범위는 판독 문서 범위와 같아야 한다(registry.toc_problem — 다르면 미등록 취급, --drop 후 재등록).
  1) 기본 번호: 파트(또는 파일) 표지 3단 탐색 ① 1쪽 → ② 1~6쪽 → ③ 1~6쪽+끝 2쪽 — 각 단에서
     같은 줄에 정책연구/연구보고/관리번호/NRF 문맥이 있는 `YYYY-NN`이 정확히 하나면 채택
     (source=cover), 여러 개면 그 단에서 멈추고 공란(후보를 note에), 하나도 없으면 다음 단.
@@ -28,9 +30,9 @@ note는 고정 세그먼트(registry.parse_note가 되읽음): 표지 번호 · 
 지우지 않고 "행 삭제 필요"로 출력한다.
 
 사용: python src/register.py ["pdfs/<파일>.pdf" ...]   # 인자 없으면 pdfs/*.pdf 전부
-      --check   쓰기 없이 표↔pdfs 정합 검사만(공란·파일 없음·미수록·형식 위반·중복)
-      --dry-run 추가될 행만 출력
-종료 코드: 0 = 사람이 고칠 것 없음, 1 = 기입·정리 필요, 2 = 사용 오류.
+      --check   쓰기 없이 표↔pdfs↔판독 파일 정합 검사만(공란·파일 없음·미수록·형식 위반·중복·판독 불일치) — LLM 0
+      --dry-run 추가될 행만 출력 — LLM 0(판독 파일이 없는 PDF는 "판독 필요"로만 표시)
+종료 코드: 0 = 사람이 고칠 것 없음, 1 = 기입·정리 필요 또는 판독 실패, 2 = 사용 오류·인증/한도 중단.
 실측(2026-09-04 v3, 278권): 자동 확정 258 · 기입 필요 20 · `-vN` 4(2018-49) · 번호 중복 2쌍.
 """
 
@@ -50,8 +52,8 @@ from pathlib import Path
 
 import pymupdf
 
+import docread
 import registry
-from extract import detect_parts, scan_document
 from registry import (COLUMNS, NOTE_SEP, REGISTRY_PATH, RID_RE, SOURCES, STEM_RE, Row, family_key,
                       family_of, format_pages, norm_name, parse_note, parse_pages, read_rows,
                       rid_sort_key)
@@ -71,7 +73,6 @@ COVER_CUES = ("성과백서", "가이드북", "요약본", "사례집", "자료�
               "별권", "별책", "부록", "첨부", "백서")
 TITLE_STOP = {"연구", "보고서", "최종", "최종보고서", "방안", "위한", "대한", "분석", "개발", "정책",
               "정책연구", "사업", "지원", "체계", "구축", "마련", "전략", "기획", "개선", "관한", "통한"}
-LEGACY_REGISTERED_DATE = "2026-09-04"  # v4 이전(registered 공란) 행의 등록일 — 전량 그날 기입
 SAME_RUN_FIRST_KEEPS = False  # True = 같은 실행 충돌 시 파일명 정렬 첫 행은 유지(사용자 결정: 전부 공란)
 UNKNOWN_RE = re.compile(r"^(\d{4})-00$")
 KEY_PART_RE = re.compile(r"^(.*?)#(\d{1,2})$")
@@ -85,6 +86,7 @@ class CoverScan:
     cues: list[str] = field(default_factory=list)
     title: str = ""
     text_chars: int = 0
+    kind: str = ""  # 판독이 본 문서 종류(main|volume|appendix|other) — 합본 파트의 note에 남긴다
 
 
 def cover_title(page) -> str:
@@ -137,26 +139,35 @@ def scan_cover_doc(doc, lo: int, hi: int) -> CoverScan:
     return sc
 
 
-def scan_cover(pdf_path) -> CoverScan:
-    doc = pymupdf.open(str(pdf_path))
-    try:
-        return scan_cover_doc(doc, 0, len(doc) - 1)
-    finally:
-        doc.close()
-
-
 PartScans = list[tuple[CoverScan, "tuple[int, int] | None"]]
 
 
+DOC_KIND_KO = {"main": "본편", "volume": "별권", "appendix": "부록", "other": "기타"}
+
+
 def scan_pdf(pdf_path) -> PartScans:
-    """경량 전체 스캔 → 합본 파트 경계 → 파트별 표지 스캔. 단독본은 [(표지, None)]."""
+    """판독 파일의 문서 범위 → 문서별 표지 스캔. 단독본은 [(표지, None)].
+    판독 파일이 없거나 PDF와 쪽 수가 다르면 ValueError(호출자가 판독부터 채운다)."""
+    tp = registry.toc_path(pdf_path)
+    if not tp.is_file():
+        raise ValueError(registry.TOC_MISSING)
+    data = json.loads(tp.read_text(encoding="utf-8"))
+    docs = data.get("documents") or []
     doc = pymupdf.open(str(pdf_path))
     try:
         n = len(doc)
-        parts = detect_parts(scan_document(doc, tables=False)) if n else [(0, -1)]
-        if len(parts) <= 1:
+        if not docs or data.get("n_pages") != n or docs[-1]["pages"][1] != n:
+            raise ValueError(f"판독 파일과 PDF의 쪽 수가 다름(판독 {data.get('n_pages')}쪽, PDF {n}쪽) — "
+                             "PDF가 바뀌었으면 python src/docread.py --force로 재판독")
+        if len(docs) == 1:
             return [(scan_cover_doc(doc, 0, n - 1), None)]
-        return [(scan_cover_doc(doc, lo, hi), (lo, hi)) for lo, hi in parts]
+        out: PartScans = []
+        for d in docs:
+            lo, hi = d["pages"][0] - 1, d["pages"][1] - 1
+            sc = scan_cover_doc(doc, lo, hi)
+            sc.kind = d.get("kind") or ""
+            out.append((sc, (lo, hi)))
+        return out
     finally:
         doc.close()
 
@@ -234,7 +245,7 @@ def decide_parts(name: str, part_scans: PartScans, md_hint: list[str] | None = N
     rows: list[Row] = []
     for i, (sc, rng) in enumerate(part_scans, 1):
         pages = format_pages(rng)
-        seg = f"합본 파트 {i}/{n}({pages}쪽" + (", 쪽 번호 재시작)" if i > 1 else ")")
+        seg = f"합본 파트 {i}/{n}({pages}쪽" + (f", 판독 {DOC_KIND_KO.get(sc.kind, sc.kind)})" if sc.kind else ")")
         row = decide(name, sc, md_hint, today, part_seg=seg)
         row.pages = pages
         rows.append(row)
@@ -523,6 +534,7 @@ def check_table(rows: list[Row], pdf_dir: Path, reports_dir: Path = Path("report
     present = {norm_name(p) for p in Path(pdf_dir).glob("*.pdf")}
     held = registry.held_names(pdf_dir)
     out: dict[str, list[str]] = {"기입 필요": [], "행 삭제 필요": [], "형식 위반": [], "rid 중복": [],
+                                 "판독과 다름(--drop 후 재등록)": [], "판독 필요(register 실행)": [],
                                  "미수록(register 실행 필요)": [], "열 밀림 의심(탭 개수)": [], "검토": []}
     by_rid: dict[str, list[str]] = {}
     grouped = by_file(rows)
@@ -534,6 +546,15 @@ def check_table(rows: list[Row], pdf_dir: Path, reports_dir: Path = Path("report
         problem = registry._rows_problem(frows)
         if problem and ("pages" in problem):
             out["형식 위반"].append(f"{f} — {problem}")
+        else:  # 판독 파일 대조는 rid 공란 여부와 따로 본다(공란 행이 있어도 범위 불일치는 드러나야 한다)
+            try:
+                tprob = registry.toc_problem(frows)
+            except ValueError:
+                tprob = ""
+            if tprob.startswith(registry.TOC_MISMATCH):
+                out["판독과 다름(--drop 후 재등록)"].append(f"{f} — {tprob}")
+            elif tprob:
+                out["판독 필요(register 실행)"].append(f"{f} — {tprob}")
         for r in frows:
             if r.source not in SOURCES + ("",):  # 탭이 밀려 다른 열의 값이 source에 들어온 줄
                 out["열 밀림 의심(탭 개수)"].append(
@@ -785,45 +806,6 @@ def drop_file(rows: list[Row], key: str, reports_dir: Path) -> tuple[list[Row], 
 
 
 # ---------------------------------------------------------------------------
-# v4 이전 행 보정 (registered 공란인 행만 1회 — 이후 실행은 no-op)
-# ---------------------------------------------------------------------------
-
-def backfill_legacy(rows: list[Row], pdf_dir: Path, today: str) -> tuple[int, int]:
-    """rid는 있는데 registered가 공란인 행(v3) → 등록일 2026-09-04 기입; 단독 행이 합본이면
-    파트 행으로 확장(파트 1 = 기존 rid, 파트 2~ = 자기 표지로 결정 → 번호 없으면 공란).
-    반환 (등록일 기입 수, 합본 확장 파일 수)."""
-    dated = expanded = 0
-    for f, frows in list(by_file(rows).items()):
-        legacy = [r for r in frows if r.report_id and not r.registered]
-        if not legacy:
-            continue
-        pdf = Path(pdf_dir) / f
-        if len(frows) == 1 and not frows[0].pages and pdf.is_file():
-            r = frows[0]
-            part_scans = scan_pdf(pdf)
-            if len(part_scans) > 1:
-                n = len(part_scans)
-                r.pages = format_pages(part_scans[0][1])
-                r.note = NOTE_SEP.join([s for s in [r.note, f"합본 파트 1/{n}({r.pages}쪽)"] if s])
-                r.registered = LEGACY_REGISTERED_DATE
-                new_rows: list[Row] = []
-                for i, (sc, rng) in enumerate(part_scans[1:], 2):
-                    pages = format_pages(rng)
-                    row = decide(f, sc, None, today, part_seg=f"합본 파트 {i}/{n}({pages}쪽, 쪽 번호 재시작)")
-                    row.pages = pages
-                    new_rows.append(row)
-                resolve_collisions(new_rows, [o for o in rows if o is not r] + [r])
-                rows.extend(new_rows)
-                expanded += 1
-                dated += 1
-                continue
-        for r in legacy:
-            r.registered = LEGACY_REGISTERED_DATE
-            dated += 1
-    return dated, expanded
-
-
-# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -833,7 +815,7 @@ def main() -> None:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-    parser = argparse.ArgumentParser(description="표지 관리번호 → report_ids.tsv 등록 (파이프라인 1단계, LLM 0).")
+    parser = argparse.ArgumentParser(description="판독(없는 PDF만 LLM 1회) + 표지 관리번호 → report_ids.tsv 등록 (파이프라인 1단계).")
     parser.add_argument("pdf", nargs="*", help="대상 PDF (기본: pdfs/*.pdf 전부 — 자체 글롭 확장)")
     parser.add_argument("--pdf-dir", default="pdfs")
     parser.add_argument("--reports-dir", default="reports")
@@ -846,6 +828,10 @@ def main() -> None:
                              "빈 값(=)은 공란으로 되돌림. 추출된 문서의 rid 변경은 .md 개명까지 수행")
     parser.add_argument("--drop", action="append", default=[], metavar="파일명일부",
                         help="그 파일의 행 전부 삭제(PDF 삭제·개명·교체 뒤 재등록용)")
+    parser.add_argument("--model", default=docread.DEFAULT_MODEL, help=f"판독 모델 (기본: {docread.DEFAULT_MODEL})")
+    parser.add_argument("--concurrency", type=int, default=3, help="동시 판독 수 (기본: 3)")
+    parser.add_argument("--timeout", type=float, default=600, help="판독 호출당 타임아웃 초 (기본: 600)")
+    parser.add_argument("--token-file", default=str(registry.REPO_ROOT / ".claude_oauth_token"))
     args = parser.parse_args()
 
     pdf_dir = Path(args.pdf_dir)
@@ -894,9 +880,23 @@ def main() -> None:
               + (" …" if len(held) > 5 else ""), file=sys.stderr)
         sys.exit(2)
 
-    dated = expanded = 0
-    if not args.dry_run:
-        dated, expanded = backfill_legacy(rows, pdf_dir, today)
+    # 판독: 판독 파일이 없는 PDF만(표에 이미 있는 파일 포함 — 그 경우 행은 건드리지 않고 판독만 채운다)
+    need = [Path(p) for p in paths if not registry.toc_path(p).is_file()]
+    stop = None
+    if need and args.dry_run:
+        print(f"[판독 필요] {len(need)}건 — 실제 실행 시 PDF당 LLM 판독 1회: "
+              + ", ".join(norm_name(p) for p in need[:5]) + (" …" if len(need) > 5 else ""), file=sys.stderr)
+    elif need:
+        import annotate
+        annotate.setup_auth(args)
+        _logs, stop = docread.ensure_many(need, model=args.model, timeout=args.timeout, concurrency=args.concurrency)
+        if stop is not None:
+            print(annotate.fatal_msg(stop), file=sys.stderr)
+    unread = [norm_name(p) for p in paths if not registry.toc_path(p).is_file()]
+    if unread and not args.dry_run:
+        for name in unread:
+            print(f"[판독 실패] {name} — 등록하지 않음(logs/docread_log.json 참조, 재실행하면 다시 판독)", file=sys.stderr)
+
     hints_by_file = md_sources(reports_dir)
     grouped = by_file(rows)
     items: list[tuple[str, PartScans, "list[str] | None"]] = []
@@ -919,7 +919,13 @@ def main() -> None:
                 if title:
                     r.cover_title, filled_title = title, filled_title + 1
             continue
-        items.append((name, scan_pdf(p), hints_by_file.get(name)))
+        if name in unread:
+            continue
+        try:
+            items.append((name, scan_pdf(p), hints_by_file.get(name)))
+        except ValueError as e:
+            unread.append(name)
+            print(f"[등록 불가] {name} — {e}", file=sys.stderr)
     added = decide_batch(items, rows, today)
     rows.extend(added)
     for row in added:
@@ -928,7 +934,7 @@ def main() -> None:
         print(f"[{'cover' if row.report_id else '기입 필요'}] {tag}{part}: {row.file}"
               + (f" — {row.note}" if row.note else ""), file=sys.stderr)
 
-    if not args.dry_run and (added or filled_title or dated or expanded):
+    if not args.dry_run and (added or filled_title):
         write_rows(rows, reg_path)
         registry.load_registry(reg_path)  # 캐시 갱신(같은 프로세스 내 후속 조회용)
 
@@ -941,10 +947,13 @@ def main() -> None:
     n_vol = sum(1 for m in stems if m and m.group(3))
     n_letter = sum(1 for m in stems if m and m.group(2))
     print(f"== 등록부 {reg_path.name}{' (dry-run — 미기록)' if args.dry_run else ''} ==")
-    print(f"행 {len(rows)} (파일 {n_files} · 합본 파트 행 {n_parts} · 이번 추가 {len(added)} · 합본 확장 {expanded}"
-          f" · 등록일 보정 {dated}) · rid 확정 {n_rid} (cover {n_cover} · manual {n_manual}"
+    print(f"행 {len(rows)} (파일 {n_files} · 합본 파트 행 {n_parts} · 이번 추가 {len(added)}"
+          f") · rid 확정 {n_rid} (cover {n_cover} · manual {n_manual}"
           f" · -vN {n_vol} · 글자 접미 {n_letter}) · 공란 {len(rows) - n_rid}")
-    sys.exit(1 if print_issues(check_table(rows, pdf_dir, reports_dir)) else 0)
+    blocking = print_issues(check_table(rows, pdf_dir, reports_dir))
+    if stop is not None:  # 인증·한도 중단 — 이미 판독된 PDF의 행은 위에서 기록됨
+        sys.exit(2)
+    sys.exit(1 if (blocking or (unread and not args.dry_run)) else 0)
 
 
 if __name__ == "__main__":

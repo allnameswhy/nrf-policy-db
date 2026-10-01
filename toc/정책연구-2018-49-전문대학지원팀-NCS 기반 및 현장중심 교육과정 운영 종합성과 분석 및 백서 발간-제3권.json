@@ -1,0 +1,396 @@
+{
+ "file": "정책연구-2018-49-전문대학지원팀-NCS 기반 및 현장중심 교육과정 운영 종합성과 분석 및 백서 발간-제3권.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 163,
+ "documents": [
+  {
+   "pages": [
+    1,
+    163
+   ],
+   "kind": "main",
+   "title": "제3권 NCS 기반 및 현장중심 교육과정 운영 종합성과 분석 및 백서 발간",
+   "body_start": 10,
+   "back_start": 163,
+   "toc_pages": [
+    5,
+    6
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "서론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 추진 배경 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "추진 배경",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "추진 목적",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 추진 경과",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 추진내용 분석 및 우수사례",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "NCS 기반 및 현장중심 교육과정 개발(개편)",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 기반 및 현장중심 교육과정 개발(개편), 도입 실적",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "NCS 기반 및 현장중심 교육과정 개발(개편)의 내용분석",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 실적",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 내용분석",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "우수사례",
+     "page": 20,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "직업기초능력 교육 운영",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "직업기초능력 교육 운영 실적",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "직업기초능력 교육 운영 내용분석",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "우수사례",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "교육품질관리 체계 구축",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "직무능력성취도 평가체계",
+     "page": 39,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교육품질관리체계",
+     "page": 56,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "우수사례",
+     "page": 76,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "교육과정 운영 지원체제",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "조직 및 규정",
+     "page": 90,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교직원 역량 강화",
+     "page": 94,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "우수사례",
+     "page": 95,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 종합성과 분석",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "정량적 성과분석",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 기반 및 현장중심 교육과정 개발(개편), 도입",
+     "page": 106,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영",
+     "page": 107,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "직업기초능력 교육 강화",
+     "page": 109,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "정성적 성과분석",
+     "page": 110,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 기반 및 현장중심 교육과정 개발(개편), 도입 성과",
+     "page": 110,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 성과",
+     "page": 117,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "직업기초능력 교육 성과",
+     "page": 126,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교육품질관리 체계 구축 성과",
+     "page": 131,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "교육과정 지원체제 운영 성과",
+     "page": 138,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "결론",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영 종합성과",
+     "page": 142,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 기반 교육과정 개발 프로세스의 체계화 성과",
+     "page": 143,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교육현장과 산업현장의 미스매치 최소화 성과",
+     "page": 145,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "학생들의 직무수행능력 향상 성과",
+     "page": 146,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교육품질관리체계 구축을 통한 고등직업교육의 질 향상 성과",
+     "page": 147,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "교육운영 지원 체제 효율화 성과",
+     "page": 147,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "NCS 기반 및 현장중심 교육과정 운영의 파급효과",
+     "page": 149,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "NCS 연계 취업 확대",
+     "page": 149,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "능력 중심 전형 채용 방식 강화",
+     "page": 150,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "NCS 기반 산학협력 강화",
+     "page": 151,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "제언",
+     "page": 151,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "대학과 학과의 다양성과 특성을 고려한 유연한 NCS 적용",
+     "page": 151,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "고등직업교육에 대한 지원 확대와 정부의 규제 완화",
+     "page": 152,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "산업체의 NCS에 대한 인식 제고",
+     "page": 153,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "국가역량체계(NQF)와의 연계 강화",
+     "page": 153,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 154,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,221 @@
+{
+ "file": "정책연구-2024-18-대학혁신지원사업 수요자 체감형 제도 개선 방안 연구.pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 274,
+ "documents": [
+  {
+   "pages": [
+    1,
+    274
+   ],
+   "kind": "main",
+   "title": "대학혁신지원사업 수요자 체감형 제도 개선 방안 연구",
+   "body_start": 16,
+   "back_start": 254,
+   "toc_pages": [
+    10,
+    11
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "서 론",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구의 배경 및 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구의 내용",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "연구의 방법",
+     "page": 6,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "과거 재정지원사업 현황 및 제도 분석",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "CK 사업의 특성 및 성과",
+     "page": 9,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "PRIME 사업의 특성 및 성과",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "WE-UP 사업의 특성 및 성과",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "CORE 사업의 특성 및 성과",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "ACE 사업의 특성 및 성과",
+     "page": 36,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6.",
+     "title": "요약 및 시사점",
+     "page": 45,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "대학혁신지원사업 현황 및 제도 분석",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "1주기 대학혁신지원사업의 특징",
+     "page": 57,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "1주기 대학혁신지원사업의 성과 및 한계점",
+     "page": 67,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "2주기 대학혁신지원사업의 특징",
+     "page": 72,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "사업 주체별 심층 면담 내용 분석",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "면담 조사 개요",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "면담 조사 결과",
+     "page": 87,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "요약 및 시사점",
+     "page": 155,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "사업 주체별 설문 내용 분석",
+     "page": 169,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "설문조사 개요",
+     "page": 169,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "설문조사 결과",
+     "page": 174,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "요약 및 시사점",
+     "page": 218,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "요약 및 결론",
+     "page": 225,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "요약",
+     "page": 225,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "결론",
+     "page": 232,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "참고문헌",
+     "page": 239,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "[부록]",
+     "title": "질문지",
+     "page": 244,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}

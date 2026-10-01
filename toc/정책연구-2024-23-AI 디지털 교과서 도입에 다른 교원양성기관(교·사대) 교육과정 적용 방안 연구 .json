@@ -1,0 +1,573 @@
+{
+ "file": "정책연구-2024-23-AI 디지털 교과서 도입에 다른 교원양성기관(교·사대) 교육과정 적용 방안 연구 .pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 159,
+ "documents": [
+  {
+   "pages": [
+    1,
+    124
+   ],
+   "kind": "main",
+   "title": "AI 디지털 교과서 도입에 따른 교원양성기관(교·사대) 교육과정 적용 방안 연구",
+   "body_start": 19,
+   "back_start": 105,
+   "toc_pages": [
+    12,
+    13
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "I.",
+     "title": "연구개발의 목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구개발의 목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "AI 디지털 교과서 도입",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "현직교원을 위한 AI 디지털 교과서 관련 연수 및 교육",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "예비교원을 위한 AI 디지털 교과서 교육의 필요성",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교원양성기관 교육과정 개선 및 편성 시 참고자료 개발의 필요성",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "II.",
+     "title": "연구개발의 방법",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "연구개발의 절차",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "선행연구 및 사례 분석",
+     "page": 2,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "요구분석",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "전문가 검토",
+     "page": 4,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구개발의 내용 및 범위",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "AI 디지털 교과서 활용을 포함한 교원양성기관 개선 방향 및 개선안 도출",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "III.",
+     "title": "연구개발의 결과",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "선행문헌 및 사례 분석 결과",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "교육과정 개선 관련 문헌 및 사례 분석",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "AI 디지털 교과서 관련 문헌 분석",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "AI 디지털 교과서 관련 연수 사례 분석",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "요구분석 결과(면담내용)",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "AI 디지털 교과서 도입에 따른 교원양성기관 교육과정 개선의 필요성 확인",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "AI 디지털 교과서 도입에 따른 교원양성기관 교육과정의 교육 목표",
+     "page": 13,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "AI 디지털 교과서 도입에 따른 교원양성기관 교육과정의 교육 내용",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "AI 디지털 교과서 도입에 따른 교원양성기관 교육과정의 교수학습방법",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3.",
+     "title": "초기 적용 방안",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "요약",
+     "page": 14,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "개요",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "교원양성기관 교육과정 개선 방향(초안)",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교원양성기관 교육과정 개선안 예시(초안)",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "운영상 제언(초안)",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4.",
+     "title": "전문가 검토 결과",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "1차 전문가 검토 결과",
+     "page": 37,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "2차 전문가 검토 결과",
+     "page": 62,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5.",
+     "title": "최종 적용 방안",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "요약",
+     "page": 68,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "개요",
+     "page": 69,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "교원양성기관 교육과정 개선 방향",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교원양성기관 교육과정 개선안 예시",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "운영상 제언",
+     "page": 92,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "IV.",
+     "title": "결론 및 제언",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1.",
+     "title": "결론",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "선행문헌 및 사례 분석 결과",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "요구분석 결과",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "전문가 검토 결과",
+     "page": 96,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "최종 적용 방안",
+     "page": 99,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "연구의 한계",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "바.",
+     "title": "향후 연구의 활용 방안",
+     "page": 101,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2.",
+     "title": "연구 결과의 효과적 활용을 위한 제언",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "가.",
+     "title": "교원양성기관에서의 AI 디지털 교과서 접근성 확대",
+     "page": 102,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "나.",
+     "title": "교원양성기관의 AI 디지털 교과서 관련 교과목에 대한 체계적인 모니터링의 실행",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "다.",
+     "title": "교원양성기관 간 정보 공유를 위한 장 마련",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "라.",
+     "title": "교원양성기관과 현직교원 간의 협력 강화",
+     "page": 103,
+     "kind": "body"
+    },
+    {
+     "depth": 3,
+     "label": "마.",
+     "title": "정부 차원의 예산 지원",
+     "page": 104,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "[참고문헌]",
+     "page": 105,
+     "kind": "back"
+    }
+   ]
+  },
+  {
+   "pages": [
+    125,
+    159
+   ],
+   "kind": "appendix",
+   "title": "부록 - AI 디지털 교과서 도입에 따른 교원양성기관(교·사대) 교육과정 적용 방안 연구",
+   "body_start": 128,
+   "back_start": null,
+   "toc_pages": [
+    126
+   ],
+   "boundary_reason": "부록 표지·목차 쪽(125~127)에 이어 128쪽에서 꼬리말 번호가 1로 다시 시작하고 Part 1~4의 자체 목차를 가진 별도 부록 책자이다.",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Part 1",
+     "title": "개요",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1",
+     "title": "교원 역할 변화에 따른 교원양성기관 교육과정 개선의 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2",
+     "title": "AI 디지털 교과서의 개념 및 역할",
+     "page": 3,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Part 2",
+     "title": "교원양성기관 교육과정 개선 방향",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1",
+     "title": "교원양성기관 교육과정 개선의 원칙과 목표",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2",
+     "title": "교원양성기관 교육과정 개선의 방향",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3",
+     "title": "개선된 교육과정의 공통 내용 영역",
+     "page": 8,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Part 3",
+     "title": "교원양성기관 교육과정 개선안 예시",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1",
+     "title": "전공 교과 『교재연구 및 지도법』 교육과정 개선안",
+     "page": 11,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2",
+     "title": "교직 교육과정 『교육공학 및 교육방법』 교육과정 개선안",
+     "page": 17,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3",
+     "title": "교직 교육과정 『교육심리』 교육과정 개선안",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4",
+     "title": "교직 교육과정 『교육평가』 교육과정 개선안",
+     "page": 19,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5",
+     "title": "교직 교육과정 『교육과정』 교육과정 개선안",
+     "page": 22,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6",
+     "title": "비교과 교육과정 개발안",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Part 4",
+     "title": "운영상 제언",
+     "page": null,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "1",
+     "title": "디지털 대전환 시대의 교육과정 개선 방향 고려",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "2",
+     "title": "AI·디지털 소양 함양 교육의 필요성 강조",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "3",
+     "title": "교육과정 개선 전담 조직 구성",
+     "page": 29,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "4",
+     "title": "교육과정 운영",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "5",
+     "title": "강사진 구성",
+     "page": 30,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "6",
+     "title": "강의실 환경 구성",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "7",
+     "title": "인프라 구축",
+     "page": 31,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "8",
+     "title": "교원양성기관 간 네트워크 형성",
+     "page": 31,
+     "kind": "body"
+    }
+   ]
+  }
+ ]
+}

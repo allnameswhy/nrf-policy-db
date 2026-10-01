@@ -1,0 +1,368 @@
+{
+ "file": "동물실험에서 성별균형 연구수행을 위한 연구지원 정책 개발 .pdf",
+ "read_at": "2026-09-30",
+ "model": "claude-sonnet-5-5",
+ "n_pages": 176,
+ "documents": [
+  {
+   "pages": [
+    1,
+    176
+   ],
+   "kind": "main",
+   "title": "동물실험에서 성별균형 연구수행을 위한 연구지원 정책 개발",
+   "body_start": 13,
+   "back_start": 95,
+   "toc_pages": [
+    9,
+    10
+   ],
+   "boundary_reason": "",
+   "entries": [
+    {
+     "depth": 1,
+     "label": "Ⅰ.",
+     "title": "연구목적 및 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅰ-1.",
+     "title": "연구 목적",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅰ-2.",
+     "title": "연구 필요성",
+     "page": 1,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅱ.",
+     "title": "연구 배경",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-1.",
+     "title": "암수균형 동물연구에 관한 외국 주요 연구지원기관의 정책현황",
+     "page": 5,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-2.",
+     "title": "동물연구의 성별균형 및 variability에 대한 연구동향",
+     "page": 7,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-3.",
+     "title": "암수균형 동물실험의 sample size 관련 연구",
+     "page": 12,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-4.",
+     "title": "동물실험의 연구자 지원정책",
+     "page": 15,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅱ-5.",
+     "title": "관련 국내 동향",
+     "page": 18,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅲ.",
+     "title": "연구 방법 및 추진전략",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅲ-1.",
+     "title": "연구내용 및 방법",
+     "page": 21,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅲ-2.",
+     "title": "연구 추진전략",
+     "page": 23,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅳ.",
+     "title": "암수균형 동물연구 수행을 위한 연구디자인과 샘플수 계산",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-1.",
+     "title": "암수균형 동물을 사용하는 연구디자인",
+     "page": 25,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-2.",
+     "title": "Factorial Design을 사용하는 암수균형 동물연구의 샘플수 계산",
+     "page": 26,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-3.",
+     "title": "G*Power Program을 활용하여 암수균형 동물연구의 샘플수 계산하기",
+     "page": 28,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-4.",
+     "title": "가상의 자료를 사용한 effect size와 sample size 계산 예제",
+     "page": 32,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-5.",
+     "title": "실제 연구사례 자료 분석",
+     "page": 41,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅳ-6.",
+     "title": "암수균형 동물연구를 위한 연구디자인과 sample size 요약",
+     "page": 46,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅴ.",
+     "title": "암수균형 동물연구를 위한 추가 고려사항",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅴ-1.",
+     "title": "암수균형 동물실험 연구의 자료분석",
+     "page": 47,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅴ-2.",
+     "title": "Treatment factor의 level이 둘보다 많은 경우의 Sample size",
+     "page": 63,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅵ.",
+     "title": "암수균형 동물연구의 연구비 규모 추계",
+     "page": 67,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅵ-2.",
+     "title": "연구자들이 현재 수행중인 연구비에서 계산한 연구비 추계",
+     "page": 70,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅵ-3.",
+     "title": "암수균형 동물실험 연구비 추계 요약",
+     "page": 71,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅶ.",
+     "title": "암수균형 동물실험연구를 위한 인프라와 지원정책",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅶ-1.",
+     "title": "동물실험연구를 위한 인프라와 지원정책 현황",
+     "page": 73,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅶ-2.",
+     "title": "Focus Group 토의 요약",
+     "page": 75,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅶ-3.",
+     "title": "암수균형 동물연구 지원을 위한 단계별 점검",
+     "page": 77,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅷ.",
+     "title": "결론 및 정책제안",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅷ-1.",
+     "title": "연구결과 요약",
+     "page": 79,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅷ-2.",
+     "title": "정책제안",
+     "page": 80,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅷ-3.",
+     "title": "연구의 제한점",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 2,
+     "label": "Ⅷ-4.",
+     "title": "앞으로의 발전방향",
+     "page": 81,
+     "kind": "body"
+    },
+    {
+     "depth": 1,
+     "label": "Ⅸ.",
+     "title": "참고문헌",
+     "page": 83,
+     "kind": "back"
+    },
+    {
+     "depth": 1,
+     "label": "",
+     "title": "부 록",
+     "page": 87,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 1]",
+     "title": "동물실험 연구자 지원정책 관련 자료",
+     "page": 88,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "1-1.",
+     "title": "NC3Rs 자료 번역본",
+     "page": 88,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "1-2.",
+     "title": "PREPARE 번역본",
+     "page": 91,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "1-3.",
+     "title": "ARRIVE 번역본",
+     "page": 97,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "1-4.",
+     "title": "동물실험등록 (Animal Study Registry) 문헌 및 번역본",
+     "page": 98,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 2]",
+     "title": "G*Power manual 관련 부분",
+     "page": 105,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 3]",
+     "title": "연구사례의 Effect size 와 sample size 계산 결과",
+     "page": 106,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 4]",
+     "title": "Effect size 와 Power 수준에 따른 Factorial design 암수균형 동물연구의 샘플수 계산",
+     "page": 128,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "4-1.",
+     "title": "Main effect 가 2 level 인 경우 (2x2 디자인)",
+     "page": 128,
+     "kind": "back"
+    },
+    {
+     "depth": 3,
+     "label": "4-2.",
+     "title": "Main effect 가 4 level 인 경우 (4x2 디자인)",
+     "page": 129,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 5]",
+     "title": "암수동물 연구를 위한 연구비 추계 사례",
+     "page": 130,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 6]",
+     "title": "Focus Group 토의 자료",
+     "page": 132,
+     "kind": "back"
+    },
+    {
+     "depth": 2,
+     "label": "[부록 7]",
+     "title": "Seminar 발표 및 토론 자료",
+     "page": 153,
+     "kind": "back"
+    }
+   ]
+  }
+ ]
+}
