@@ -57,11 +57,23 @@ build_db·build_index는 세 스탬프가 모두 있는 파일만 싣는다.
                    (--escalate-judge-model, 통과 시 종료) / 요약 오류(또는 Sonnet도
                    FAIL)면 캐시에 regen_model을 남겨 다음 annotate가 그 유닛만
                    Opus로 재생성(--escalate-gen-model). 그래도 FAIL이면 manual(수동
-                   검토, LLM 호출 없음 — /admin 카드). 캐시 적중 FAIL에도 게이트가
-                   돌아 동일 텍스트 재생성 등이 수렴한다.
+                   검토, LLM 호출 없음 — /admin 카드): 본문 오독·무작위성은 모델 한계라
+                   사람 판단으로 넘긴다(사용자 결정 2026-10-14). 캐시 적중 FAIL에도
+                   게이트가 돌아 동일 텍스트 재생성 등이 수렴한다.
                    사람 확인(frontmatter `summary_reviewed: hid …`, /admin 버튼 또는
                    --accept RID:HID): 그 유닛은 판정을 생략하고 PASS(판정자 human)로
                    캐시에 정착한다(수동 표식·streak 소거).
+                   2026-10-14 보강(재적재 실측: 승급 중재 82건 중 판정 오류 74·요약 오류 8):
+                   판정 모델 기본 Sonnet 5(승급 재판정 Opus). 기준 — 본문의 기준은 서술문,
+                   표와 다르면 서술문을 따른 요약은 PASS·표를 따른 요약은 WARN; 왜곡 FAIL은
+                   본문 구절 인용 의무; 누락은 핵심 주제 부재에 한정하고 압축·생략을 보면
+                   '요약을 위한 타당한 생략인가'를 먼저 자문해 valid_omission에 적는다.
+                   결정론 안전판 judge_unit→prose_guard: 왜곡 사유의 수치가 전부 서술문에
+                   그대로 있거나 판정자가 타당한 생략이라 적은 누락은 기각(리포트
+                   [서술문 기준 기각 N], 로그 dismissed). 결정론 수치 검사 missing_numbers:
+                   요약의 수치(2자리 이상)가 본문 어디에도 없으면 판정 프롬프트에
+                   [결정론 검사] 힌트(캐시 키에 포함)로 올리고 리포트에 [본문에 없는 수치 …]
+                   표시(PASS여도 경고 줄).
 
 문서 종류는 frontmatter `structure` 키로 가른다. `toc`(목차 대응 산출물) = A·B·C.
 `flat`(사람이 플랫으로 수용한 문서) = 판독의 본문 시작으로 body 범위를 재현해 B를 동일하게
@@ -381,18 +393,33 @@ JUDGE_CRITERIA = (
     "무관(요약이 본문 주제와 무관). WARN: 핵심은 담겼으나 부차 내용에 편중. "
     "그 외 PASS. 본문 내용의 압축·환언·표현 선택은 문제 삼지 않는다. "
     "수치 왜곡 판정 전에는 반드시 두 표기를 같은 단위로 환산해 계산 비교하라 — "
-    "만=10^4, 억=10^8이므로 152만 = 1,520,000이며, 이렇게 산술적으로 같은 단위 "
-    "환산 쌍은 왜곡이 아니고, '명확성 손상'·'축약' 등 어떤 명분으로도 문제 삼지 않는다. "
+    "만=10^4, 억=10^8, 백만원=10^6원이므로 152만 = 1,520,000이고 37,478백만원 = 374.78억원이며, "
+    "이렇게 산술적으로 같은 단위 환산 쌍은 왜곡이 아니고, '명확성 손상'·'축약' 등 어떤 명분으로도 "
+    "문제 삼지 않는다. "
     "서술 순서의 압축이나 구조의 환언(N개 항목을 'N단계'로 부르는 등)도 왜곡·누락이 아니다. "
+    "누락은 절의 핵심 주제 자체가 빠진 경우에 한정한다 — 목록의 일부 항목, 세부 수치, "
+    "연도별 중간값, 금액·출처·기관명의 생략은 누락이 아니다. 압축이나 생략을 발견하면 FAIL 사유로 "
+    "적기 전에 먼저 자문하라 — 이 내용이 요약에 없으면 사용자가 요약만 보고 이 절을 찾아오지 못하는가, "
+    "아니면 1~2문장 요약에서 당연히 빠질 세부인가? 그 답을 issue의 valid_omission(true = 요약을 위한 "
+    "타당한 생략)과 why에 적고, 타당한 생략은 FAIL 사유로 삼지 않는다. 반올림·근사(6,631백만원≈66억원)와 "
+    "기간의 연 단위 환언(2016.12~2021.1을 2016~2021로)도 왜곡이 아니다. "
     "FAIL은 검색·발견을 해치는 결함(산술적으로 다른 수치, 본문에 없는 사실, 핵심 주제 부재)에 "
     "한정하고, 문체·표기·명확성 선호는 판정 대상이 아니다. "
-    "본문 안에서 서술문과 표 등 표기가 서로 모순될 때 요약이 그중 "
-    "한쪽을 그대로 따랐다면 FAIL이 아니라 WARN으로 하고 note에 원문 모순임을 밝힌다. "
+    "본문의 기준은 서술문(문단 글)이다. 서술문과 표(| 로 구분된 행)의 수치·개수·명칭이 서로 "
+    "다를 때 요약이 서술문을 따랐으면 PASS이고 표를 근거로 문제 삼지 않는다. 요약이 표 쪽을 "
+    "따랐으면 FAIL이 아니라 WARN으로 하고 note에 원문 모순임을 밝힌다. 표의 행을 세거나 "
+    "합산해 얻은 값은 서술문의 수치를 왜곡이라 할 근거가 되지 않는다. "
+    "[결정론 검사] 블록이 붙어 있으면 거기 적힌 수치가 본문에 정말 없는지 확인하고, 없으면 "
+    "왜곡(단위 환산·합산 포함) 또는 할루시네이션으로 FAIL한다. "
+    "왜곡 FAIL의 note에는 요약과 다른 값을 적은 본문 구절을 그대로 인용한다 — 그런 구절을 "
+    "찾지 못하면 왜곡이 아니다. 할루시네이션 FAIL은 본문 전체(표 포함)를 찾아도 근거가 없는 "
+    "주장에만 내린다. "
 )
 JUDGE_SYSTEM_PROMPT = JUDGE_CRITERIA + (
     "출력은 JSON 한 줄만, 다른 텍스트 금지: "
     '{"verdict":"PASS|WARN|FAIL","issues":[{"type":"누락|할루시네이션|왜곡|무관",'
-    '"claim":"요약 속 문제 문구","note":"짧은 근거"}]} PASS면 issues는 빈 배열.'
+    '"claim":"요약 속 문제 문구","note":"짧은 근거","valid_omission":true|false,"why":"생략 판단 근거"}]} '
+    'valid_omission·why는 누락 유형에만 적고, PASS면 issues는 빈 배열.'
 )
 # 중재자(승급 상태 기계): 판정이 아니라 책임 분류만 — 판정자 기준을 그대로 제시한다.
 ARBITER_SYSTEM_PROMPT = (
@@ -464,6 +491,7 @@ class JudgeTarget:
     prompt: str  # 판정 프롬프트 전문 = 캐시 키 원문
     summary: str  # 검사 대상 요약 텍스트 = summary_sha 원문
     evidence: str  # 근거 블록(판정과 동일 절단) — 중재 프롬프트 재사용
+    missing: tuple = ()  # 결정론 수치 검사 — 요약에 있고 본문 어디에도 없는 수치(프롬프트 힌트·로그)
 
 
 def unit_evidence(an, fm, unit, base: list[str], cap: int) -> str:
@@ -478,9 +506,44 @@ def unit_evidence(an, fm, unit, base: list[str], cap: int) -> str:
     return f"보고서: {fm.title}\n위치: {path}{note}\n\n[절 본문]\n{text}"
 
 
+NUM_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _num_in(n: str, text: str) -> bool:
+    """수치 n이 text에 있는가 — 앞뒤로 숫자가 이어지면 다른 수(374 ≠ 37478, 18 ≠ 2018)지만, 앞뒤의
+    점은 소수·날짜의 일부(80 ⊂ 80.49%, 2027 ⊂ 2027. 04, 11 ⊂ 2024.11.6, 001 ⊂ p<.001)라 있는 것으로 본다."""
+    return re.search(rf"(?<!\d){re.escape(n)}(?!\d)", text) is not None
+
+
+def _year_abbrev_in(n: str, text: str) -> bool:
+    """4자리 연도의 축약 표기(‘18년, '18.2월)."""
+    return bool(re.fullmatch(r"(19|20)\d\d", n)) and re.search(rf"[‘’'`]{n[2:]}(?!\d)", text) is not None
+
+
+def missing_numbers(summary: str, evidence: str) -> tuple[str, ...]:
+    """결정론 수치 검사(2026-10-14, 사용자 결정): 요약의 수치(숫자 2자리 이상, 쉼표 무시)가 본문(서술문·표
+    모두) 어디에도 없으면 왜곡·할루시네이션 후보 — 판정 프롬프트에 힌트로 올리고 리포트에 표시한다.
+    배경: Sonnet 판정은 오탐이 거의 없는 대신 10배 수치 변조를 20건 중 6건만 잡았다(ab2 실측)."""
+    evidence = evidence.replace(",", "")  # 제목·위치 줄 포함 — 요약은 헤딩의 연도·번호도 쓴다
+    out = []
+    for raw in NUM_RE.findall(summary):
+        n = raw.replace(",", "")
+        if (sum(c.isdigit() for c in n) >= 2 and n not in out
+                and not _num_in(n, evidence) and not _year_abbrev_in(n, evidence)):
+            out.append(n)
+    return tuple(out)
+
+
+def unit_judge_prompt(evidence: str, summary: str, missing: tuple = ()) -> str:
+    hint = ("[결정론 검사] 요약의 다음 수치는 본문(서술문·표) 어디에도 없다: " + ", ".join(missing)
+            + " — 왜곡(단위 환산·합산 포함) 또는 할루시네이션 후보이니 반드시 확인하라.\n\n") if missing else ""
+    return (f"{evidence}\n\n[검사 대상 요약]\n{summary}\n\n{hint}"
+            "위 요약을 판정 기준에 따라 JSON으로 판정하라.")
+
+
 def build_judge_unit_prompt(an, fm, unit, base: list[str], summary: str, cap: int) -> str:
-    return (f"{unit_evidence(an, fm, unit, base, cap)}\n\n"
-            f"[검사 대상 요약]\n{summary}\n\n위 요약을 판정 기준에 따라 JSON으로 판정하라.")
+    ev = unit_evidence(an, fm, unit, base, cap)
+    return unit_judge_prompt(ev, summary, missing_numbers(summary, ev))
 
 
 def report_evidence(fm, pairs: list[tuple[str, str]]) -> str:
@@ -523,6 +586,51 @@ def build_arbiter_prompt(t: JudgeTarget, fail_history: list) -> str:
     return (f"{t.evidence}\n\n[현재 {where}]\n{t.summary}\n\n"
             f"[판정자의 FAIL 사유 이력 — 연속 {len(fail_history)}회, 오래된 순]\n{hist}\n\n"
             "판정 오류(judge)인지 요약 오류(summary)인지 JSON 한 줄로 분류하라.")
+
+
+def prose_text(evidence: str) -> str:
+    """근거 본문에서 표 행(| 로 시작)을 뺀 서술문 — 쉼표 제거(수치 대조용)."""
+    body = evidence.split("[절 본문]\n", 1)[-1]
+    return "\n".join(ln for ln in body.splitlines() if not ln.lstrip().startswith("|")).replace(",", "")
+
+
+def prose_guard(v: dict, evidence: str) -> dict:
+    """본문의 기준은 서술문(2026-10-14, 결정론 안전판 — 판정자가 표를 근거로 서술문 수치를 왜곡이라
+    하는 오판이 프롬프트 규칙만으로는 줄지 않았다: 판정 오류 확정 78유닛을 Haiku가 옛 기준 69·새 기준
+    65 FAIL). 왜곡 issue의 문제 문구에 든 수치(2자리 이상 하나 포함)가 전부 서술문에 그대로 있으면
+    기각하고, 판정자가 valid_omission=true로 적은 누락(생략 자문 절차)도 기각한다. 전부 기각되면 PASS.
+    기각분은 v["dismissed"]에 남긴다(로그용 — 캐시에는 최종 verdict만).
+    한계: 서술문에 있는 수치를 요약이 다른 대상에 붙인 왜곡은 이 안전판이 놓친다(사용자 결정 — 서술문 기준)."""
+    if v.get("verdict") != "FAIL":
+        return v
+    prose = prose_text(evidence)
+    keep, drop = [], []
+    for iss in v.get("issues") or []:
+        nums = [n.replace(",", "") for n in NUM_RE.findall(str(iss.get("claim", "")))]
+        in_prose = all(_num_in(n, prose) for n in nums)
+        if iss.get("type") == "왜곡" and nums and any(len(n) >= 2 for n in nums) and in_prose:
+            drop.append(iss)
+        elif iss.get("type") == "누락" and str(iss.get("valid_omission", "")).lower() == "true":
+            drop.append(iss)  # 판정자 스스로 '요약을 위한 타당한 생략'이라 적은 누락(절차 자문 결과)
+        else:
+            keep.append(iss)
+    if not drop:
+        return v
+    v = dict(v, issues=keep, dismissed=drop)
+    if not keep:
+        v["verdict"] = "PASS"
+    return v
+
+
+async def judge_unit(an, t: "JudgeTarget", args, jstats: dict, model: str | None = None) -> dict:
+    """판정 1건 + 서술문 안전판(절 요약만 — 보고서 요약의 근거는 요약 목록이라 표 구분이 없다)."""
+    v = await judge_call(an, t.prompt, args, jstats, model=model)
+    if t.hid == mdio.REPORT_KEY:
+        return v
+    v = prose_guard(v, t.evidence)
+    if t.missing:
+        v["missing_numbers"] = list(t.missing)
+    return v
 
 
 async def judge_call(an, prompt: str, args, jstats: dict, model: str | None = None) -> dict:
@@ -588,9 +696,8 @@ def build_judge_targets(an, st, args) -> tuple[list[JudgeTarget], dict[str, str]
             continue
         ev = unit_evidence(an, st.fm, u, st.base, args.input_cap)
         summ = st.existing[u.hid]
-        targets.append(JudgeTarget(
-            u.hid, f"{ev}\n\n[검사 대상 요약]\n{summ}\n\n위 요약을 판정 기준에 따라 JSON으로 판정하라.",
-            summ, ev))
+        miss = missing_numbers(summ, ev)
+        targets.append(JudgeTarget(u.hid, unit_judge_prompt(ev, summ, miss), summ, ev, miss))
     if mdio.REPORT_KEY in st.existing and mdio.REPORT_KEY not in reviewed:
         pairs = [(" > ".join(u.heading_path), st.existing[u.hid]) for u in st.units]
         summ = st.existing[mdio.REPORT_KEY]
@@ -640,7 +747,7 @@ async def judge_file(an, targets: list[JudgeTarget], args, jstats: dict, bucket:
             v["escalated"] = esc
             if ent.get("regen_model"):
                 v["pending_regen"] = ent["regen_model"]
-            else:  # 승급 재생성 후에도 FAIL — 사람 몫
+            else:  # 승급 재생성 후에도 FAIL — 본문 오독·무작위성은 모델 한계라 사람 판단(사용자 결정 2026-10-14)
                 if not ent.get("manual"):
                     jstats["manual"] += 1
                 ent["manual"] = True
@@ -656,7 +763,7 @@ async def judge_file(an, targets: list[JudgeTarget], args, jstats: dict, bucket:
             v["arbiter"] = arb
             fault = arb["fault"]
             if fault == "judge":
-                v2 = await judge_call(an, t.prompt, args, jstats, model=args.escalate_judge_model)
+                v2 = await judge_unit(an, t, args, jstats, model=args.escalate_judge_model)
                 jstats["escalated_judge"] += 1
                 if v2["verdict"] not in VERDICTS:
                     v["note"] = "승격 재판정 판정불능 — 다음 실행 재시도"
@@ -685,7 +792,7 @@ async def judge_file(an, targets: list[JudgeTarget], args, jstats: dict, bucket:
                 if t.hid in hits:
                     ent = bucket.get(t.hid) or {}
                 else:
-                    v0 = await judge_call(an, t.prompt, args, jstats)
+                    v0 = await judge_unit(an, t, args, jstats)
                     results[t.hid] = dict(v0, cached=False)
                     if v0["verdict"] not in VERDICTS:
                         return  # ERROR(판정불능)는 캐시하지 않음 — 재실행 시 재시도
@@ -716,6 +823,10 @@ def _verdict_desc(hid: str, v: dict, lmap: dict[str, int]) -> str:
         head += f" (연속 {v['fail_streak']}회)"
     if v.get("escalated") == "judge":
         head += f" [승격 재판정 {v.get('model')}]"
+    if v.get("dismissed"):
+        head += f" [서술문 기준 기각 {len(v['dismissed'])}]"
+    if v.get("missing_numbers"):
+        head += f" [본문에 없는 수치 {', '.join(v['missing_numbers'][:5])}]"
     parts = "; ".join(
         f"[{i.get('type', '?')}] {str(i.get('claim', ''))[:60]} — {str(i.get('note', ''))[:80]}"
         for i in (v.get("issues") or [])[:3]
@@ -874,7 +985,8 @@ def main() -> None:
     parser.add_argument("--reaudit", action="store_true", help="verified_annotate가 있어도 D 품질 판정 재실행")
     parser.add_argument("--no-llm", action="store_true", help="D 품질 판정 억제 — 결정론 검사만, verified_annotate 미기록")
     parser.add_argument("--no-stamp", action="store_true", help="검사만 하고 어떤 파일도 쓰지 않음")
-    parser.add_argument("--judge-model", default="claude-haiku-4-5", help="판정 모델 (기본: claude-haiku-4-5)")
+    parser.add_argument("--judge-model", default="claude-sonnet-5",
+                        help="판정 모델 (기본: claude-sonnet-5 — 2026-10-14 Haiku에서 교체, 캐시 키는 모델 무관)")
     parser.add_argument("--concurrency", type=int, default=3, help="동시 판정 호출 수 (기본: 3)")
     parser.add_argument("--llm-timeout", type=float, default=240, help="판정 호출당 타임아웃 초 (기본: 240)")
     parser.add_argument("--input-cap", type=int, default=8000, help="판정 입력 절단 상한 — annotate와 동일해야 함 (기본: 8000)")
@@ -885,7 +997,7 @@ def main() -> None:
                         help="서로 다른 요약으로 N회 연속 FAIL이면 승급 상태 기계 진입 (기본 3, 0=비활성)")
     parser.add_argument("--arbiter-model", default="claude-opus-5",
                         help="중재 모델 — 판정 오류/요약 오류 분류 (기본: claude-opus-5)")
-    parser.add_argument("--escalate-judge-model", default="claude-sonnet-5",
+    parser.add_argument("--escalate-judge-model", default="claude-opus-5",
                         help="판정 오류 시 그 유닛만 재판정할 모델 (기본: claude-sonnet-5)")
     parser.add_argument("--escalate-gen-model", default="claude-opus-5",
                         help="요약 오류 시 다음 annotate가 그 유닛만 재생성할 모델 (기본: claude-opus-5)")
@@ -1069,7 +1181,7 @@ def main() -> None:
             counts[v["verdict"]] += 1
             if v["verdict"] in ("FAIL", "ERROR"):
                 rep.qfails.append(_verdict_desc(hid, v, lmap))
-            elif v["verdict"] == "WARN":
+            elif v["verdict"] == "WARN" or v.get("dismissed") or v.get("missing_numbers"):
                 rep.warns.append(_verdict_desc(hid, v, lmap))
         rep.stats["judge"] = counts
         rep.stats["judge_cached"] = sum(1 for v in verdicts.values() if v.get("cached"))

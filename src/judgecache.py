@@ -12,7 +12,7 @@ entry 필드:
   escalated     "" | "judge" | "summary" — 이번 FAIL 연속 구간에서 올린 방향. PASS/WARN → 소거.
   regen_model   중재가 요약 오류로 본 뒤 verify가 설정 — annotate가 그 모델로 재생성하고 소거.
   arbiter       {fault, note, model, at} 마지막 중재 출력.
-  manual        승급 재생성 후에도 FAIL — 수동 검토 표식(/admin 카드). PASS/WARN → 소거.
+  manual        승급 재생성 후에도 FAIL — 수동 검토 표식(/admin 카드, 사람 판단). PASS/WARN → 소거.
 
 잔여 호출 산식(plan)의 단일 소스 — annotate --scan · verify.annotate_complete · status.py가 공유.
 사람 확인(frontmatter `summary_reviewed`, mdio)은 요약이 있는 hid에만 유효하며 재생성·수동
